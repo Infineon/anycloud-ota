@@ -87,17 +87,18 @@ typedef enum
     OTA_EVENT_AGENT_DISCONNECT              = (1 <<  9),    /**< Disconnect from server                         */
     OTA_EVENT_AGENT_VERIFY                  = (1 << 10),    /**< Verify download                                */
 
-    OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT        = (1 << 11),    /**< Download timed out                             */
+    OTA_EVENT_AGENT_PACKET_TIMEOUT          = (1 << 11),    /**< Packet download timed out                      */
+    OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT        = (1 << 12),    /**< Timed out waiting for download job             */
 
-    OTA_EVENT_AGENT_STORAGE_ERROR           = (1 << 12),    /**< Notify cy_ota_get() to exit - STORAGE - ERROR  */
-    OTA_EVENT_INVALID_VERSION               = (1 << 13),    /**< Notify cy_ota_get() to exit - INVALID VERSION  */
+    OTA_EVENT_AGENT_STORAGE_ERROR           = (1 << 13),    /**< Notify cy_ota_get() to exit - STORAGE - ERROR  */
+    OTA_EVENT_INVALID_VERSION               = (1 << 14),    /**< Notify cy_ota_get() to exit - INVALID VERSION  */
 
     /* MQTT specific */
-    OTA_EVENT_MQTT_GOT_DATA                 = (1 << 14),    /**< Notify cy_ota_get() that we got some data      */
-    OTA_EVENT_MQTT_DATA_DONE                = (1 << 15),    /**< Notify cy_ota_get() that we got all the data   */
-    OTA_EVENT_MQTT_DATA_FAIL                = (1 << 16),    /**< Data failure (could be sign / decrypt fail)    */
-    OTA_EVENT_MQTT_REDIRECT                 = (1 << 17),    /**< MQTT re-directed to HTTP for OTA download      */
-    OTA_EVENT_MQTT_DROPPED_US               = (1 << 18),    /**< MQTT Broker did not respond to ping            */
+    OTA_EVENT_MQTT_GOT_DATA                 = (1 << 15),    /**< Notify cy_ota_mqtt_get() that we got some data */
+    OTA_EVENT_MQTT_DATA_DONE                = (1 << 16),    /**< Notify cy_ota_get() that we got all the data   */
+    OTA_EVENT_MQTT_DATA_FAIL                = (1 << 17),    /**< Data failure (could be sign / decrypt fail)    */
+    OTA_EVENT_MQTT_REDIRECT                 = (1 << 18),    /**< MQTT re-directed to HTTP for OTA download      */
+    OTA_EVENT_MQTT_DROPPED_US               = (1 << 19),    /**< MQTT Broker did not respond to ping            */
 
 } ota_events_t;
 
@@ -108,16 +109,19 @@ typedef enum
                                            OTA_EVENT_AGENT_START_RETRY_TIMER | \
                                            OTA_EVENT_AGENT_START_UPDATE | \
                                            OTA_EVENT_AGENT_CONNECT | \
+                                           OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT | \
                                            OTA_EVENT_AGENT_DOWNLOAD | \
                                            OTA_EVENT_AGENT_DISCONNECT | \
                                            OTA_EVENT_AGENT_VERIFY )
-/* Main OTA Agent loop event wait time (There is no WAIT FOREVER, just make it big) */
-#define CY_OTA_WAIT_FOR_EVENTS_MS       (SECS_TO_MILLISECS(3600))
+/* Main OTA Agent loop event wait time */
+#define CY_OTA_WAIT_FOR_EVENTS_MS       (CY_RTOS_NEVER_TIMEOUT)
 
 /* OTA MQTT main loop events to wait look for */
 #define OTA_EVENT_MQTT_EVENTS  ( OTA_EVENT_AGENT_SHUTDOWN_NOW | \
+                                    OTA_EVENT_AGENT_PACKET_TIMEOUT | \
                                     OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT | \
                                     OTA_EVENT_AGENT_STORAGE_ERROR | \
+                                    OTA_EVENT_AGENT_DISCONNECT | \
                                     OTA_EVENT_INVALID_VERSION | \
                                     OTA_EVENT_MQTT_GOT_DATA |  \
                                     OTA_EVENT_MQTT_DATA_DONE | \
@@ -125,8 +129,8 @@ typedef enum
                                     OTA_EVENT_MQTT_REDIRECT | \
                                     OTA_EVENT_MQTT_DROPPED_US )
 
-/* Inner MQTT event loop - time to wait for events  (There is no WAIT FOREVER, just make it big)*/
-#define CY_OTA_WAIT_MQTT_EVENTS_MS      (SECS_TO_MILLISECS(3600))
+/* Inner MQTT event loop - time to wait for events */
+#define CY_OTA_WAIT_MQTT_EVENTS_MS      (CY_RTOS_NEVER_TIMEOUT)
 
 /* Time to wait for a free Queue entry to pass buffer to MQTT event loop */
 #define CY_OTA_WAIT_MQTT_MUTEX_MS       (SECS_TO_MILLISECS(20))
@@ -188,7 +192,8 @@ typedef struct cy_ota_context_s {
     uint32_t                initial_timer_sec;      /**< Seconds before attempting connect after cy_ota_agent_start()   */
     uint32_t                next_timer_sec;         /**< Seconds between connect after successful download              */
     uint32_t                retry_timer_sec;        /**< Seconds between connect retry after failed download            */
-    uint32_t                download_timout_sec;    /**< Seconds to wait for download                                   */
+    uint32_t                check_timeout_sec;      /**< Seconds to wait for server to start download                   */
+    uint32_t                packet_timeout_sec;     /**< Seconds to wait between packets for download                   */
     uint16_t                ota_retries;            /**< count # retries between initial or next intervals              */
 
     cy_timer_t              ota_timer;              /**< for delaying start of connections      */
@@ -203,7 +208,8 @@ typedef struct cy_ota_context_s {
     uint16_t                last_packet_received;   /**< Last Packet of data we have received                           */
     uint16_t                total_packets;          /**< Total number of Packets of data for the OTA Image              */
 
-    cy_mutex_t              recv_mutex;             /**< Keep callbacks from separate threads under control             */
+    cy_mutex_t              sub_callback_mutex;     /**< Keep subscription callbacks from being timesliced              */
+    cy_mutex_t              recv_mutex;             /**< Keep data_queue from being accessed by multi threads           */
     cy_queue_t              recv_data_queue;        /**< Pass data from callbacks to cy_ota_get() loop                  */
 
     /* Network connection */

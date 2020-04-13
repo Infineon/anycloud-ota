@@ -12,6 +12,7 @@ var searchData=
   ['cy_5fota_5freason_5fdownload_5fpercent',['CY_OTA_REASON_DOWNLOAD_PERCENT',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a98c083671006fa1635188673a648ca52',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fdownload_5fstarted',['CY_OTA_REASON_DOWNLOAD_STARTED',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a01b49dcdeb7717a97fe0000e2a608422',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fexceeded_5fretries',['CY_OTA_REASON_EXCEEDED_RETRIES',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a948e6721d765cc71d0bb93f42d38ab28',1,'cy_ota_api.h']]],
+  ['cy_5fota_5freason_5fno_5fupdate',['CY_OTA_REASON_NO_UPDATE',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ab9120f1f81b2113c54ed66a09e7707b0',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fota_5fcompleted',['CY_OTA_REASON_OTA_COMPLETED',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60af9344cf699c09b04acbe4c09836e164d',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fota_5fflash_5fwrite_5ferror',['CY_OTA_REASON_OTA_FLASH_WRITE_ERROR',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60aba0bf8b04bf8ee483b144446e7d066aa',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fota_5finvalid_5fversion',['CY_OTA_REASON_OTA_INVALID_VERSION',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ab8756eae0ac1b533c36b4ab274a3ca90',1,'cy_ota_api.h']]],

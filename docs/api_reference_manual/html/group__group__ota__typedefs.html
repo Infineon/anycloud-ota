@@ -110,7 +110,7 @@ Macros</h2></td></tr>
 <tr class="memitem:ga8dc51fb658999531cfe4ab9b9f554acd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga8dc51fb658999531cfe4ab9b9f554acd">CY_OTA_INTERVAL_SECS_MIN</a>&#160;&#160;&#160;(5)</td></tr>
 <tr class="memdesc:ga8dc51fb658999531cfe4ab9b9f554acd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum interval check time.  <a href="#ga8dc51fb658999531cfe4ab9b9f554acd">More...</a><br /></td></tr>
 <tr class="separator:ga8dc51fb658999531cfe4ab9b9f554acd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gadf3e83f72f338308efd080da234a6917"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gadf3e83f72f338308efd080da234a6917">CY_OTA_INTERVAL_SECS_MAX</a>&#160;&#160;&#160;(60 * 60 * 24 * 31)     /* one month */</td></tr>
+<tr class="memitem:gadf3e83f72f338308efd080da234a6917"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gadf3e83f72f338308efd080da234a6917">CY_OTA_INTERVAL_SECS_MAX</a>&#160;&#160;&#160;(60 * 60 * 24 * 365)     /* one year */</td></tr>
 <tr class="memdesc:gadf3e83f72f338308efd080da234a6917"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum interval check time.  <a href="#gadf3e83f72f338308efd080da234a6917">More...</a><br /></td></tr>
 <tr class="separator:gadf3e83f72f338308efd080da234a6917"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gab585a7541d7bb222fbff7719555f68b0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gab585a7541d7bb222fbff7719555f68b0">CY_OTA_INITIAL_CHECK_SECS</a>&#160;&#160;&#160;(60)           /* 60 seconds */</td></tr>
@@ -122,10 +122,13 @@ Macros</h2></td></tr>
 <tr class="memitem:ga5f7048d0e07022decfaa5cd9afcfa2d1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga5f7048d0e07022decfaa5cd9afcfa2d1">CY_OTA_RETRY_INTERVAL_SECS</a>&#160;&#160;&#160;(5)            /* 5 seconds */</td></tr>
 <tr class="memdesc:ga5f7048d0e07022decfaa5cd9afcfa2d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retry Interval.  <a href="#ga5f7048d0e07022decfaa5cd9afcfa2d1">More...</a><br /></td></tr>
 <tr class="separator:ga5f7048d0e07022decfaa5cd9afcfa2d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga0594563898330310d313eb28321907b1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga0594563898330310d313eb28321907b1">CY_OTA_DOWNLOAD_INTERVAL_SECS</a>&#160;&#160;&#160;(60)            /* 1 minute */</td></tr>
-<tr class="memdesc:ga0594563898330310d313eb28321907b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interval between OTA download attempts.  <a href="#ga0594563898330310d313eb28321907b1">More...</a><br /></td></tr>
-<tr class="separator:ga0594563898330310d313eb28321907b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad937d8f959bccec87b87f11a9315ae3a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gad937d8f959bccec87b87f11a9315ae3a">CY_OTA_RETRIES</a>&#160;&#160;&#160;(5)            /* 5 overall OTA retries */</td></tr>
+<tr class="memitem:ga28238863ca54b663f9faea4823253a42"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga28238863ca54b663f9faea4823253a42">CY_OTA_PACKET_INTERVAL_SECS</a>&#160;&#160;&#160;(60)            /* 1 minute */</td></tr>
+<tr class="memdesc:ga28238863ca54b663f9faea4823253a42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expected maximum download time between each OTA packet arrival.  <a href="#ga28238863ca54b663f9faea4823253a42">More...</a><br /></td></tr>
+<tr class="separator:ga28238863ca54b663f9faea4823253a42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga857fb18dbbc8e462f9eefa30d57afefb"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga857fb18dbbc8e462f9eefa30d57afefb">CY_OTA_CHECK_TIME_SECS</a>&#160;&#160;&#160;(60 * 10)     /* 10 minutes */</td></tr>
+<tr class="memdesc:ga857fb18dbbc8e462f9eefa30d57afefb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Length of time to check for downloads.  <a href="#ga857fb18dbbc8e462f9eefa30d57afefb">More...</a><br /></td></tr>
+<tr class="separator:ga857fb18dbbc8e462f9eefa30d57afefb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad937d8f959bccec87b87f11a9315ae3a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gad937d8f959bccec87b87f11a9315ae3a">CY_OTA_RETRIES</a>&#160;&#160;&#160;(5)             /* 5 overall OTA retries */</td></tr>
 <tr class="memdesc:gad937d8f959bccec87b87f11a9315ae3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of OTA retries.  <a href="#gad937d8f959bccec87b87f11a9315ae3a">More...</a><br /></td></tr>
 <tr class="separator:gad937d8f959bccec87b87f11a9315ae3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaf05c3cff9a4bcdf5d63e5f5d0962f25a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gaf05c3cff9a4bcdf5d63e5f5d0962f25a">CY_OTA_CONNECT_RETRIES</a>&#160;&#160;&#160;(3)             /* 3 server connect retries  */</td></tr>
@@ -202,6 +205,8 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60af9344cf699c09b04acbe4c09836e164d">CY_OTA_REASON_OTA_COMPLETED</a>,
 <br />
+&#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ab9120f1f81b2113c54ed66a09e7707b0">CY_OTA_REASON_NO_UPDATE</a>,
+<br />
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a6f1fe12d222a4fcb6aef59d045cc40af">CY_OTA_LAST_REASON</a>
 <br />
  }</td></tr>
@@ -237,6 +242,8 @@ Enumerations</h2></td></tr>
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfaf6737e125ad0b6f8fbe248b64b664d5c">OTA_ERROR_CONNECTING</a>,
 <br />
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa1238ba099ef73d75b4563a034f46ea90">OTA_ERROR_DOWNLOADING</a>,
+<br />
+&#160;&#160;<a class="el" href="group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa44e9163f8ed70bf2579fef181af989e8">OTA_ERROR_NO_UPDATE</a>,
 <br />
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa24c0839aa72df5bcb2d9a6eb08fb26f1">OTA_ERROR_WRITING_TO_FLASH</a>,
 <br />
@@ -275,13 +282,13 @@ Enumerations</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define CY_OTA_INTERVAL_SECS_MAX&#160;&#160;&#160;(60 * 60 * 24 * 31)     /* one month */</td>
+          <td class="memname">#define CY_OTA_INTERVAL_SECS_MAX&#160;&#160;&#160;(60 * 60 * 24 * 365)     /* one year */</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Maximum interval check time. </p>
-<p>This applies to: Initial wait after call to <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start()</a> before contacting server. Also used for checking wait value after failing or completing an OTA download. </p>
+<p>This applies to: Initial wait after call to <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a> before contacting server. Wait value after failing or completing an OTA download. </p>
 
 </div>
 </div>
@@ -332,18 +339,33 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga0594563898330310d313eb28321907b1"></a>
+<a class="anchor" id="ga28238863ca54b663f9faea4823253a42"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define CY_OTA_DOWNLOAD_INTERVAL_SECS&#160;&#160;&#160;(60)            /* 1 minute */</td>
+          <td class="memname">#define CY_OTA_PACKET_INTERVAL_SECS&#160;&#160;&#160;(60)            /* 1 minute */</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Interval between OTA download attempts. </p>
-<p>Time between failures for a download before we re-try. You can over-ride this define in cy_ota_config.h Minimum value is CY_OTA_INTERVAL_SECS_MIN. Maximum value is CY_OTA_INTERVAL_SECS_MAX. </p>
+<p>Expected maximum download time between each OTA packet arrival. </p>
+<p>This is used check that the download occurs in a reasonable time frame. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga857fb18dbbc8e462f9eefa30d57afefb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CY_OTA_CHECK_TIME_SECS&#160;&#160;&#160;(60 * 10)     /* 10 minutes */</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Length of time to check for downloads. </p>
+<p>OTA Agent wakes up, connects to server, and waits this much time before disconnecting. This allows the OTA Agent to be inactive for long periods of time, only checking for short periods. Use 0x00 to continue checking once started. </p>
 
 </div>
 </div>
@@ -352,7 +374,7 @@ Enumerations</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define CY_OTA_RETRIES&#160;&#160;&#160;(5)            /* 5 overall OTA retries */</td>
+          <td class="memname">#define CY_OTA_RETRIES&#160;&#160;&#160;(5)             /* 5 overall OTA retries */</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -496,7 +518,7 @@ Enumerations</h2></td></tr>
 </div><div class="memdoc">
 
 <p>OTA Context pointer. </p>
-<p>Returned from <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start()</a> and used for subsequent calls </p>
+<p>Returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a> and used for subsequent calls </p>
 
 </div>
 </div>
@@ -580,6 +602,9 @@ Enumerations</h2></td></tr>
 <tr><td class="fieldname"><a class="anchor" id="ggad852fa8cdb0431df709ccf12bb37cd60af9344cf699c09b04acbe4c09836e164d"></a>CY_OTA_REASON_OTA_COMPLETED&#160;</td><td class="fielddoc">
 <p>OTA download completed. </p>
 </td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ggad852fa8cdb0431df709ccf12bb37cd60ab9120f1f81b2113c54ed66a09e7707b0"></a>CY_OTA_REASON_NO_UPDATE&#160;</td><td class="fielddoc">
+<p>OTA No update at this time. </p>
+</td></tr>
 <tr><td class="fieldname"><a class="anchor" id="ggad852fa8cdb0431df709ccf12bb37cd60a6f1fe12d222a4fcb6aef59d045cc40af"></a>CY_OTA_LAST_REASON&#160;</td><td class="fielddoc">
 <p>Do not use. </p>
 </td></tr>
@@ -650,6 +675,9 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a class="anchor" id="gga4ee62ce2e7209c650cd20166490956dfa1238ba099ef73d75b4563a034f46ea90"></a>OTA_ERROR_DOWNLOADING&#160;</td><td class="fielddoc">
 <p>Error downloading update. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="gga4ee62ce2e7209c650cd20166490956dfa44e9163f8ed70bf2579fef181af989e8"></a>OTA_ERROR_NO_UPDATE&#160;</td><td class="fielddoc">
+<p>Error no update available. </p>
 </td></tr>
 <tr><td class="fieldname"><a class="anchor" id="gga4ee62ce2e7209c650cd20166490956dfa24c0839aa72df5bcb2d9a6eb08fb26f1"></a>OTA_ERROR_WRITING_TO_FLASH&#160;</td><td class="fielddoc">
 <p>Error Writing to FLASH. </p>

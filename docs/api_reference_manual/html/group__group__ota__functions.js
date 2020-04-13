@@ -1,7 +1,7 @@
 var group__group__ota__functions =
 [
     [ "cy_ota_callback_t", "group__group__ota__functions.html#ga8286ce2144f78d501ca224b1f4c8df4f", null ],
-    [ "cy_ota_agent_start", "group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949", null ],
+    [ "cy_ota_agent_start", "group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3", null ],
     [ "cy_ota_agent_stop", "group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be", null ],
     [ "cy_ota_get_update_now", "group__group__ota__functions.html#ga749e2780daeb68e40d47ca8c90a6922c", null ],
     [ "cy_ota_validated", "group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5", null ],

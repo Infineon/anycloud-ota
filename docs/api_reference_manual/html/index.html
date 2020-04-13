@@ -100,7 +100,11 @@ $(document).ready(function(){initNavTree('index.html','');});
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><h1>Basic concept </h1>
-<p>MCUBoot runs current application in Primary Slot. A New application is downloaded and stored in the Secondary Slot. The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot. Reboot system MCUBoot sees that there is a New Application in the Secondary Slot. MCUBoot copies over New Application from Secondary Slot to Primary Slot. MCUBoot runs New Application in Primary Slot. New Application must validate itself and call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> to complete the process.</p>
+<p>MCUBoot runs the current application in Primary Slot. A New application is downloaded and stored in the Secondary Slot. The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.<br />
+ If validate_after_reboot == 0 then Secondary Slot will be tagged as "perm"<br />
+ If validate_after_reboot == 1 then Secondary Slot will be tagged as "test"<br />
+ If reboot_upon_completion == 1, the system will reboot automatically.<br />
+ On the next system reboot, MCUBoot sees that there is a New Application in the Secondary Slot. MCUBoot then copies the New Application from Secondary Slot to Primary Slot. MCUBoot runs New Application in Primary Slot. If validate_after_reboot == 1 then the New Application must validate itself and call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> to complete the process.</p>
 <h1>API </h1>
 <h2>Start background agent to check for updates </h2>
 <p>This is a non-blocking call.<br />
@@ -111,14 +115,16 @@ This consumes resources while running.<br />
  timer<br />
  events<br />
 The start function returns a context pointer that is used in subsequent calls.<br />
-This uses callbacks to signal application when events happen events.<br />
-<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ctxt)</a>;</code></p>
+The OTA Agent uses callbacks to signal application when events happen events.<br />
+<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr)</a>;</code> <br />
+These defines determine when the checks happen. Between checks, the OTA Agent is not checking for updates.<br />
+CY_OTA_INITIAL_CHECK_SECS CY_OTA_NEXT_CHECK_INTERVAL_SECS CY_OTA_RETRY_INTERVAL_SECS CY_OTA_CHECK_TIME_SECS</p>
 <h2>Stop OTA agent </h2>
 <p>When you want to stop the OTA agent from checking for updates.<br />
-<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be" title="Stop OTA Background Agent. ">cy_ota_agent_stop(cy_ota_context_ptr *ota_ctxt)</a>;</code></p>
+<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be" title="Stop OTA Background Agent. ">cy_ota_agent_stop(cy_ota_context_ptr *ota_ptr)</a>;</code></p>
 <h2>Trigger a check right now. </h2>
 <p>Use this when you want to trigger a check for an OTA update earlier than is currently scheduled. The OTA agent must have been started already.<br />
-<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga749e2780daeb68e40d47ca8c90a6922c" title="Check for OTA update availability and download update now. ">cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)</a>;</code></p>
+<code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga749e2780daeb68e40d47ca8c90a6922c" title="Check for OTA update availability and download update now. ">cy_ota_get_update_now(cy_ota_context_ptr ota_ptr)</a>;</code></p>
 <h1>Set up cy_ota_config.h for application-specific over-riding defines </h1>
 <p>You must create a file called <b>"cy_ota_config.h"</b> to contain over-riding defines for:</p>
 <div class="fragment"><div class="line"><span class="comment">// Initial time for checking for OTA updates</span></div>
@@ -133,9 +139,15 @@ This uses callbacks to signal application when events happen events.<br />
 <div class="line"><span class="comment">// This is used to re-start the timer after failing to contact the server during an OTA update check.</span></div>
 <div class="line"><span class="preprocessor">#define CY_OTA_RETRY_INTERVAL_SECS          (5)                 // seconds between retries after an error</span></div>
 <div class="line"></div>
+<div class="line"><span class="comment">// Length of time to check for downloads</span></div>
+<div class="line"><span class="comment">// OTA Agent wakes up, connects to server, and waits this much time before stopping checks.</span></div>
+<div class="line"><span class="comment">// This allows the OTA Agent to be inactive for long periods of time, only checking at the interval.</span></div>
+<div class="line"><span class="comment">// Use 0x00 to continue checking once started.</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_CHECK_TIME_SECS                (60)              // 1 minute</span></div>
+<div class="line"></div>
 <div class="line"><span class="comment">// Expected maximum download time between each OTA packet arrival.</span></div>
 <div class="line"><span class="comment">// This is used check that the download occurs in a reasonable time frame.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_DOWNLOAD_INTERVAL_SECS       (60)                // 1 minute</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_PACKET_INTERVAL_SECS       (60)                // 1 minute</span></div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Number of retries when attempting OTA update</span></div>
 <div class="line"><span class="comment">// This is used to determine # retries when attempting an OTA update.</span></div>
@@ -281,7 +293,7 @@ This uses callbacks to signal application when events happen events.<br />
 <div class="line">   ota_test_agent_params.<a class="code" href="structcy__ota__agent__params__t.html#a2f3b68d908f64e031aca84d871554850">cb_func</a> = ota_callback;</div>
 <div class="line">   ota_test_agent_params.<a class="code" href="structcy__ota__agent__params__t.html#a8734130b240a3c0121a412c1a92afffa">cb_arg</a> = \&amp;ota_context;</div>
 <div class="line"></div>
-<div class="line">   result = <a class="code" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949">cy_ota_agent_start</a>(\&amp;ota_test_network_params, \&amp;ota_test_agent_params, \&amp;ota_context);</div>
+<div class="line">   result = <a class="code" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start</a>(\&amp;ota_test_network_params, \&amp;ota_test_agent_params, \&amp;ota_context);</div>
 <div class="line">   <span class="keywordflow">if</span> (result != CY_RSLT_SUCCESS)</div>
 <div class="line">   {</div>
 <div class="line">       printf(<span class="stringliteral">&quot;cy_ota_agent_start() Failed - result: 0x%lx&quot;</span>, result);</div>

@@ -1,18 +1,44 @@
-# Over The Air update middleware library for AnyCloud
+# Over The Air update middleware library
 
 ***This library is still in development. This will be available when this comment is removed.***
 
 This code library provides support for OTA updating a PSoC® 6 MCU and CYW4343W or 43012 connectivity device. In this example, device establishes connection with designated MQTT Broker. Once the connection completes successfully, the device subscribes to a topic. When an update is available, the customer will publish the update and the device saves the update to FLASH. On the next reboot, MCUBoot will copy the new application over to the Primary slot, and run the application.
 
+This library provides application developers a library enabling Over The Air firmware update capability using Wi-Fi.
+
+The ModusToolbox OTA code examples download this library automatically, so you don't need to.
+
+## Features and functionality
+
+This library utilizes MQTT and TLS to securely connect to an MQTT Broker and download an update for your application. Other features:
+
+- Configuration to adjust multiple timing values to customize how often and other parameters for the MQTT Broker connection.
+- Runs in a separate background thread, only connecting to MQTT broker based on your configuration.
+- Run-time parameters for MQTT broker, credentials, and other parameters.
+- Provides a callback mechanism to report stages of connect, download %, and errors.
+
+Once the application starts the OTA agent, the OTA agent will contact the MQTT broker at the defined intervals to see if there is an update available. If so, it will download the update. If the "reset_after_complete" flag was set in the agnet parameters, the OTA agent will automatically reset the device. If not set, on the next manual reset, MCUBoot will perform the update.
+
+## Integration Notes
+
+- A pre-defined configuration file has been bundled with this library.
+
+  The developer is expected to:
+
+  - Copy the cy_ota_config.h file from the libs/aucloud-ota/include directory to the top level code example directory in the project.
+
+- Add the following to COMPONENTS in the code example project's Makefile - FREERTOS, PSOC6HAL, LWIP, MBEDTLS and either 4343W or 43012 depending on the platform. For instance, if [CY8CKIT-062](https://jira.cypress.com/browse/CY8CKIT-062)S2-43012 is chosen, then the Makefile entry would look like
+  COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS 43012
+
 ## Requirements
 
-- [ModusToolbox™ IDE](https://www.cypress.com/products/modustoolbox-software-environment) v2.0
+- [ModusToolbox™ IDE](https://www.cypress.com/products/modustoolbox-software-environment) v2.1
+- [MCUBoot](https://juullabs-oss.github.io/mcuboot/)
 - Programming Language: C
-- Associated Parts:
 
 ## Supported Kits
 
-- [PSoC 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W) - Default target
+- [PSoC 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
 - [PSoC 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
 
 ## Hardware Setup
@@ -26,29 +52,33 @@ This example uses the board's default configuration. See the kit user guide to e
 - Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 - Python Interpreter. This code example is tested with [Python 3.8.1](https://www.python.org/downloads/release/python-381/).
 
-## Using the Code Example
-
 ## Prepare MCUbootApp
 
-OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the Secondary Slot.  MCUboot to do the actual update from the Secondary Slot to the Primary Slot. In order for the OTA software and MCUBoot to have the same information on where the two Slots are in FLASH, we need to tell MCUBoot where the Slots are located. We also use some of the same code (exact .h and .c files) in the OTA code so that they are both in agreement.
+OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the Secondary Slot.  MCUboot will do the actual update from the Secondary Slot to the Primary Slot on the next reboot of the device. In order for the OTA software and MCUBoot to have the same information on where the two Slots are in FLASH, we need to tell MCUBoot where the Slots are located. We also use some of the same code (exact .h and .c files) in the OTA code so that they are both in agreement.
 
-Preparing MCUBootApp requires a few steps
+Preparing MCUBootApp requires a few steps.
 
 ### In Command-line Interface (CLI):
 
-1. Download and unzip the Example Program repository onto your local machine, or clone the repository.
+1. Clone the MCUBoot repository onto your local machine.
 
-2. Open a CLI terminal and navigate to the application folder.
+2. Open a CLI terminal and navigate to the mcuboot folder.
 
-3. Import required libraries by executing the `make getlibs` command.
+3. Change the branch to work with
 
-4. We need to pull in mcuboot sub-modules to build mcuboot
+   1. git checkout cypress-201912.00
+
+4. Import required libraries by executing the `make getlibs` command.
+
+5. We need to pull in mcuboot sub-modules to build mcuboot
 
    1. `cd libs/mcuboot`
    2. `git submodule update --init --recursive`
    7. `cd ../..`
 
-5. We need to adjust MCUBootApp FLASH locations
+6. We need to adjust MCUBootApp FLASH locations
+
+   NOTE: These values are used when the Primary and Secondary Slots are both in **internal** FLASH. To adjust the settings for your device/application, please read the application's notes.
 
    1. Edit libs/mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk
 
@@ -64,7 +94,7 @@ Preparing MCUBootApp requires a few steps
 
       `DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x0EE000`
 
-6. Change MCUBoot to ignore Primary Slot verify. Note that This is where the application is programmed, the OTA download is stores in Secondary slot, and it is verified before copying to Primary slot.
+7. Change MCUBoot to ignore Primary Slot verify. Note that This is where the application is run from, the OTA download stores in Secondary slot, and it is verified before copying to Primary slot.
 
    1. Edit libs/mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h:
 
@@ -72,7 +102,7 @@ Preparing MCUBootApp requires a few steps
 
    `//#define MCUBOOT_VALIDATE_PRIMARY_SLOT`
 
-7. Adjust signing type for MCUBoot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUBoot will not find the magic_number and fail to copy Secondary slot to Primary slot.
+8. Adjust signing type for MCUBoot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUBoot will not find the magic_number and fail to copy Secondary slot to Primary slot.
 
    1. Edit libs/mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h
 
@@ -93,83 +123,25 @@ Preparing MCUBootApp requires a few steps
 
    `make app APP_NAME=MCUBootApp TARGET=CY8CPROTO-062-4343W`
 
-3. Use Cypress Programmer to program mcuboot. Remember to close Cypress Programmer before trying to program the application using the CLI as described below. The .elf file is here:
+3. Use Cypress Programmer to program MCUBoot. Remember to close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUBOOT .elf file is here:
 
    `libs/mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Debug/MCUBootApp.elf`
 
 ## Operation
 
 1. Connect the board to your PC using the provided USB cable through the USB connector.
-
-2. Modify WIFI_SSID and WIFI_PASSWORD macros to match with that of the Wi-Fi network credentials that you want to connect. These macros are defined in the `main.c` file.
-
+2. Copy the file configs/cy_ota_config.h to your application's top level directory. Edit and adjust timing parameters.
 3. Consult the README.md file for configuration of the Example Application.
-
 4. Open a terminal program and select the KitProg3 COM port. Set the serial port parameters to 8N1 and 115200 baud.
+5. Program the board using the instructions in your Customer Example Application notes.
 
-5. Program the board.
+## Additional Information
 
-   ### Using CLI
-
-   #### Building and Programming mtb-example-ota
-
-   1. From the terminal, execute the `make program` command to build and program the application using the default toolchain to the default target. You can specify a target and toolchain manually:
-        ```
-       make program TARGET=<BSP> TOOLCHAIN=<toolchain>
-       ```
-       Example:
-
-        ```
-        make program TARGET=CY8CKIT-062S2-43012 TOOLCHAIN=GCC_ARM
-        ```
-        **Note**:  Before building the application, ensure that the *libs* folder contains the BSP file (*TARGET_xxx.lib*) corresponding to the TARGET. Execute the `make getlibs` command to fetch the BSP contents before building the application.
-
-   After programming, the application starts automatically.
+- [OTA RELEASE.md]()
+- [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/docs/index.html)
+- [ModusToolbox Software Environment, Quick Start Guide, Documentation, and Videos](https://www.cypress.com/products/modustoolbox-software-environment)
 
 
-
-
-## Related Resources
-
-| Application Notes                                            |                                                              |
-| :----------------------------------------------------------- | :----------------------------------------------------------- |
-| [AN228571](https://www.cypress.com/AN228571) – Getting Started with PSoC 6 MCU on ModusToolbox | Describes PSoC 6 MCU devices and how to build your first application with ModusToolbox |
-| [AN221774](https://www.cypress.com/AN221774) – Getting Started with PSoC 6 MCU on PSoC Creator | Describes PSoC 6 MCU devices and how to build your first application with PSoC Creator |
-| [AN210781](https://www.cypress.com/AN210781) – Getting Started with PSoC 6 MCU with Bluetooth Low Energy (BLE) Connectivity on PSoC Creator | Describes PSoC 6 MCU with BLE Connectivity devices and how to build your first application with PSoC Creator |
-| [AN215656](https://www.cypress.com/AN215656) – PSoC 6 MCU: Dual-CPU System Design | Describes the dual-CPU architecture in PSoC 6 MCU, and shows how to build a simple dual-CPU design |
-| **Code Examples**                                            |                                                              |
-| [Using ModusToolbox IDE](https://github.com/cypresssemiconductorco/Code-Examples-for-ModusToolbox-Software) | [Using PSoC Creator](https://www.cypress.com/documentation/code-examples/psoc-6-mcu-code-examples) |
-| **Device Documentation**                                     |                                                              |
-| [PSoC 6 MCU Datasheets](https://www.cypress.com/search/all?f[0]=meta_type%3Atechnical_documents&f[1]=resource_meta_type%3A575&f[2]=field_related_products%3A114026) | [PSoC 6 Technical Reference Manuals](https://www.cypress.com/search/all/PSoC%206%20Technical%20Reference%20Manual?f[0]=meta_type%3Atechnical_documents&f[1]=resource_meta_type%3A583) |
-| **Development Kits**                                         | Buy at Cypress.com                                           |
-| [CY8CPROTO-062-4343W](https://www.cypress.com/cy8cproto-062-4343w) PSoC 6 Wi-Fi BT Prototyping Kit | [CY8CKIT-062S2-43012](https://www.cypress.com/CY8CKIT-062S2-43012) PSoC 62S2 Wi-Fi BT Pioneer Kit |
-| **Libraries**                                                |                                                              |
-| Cypress Hardware Abstraction Layer Library and docs          | [psoc6hal](https://github.com/cypresssemiconductorco/psoc6hal) on GitHub |
-| RetargetIO - Library for redirecting low level IO commands to allow sending messages via standard printf/scanf functions over a UART connection | [retarget-io](https://github.com/cypresssemiconductorco/retarget-io) on GitHub |
-| **Middleware**                                               |                                                              |
-| Links to all PSoC 6 Middleware                               | [psoc6-middleware](https://github.com/cypresssemiconductorco/psoc6-middleware) on GitHub |
-| Wi-Fi Middleware core                                        | [wifi-mw-core](https://github.com/cypresssemiconductorco/wifi-mw-core) on GitHub |
-| **Tools**                                                    |                                                              |
-| [ModusToolbox IDE](https://www.cypress.com/modustoolbox)     | The Cypress IDE for PSoC 6 and IoT designers                 |
-| [PSoC Creator](https://www.cypress.com/products/psoc-creator-integrated-design-environment-ide) | The Cypress IDE for PSoC and FM0+ development                |
-
-## Other Resources
-
-Cypress provides a wealth of data at www.cypress.com to help you select the right device, and quickly and effectively integrate it into your design.
-
-For PSoC 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Cypress community.
-
-## Document History
-
-Document Title: Over The Air update middleware library for AnyCloud
-
-| Version | Description of Change |
-| ------- | --------------------- |
-| 1.0.0   | New middleware code   |
-
-------
-
-All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
 ![Banner](images/Banner.png)
 

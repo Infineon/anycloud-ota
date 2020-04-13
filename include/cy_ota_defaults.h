@@ -82,15 +82,23 @@ extern "C" {
 #endif
 
 /**
- * @brief Interval between OTA download attempts
+* @brief Expected maximum download time between each OTA packet arrival
+*
+* This is used check that the download occurs in a reasonable time frame.
+*/
+#ifndef CY_OTA_PACKET_INTERVAL_SECS
+#define CY_OTA_PACKET_INTERVAL_SECS       (60)            /* 1 minute */
+#endif
+
+/**
+ * @brief Length of time to check for downloads
  *
- * Time between failures for a download before we re-try.
- * You can over-ride this define in cy_ota_config.h
- * Minimum value is  CY_OTA_INTERVAL_SECS_MIN.
- * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
+ * OTA Agent wakes up, connects to server, and waits this much time before disconnecting.
+ * This allows the OTA Agent to be inactive for long periods of time, only checking for short periods.
+ * Use 0x00 to continue checking once started.
  */
-#ifndef CY_OTA_DOWNLOAD_INTERVAL_SECS
-#define CY_OTA_DOWNLOAD_INTERVAL_SECS       (60)            /* 1 minute */
+#ifndef CY_OTA_CHECK_TIME_SECS
+#define CY_OTA_CHECK_TIME_SECS                (60 * 10)     /* 10 minutes */
 #endif
 
 /**
@@ -102,7 +110,7 @@ extern "C" {
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_RETRIES
-#define CY_OTA_RETRIES                      (5)            /* 5 overall OTA retries */
+#define CY_OTA_RETRIES                      (5)             /* 5 overall OTA retries */
 #endif
 
 /**

@@ -5,6 +5,7 @@ var group__group__ota__macros =
     [ "CY_RSLT_MODULE_OTA_BADARG", "group__group__ota__macros.html#ga7413c9c76a0f24557aa12b6c7e143c9a", null ],
     [ "CY_RSLT_MODULE_OTA_UNSUPPORTED", "group__group__ota__macros.html#gafd3d68449df69e1f322451b95131f18b", null ],
     [ "CY_RSLT_MODULE_OTA_ALREADY_STARTED", "group__group__ota__macros.html#ga264a3548446f3cf040f681cd1b0a67ab", null ],
+    [ "CY_RSLT_MODULE_NO_UPDATE_AVAILABLE", "group__group__ota__macros.html#gaccbf657d031170f47f1bd10e25762f21", null ],
     [ "CY_RSLT_MODULE_OTA_MQTT_INIT_ERROR", "group__group__ota__macros.html#ga8db0dc124b7cf7570e83351af91faf31", null ],
     [ "CY_RSLT_MODULE_OTA_TCP_INIT_ERROR", "group__group__ota__macros.html#ga807fb2ef6697ea8e9bc14b2fdafe50d8", null ],
     [ "CY_RSLT_MODULE_OTA_CONNECT_ERROR", "group__group__ota__macros.html#gacc1e5ac8b4a575006c9ed4131cb258bd", null ],

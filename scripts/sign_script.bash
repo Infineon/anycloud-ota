@@ -4,6 +4,10 @@
 #
 # Modify at your peril !
 #
+# break immediately on errors
+set -e
+
+#
 # Arguments
 # We have a lot
 #
@@ -35,8 +39,9 @@ CY_BOOT_PRIMARY_1_START=$1
 shift
 CY_BOOT_PRIMARY_1_SIZE=$1
 shift
+CY_HEX_TO_BIN=$1
+shift
 CY_SIGNING_KEY_ARG=$1
-
 
 # Export these values for python3 click module
 export LC_ALL=C.UTF-8
@@ -90,27 +95,23 @@ then
 FLASH_ERASE_ARG="-R 0"
 fi
 
-#
-set -e
-echo "Create  $CY_OUTPUT_HEX"
+echo ""
+echo "Create  unsigned.hex"
+# echo "$CY_ELF_TO_HEX $CY_ELF_TO_HEX_OPTIONS $CY_ELF_TO_HEX_FILE_1 $CY_ELF_TO_HEX_FILE_2"
 "$CY_ELF_TO_HEX" $CY_ELF_TO_HEX_OPTIONS $CY_ELF_TO_HEX_FILE_1 $CY_ELF_TO_HEX_FILE_2
 
-echo ""
-#echo  "Compile size (useful for debugging the build):"
-#arm-none-eabi-size "--format=SysV" $CY_OUTPUT_ELF
-echo ""
-echo  "$IMGTOOL_COMMAND_ARG Hex, creating bin."
+echo  "imgtool $IMGTOOL_COMMAND_ARG signed .hex."
 cd $MCUBOOT_SCRIPT_FILE_DIR
-echo "$IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX"
-python3 $IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX
+# echo "$IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX"
+python $IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX
 
 # back to our build directory
 cd $CY_OUTPUT_PATH
 
 #
 # Convert signed hex file to Binary for AWS uploading
-objcopy --input-target=ihex --output-target=binary $CY_OUTPUT_SIGNED_HEX $CY_OUTPUT_BIN
-echo  " Done."
+echo "Signed .hex to .bin"
+"$CY_HEX_TO_BIN" --input-target=ihex --output-target=binary $CY_OUTPUT_SIGNED_HEX $CY_OUTPUT_BIN
 
 # get size of binary file for components.json
 BIN_SIZE=$(ls -l $CY_OUTPUT_BIN | awk '{printf $6}')
@@ -121,8 +122,8 @@ echo "{\"fileName\":\"components.json\",\"fileType\": \"component_list\"},"     
 echo "{\"fileName\":\"$CY_OUTPUT_FILE_NAME_BIN\",\"fileType\": \"NSPE\",\"fileSize\":\"$BIN_SIZE\"}]}" >> $CY_COMPONENTS_JSON_NAME
 
 # create tarball for OTA
+echo "Create tarball"
 tar -cf $CY_OUTPUT_FILE_NAME_TAR $CY_COMPONENTS_JSON_NAME $CY_OUTPUT_FILE_NAME_BIN
-
 
 echo ""
 echo "Application Name                         : $CY_OUTPUT_NAME"

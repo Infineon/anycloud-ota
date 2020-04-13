@@ -5,7 +5,8 @@ var group__group__ota__typedefs =
     [ "CY_OTA_INITIAL_CHECK_SECS", "group__group__ota__typedefs.html#gab585a7541d7bb222fbff7719555f68b0", null ],
     [ "CY_OTA_NEXT_CHECK_INTERVAL_SECS", "group__group__ota__typedefs.html#ga9c17fd8b3a98ec9f3f21ba475418227a", null ],
     [ "CY_OTA_RETRY_INTERVAL_SECS", "group__group__ota__typedefs.html#ga5f7048d0e07022decfaa5cd9afcfa2d1", null ],
-    [ "CY_OTA_DOWNLOAD_INTERVAL_SECS", "group__group__ota__typedefs.html#ga0594563898330310d313eb28321907b1", null ],
+    [ "CY_OTA_PACKET_INTERVAL_SECS", "group__group__ota__typedefs.html#ga28238863ca54b663f9faea4823253a42", null ],
+    [ "CY_OTA_CHECK_TIME_SECS", "group__group__ota__typedefs.html#ga857fb18dbbc8e462f9eefa30d57afefb", null ],
     [ "CY_OTA_RETRIES", "group__group__ota__typedefs.html#gad937d8f959bccec87b87f11a9315ae3a", null ],
     [ "CY_OTA_CONNECT_RETRIES", "group__group__ota__typedefs.html#gaf05c3cff9a4bcdf5d63e5f5d0962f25a", null ],
     [ "CY_OTA_MAX_DOWNLOAD_TRIES", "group__group__ota__typedefs.html#ga63713f2122581c2bee97ebd3dbf1815c", null ],
@@ -37,6 +38,7 @@ var group__group__ota__typedefs =
       [ "CY_OTA_REASON_DISCONNECTED", "group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a9b4af7fcecb3d31fcbaa92dc8fa5408b", null ],
       [ "CY_OTA_REASON_OTA_VERIFIED", "group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ae919cc7159f1c868460453af1fee9e2b", null ],
       [ "CY_OTA_REASON_OTA_COMPLETED", "group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60af9344cf699c09b04acbe4c09836e164d", null ],
+      [ "CY_OTA_REASON_NO_UPDATE", "group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ab9120f1f81b2113c54ed66a09e7707b0", null ],
       [ "CY_OTA_LAST_REASON", "group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a6f1fe12d222a4fcb6aef59d045cc40af", null ]
     ] ],
     [ "cy_ota_agent_state_t", "group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f", [
@@ -54,6 +56,7 @@ var group__group__ota__typedefs =
     [ "cy_ota_error_t", "group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df", [
       [ "OTA_ERROR_CONNECTING", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfaf6737e125ad0b6f8fbe248b64b664d5c", null ],
       [ "OTA_ERROR_DOWNLOADING", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa1238ba099ef73d75b4563a034f46ea90", null ],
+      [ "OTA_ERROR_NO_UPDATE", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa44e9163f8ed70bf2579fef181af989e8", null ],
       [ "OTA_ERROR_WRITING_TO_FLASH", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa24c0839aa72df5bcb2d9a6eb08fb26f1", null ],
       [ "OTA_ERROR_VERIFY_FAILED", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa41ed567ef3dfb1fa77a5316faffd61c6", null ],
       [ "OTA_ERROR_INVALID_VERSION", "group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfa5548023db6fba41f2587efc206adc4c3", null ],

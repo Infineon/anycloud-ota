@@ -153,25 +153,15 @@ typedef enum {
 typedef struct cy_ota_mqtt_chunk_payload_header_s {
     const char      magic[sizeof(CY_OTA_MQTT_MAGIC) - 1];       /**< "OTAImage" @ref CY_OTA_MQTT_MAGIC                  */
     const uint16_t  offset_to_data;                             /**< offset within this payload to start of data        */
-#ifdef OTA_SIGNING_SUPPORT
-    const uint16_t   ota_image_type;                             /**< 0 = single application OTA Image  @ref cy_ota_mqtt_header_ota_type_t */
-    const uint16_t   update_version_major;                       /**< OTAImage Major version number                      */
-    const uint16_t   update_version_minor;                       /**< OTAImage minor version number                      */
-    const uint16_t   update_version_build;                       /**< OTAImage build version number                      */
-#else
-    const uint8_t   ota_image_type;                             /**< 0 = single application OTA Image  @ref cy_ota_mqtt_header_ota_type_t */
-    const uint8_t   update_version_major;                       /**< OTAImage Major version number                      */
-    const uint8_t   update_version_minor;                       /**< OTAImage minor version number                      */
-    const uint8_t   update_version_build;                       /**< OTAImage build version number                      */
-#endif
+    const uint16_t  ota_image_type;                             /**< 0 = single application OTA Image  @ref cy_ota_mqtt_header_ota_type_t */
+    const uint16_t  update_version_major;                       /**< OTAImage Major version number                      */
+    const uint16_t  update_version_minor;                       /**< OTAImage minor version number                      */
+    const uint16_t  update_version_build;                       /**< OTAImage build version number                      */
     const uint32_t  total_size;                                 /* total size of OTA Image (all chunk data concatenated)*/
     const uint32_t  image_offset;                               /* offset within the final OTA Image of THIS chunk data */
     const uint16_t  data_size;                                  /* Size of chunk data in THIS payload                   */
     const uint16_t  total_num_payloads;                         /* Total number of payloads                             */
     const uint16_t  this_payload_index;                         /* THIS payload index                                   */
-#ifdef OTA_SIGNING_SUPPORT
-    const char      signature_scheme[CY_OTA_MAX_SIGN_LENGTH];   /* eg: “sig-ecdsa-sha256” empty indicates not signed    */
-#endif
 } cy_ota_mqtt_chunk_payload_header_t;
 #pragma pack(pop)
 
@@ -348,7 +338,7 @@ cy_rslt_t cy_ota_parse_check_for_redirect(cy_ota_context_t *ctx, const uint8_t *
 //        ctx->new_server.pHostName = &redirect_url;
 //        ctx->new_server.port = new_port;
 //        ctx->redirect_to_http = true;
-//        TODO: What signal?
+//        Create a signal for telling cy_ota_agent main loop to redirect ?
     }
 
     return CY_RSLT_MODULE_OTA_NOT_A_REDIRECT;
@@ -389,6 +379,12 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
     IotLogDebug ("header->data_size          off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,data_size), header->data_size);
     IotLogDebug ("header->total_num_payloads off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,total_num_payloads), header->total_num_payloads);
     IotLogDebug ("header->this_payload_index off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,this_payload_index), header->this_payload_index);
+    /* debugging */
+    {
+        cy_thread_t thread;
+        cy_rtos_get_thread_handle(&thread);
+        IotLogInfo ("Rec'd %d of %d th:0x%lx\n", header->this_payload_index, header->total_num_payloads, thread);
+    }
 
     /* test for magic */
     if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0))
@@ -531,6 +527,7 @@ cy_rslt_t cy_ota_mqtt_free_queue_chunk(cy_ota_context_t *ctx, cy_ota_mqtt_chunk_
     }
 
     cy_rtos_get_mutex(&ctx->recv_mutex, CY_OTA_WAIT_MQTT_MUTEX_MS);
+
     /* clear out the queue_chunk so it can be re-used */
     memset(queue_chunk, 0x00, sizeof(cy_ota_mqtt_chunk_for_queue_t));
     cy_rtos_set_mutex(&ctx->recv_mutex);
@@ -581,11 +578,11 @@ cy_rslt_t cy_ota_mqtt_queue_data_to_write(cy_ota_context_t *ctx, cy_ota_storage_
     if (cy_rtos_put_queue(&ctx->recv_data_queue, (void *)&queue_chunk, CY_OTA_RECV_QUEUE_TIMEOUT_MS, 0) == CY_RSLT_SUCCESS)
     {
         size_t num_waiting;
+        cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_MQTT_GOT_DATA, 0);
         cy_rtos_count_queue(&ctx->recv_data_queue, &num_waiting);
-        IotLogInfo("Queued chunk %d of %d  queueDepth: %d of %d",
+        IotLogInfo("Queued %d of %d depth: %d of %d",
                      chunk_info->packet_number, chunk_info->total_packets,
                      (uint16_t)num_waiting, CY_OTA_RECV_QUEUE_LEN);
-        cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_MQTT_GOT_DATA, 0);
         return CY_RSLT_SUCCESS;
     }
 
@@ -637,6 +634,8 @@ static void _mqttSubscriptionCallback( void * param1,
 
     CY_OTA_CONTEXT_ASSERT(ctx);
     CY_ASSERT(pPublish != NULL);
+
+    cy_rtos_get_mutex(&ctx->sub_callback_mutex, CY_OTA_WAIT_MQTT_MUTEX_MS);
 
     info = &pPublish->u.message.info;
     pPayload = pPublish->u.message.info.pPayload;
@@ -695,6 +694,9 @@ static void _mqttSubscriptionCallback( void * param1,
     {
         IotLogWarn("%s() cy_ota_mqtt_queue_data_to_write() failed !\n", __func__);
     }
+
+    cy_rtos_set_mutex(&ctx->sub_callback_mutex);
+
 }
 
 /*-----------------------------------------------------------*/
@@ -1038,7 +1040,7 @@ cy_rslt_t cy_ota_mqtt_connect(cy_ota_context_t *ctx)
         return CY_RSLT_SUCCESS;
     }
 
-    IotLogInfo("MQTT Connection failed\n");
+    IotLogWarn("MQTT Connection failed\n");
     return CY_RSLT_MODULE_OTA_MQTT_INIT_ERROR;
 }
 
@@ -1066,13 +1068,19 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
 
     if (ctx->u.mqtt.connectionEstablished != true)
     {
-        IotLogDebug("%s() connection not established\n", __func__);
+        IotLogWarn("%s() connection not established\n", __func__);
         return CY_RSLT_MODULE_OTA_GET_ERROR;
     }
 
     if (cy_rtos_init_mutex(&ctx->recv_mutex) != CY_RSLT_SUCCESS)
     {
-        IotLogDebug("%s() Mutex init failed\n", __func__);
+        IotLogWarn("%s() recv_mutex init failed\n", __func__);
+        return CY_RSLT_MODULE_OTA_GET_ERROR;
+    }
+
+    if (cy_rtos_init_mutex(&ctx->sub_callback_mutex) != CY_RSLT_SUCCESS)
+    {
+        IotLogWarn("%s() sub_callback_mutex init failed\n", __func__);
         return CY_RSLT_MODULE_OTA_GET_ERROR;
     }
 
@@ -1085,7 +1093,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
                                    ctx );
     if (status != EXIT_SUCCESS)
     {
-        IotLogDebug("%s() _modifySubscriptions(0 failed\n", __func__);
+        IotLogWarn("%s() _modifySubscriptions(0 failed\n", __func__);
         return CY_RSLT_MODULE_OTA_GET_ERROR;
     }
 
@@ -1095,7 +1103,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
    if (result != CY_RSLT_SUCCESS)
    {
        /* Event create failed */
-       IotLogError( "%s() Timer Create Failed!\n", __func__);
+       IotLogWarn( "%s() Timer Create Failed!\n", __func__);
        return CY_RSLT_MODULE_OTA_GET_ERROR;
    }
 
@@ -1124,6 +1132,14 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
             break;
         }
 
+        if (waitfor & OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT)
+        {
+//            /* Pass along to Agent thread */
+//            cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT, 0);
+            result = CY_RSLT_MODULE_NO_UPDATE_AVAILABLE;
+            break;
+        }
+
         if (waitfor & OTA_EVENT_AGENT_STORAGE_ERROR)
         {
             result = CY_RSLT_MODULE_OTA_WRITE_STORAGE_ERROR;
@@ -1141,8 +1157,8 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
             cy_ota_mqtt_chunk_for_queue_t *queue_chunk;
 
             /* got some data - restart the download interval timer */
-            IotLogDebug("%s() RESTART DOWNLOAD TIMER %ld secs\n", __func__, ctx->download_timout_sec);
-            cy_ota_start_mqtt_timer(ctx, ctx->download_timout_sec, OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT);
+            IotLogDebug("%s() RESTART PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
+            cy_ota_start_mqtt_timer(ctx, ctx->packet_timeout_sec, OTA_EVENT_AGENT_PACKET_TIMEOUT);
 
             queue_chunk = NULL;
             result = cy_rtos_get_queue(&ctx->recv_data_queue, &queue_chunk, CY_OTA_RECV_QUEUE_TIMEOUT_MS, 0);
@@ -1175,7 +1191,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
                 if ( (queue_chunk->chunk_info.packet_number > 0) &&
                      (queue_chunk->chunk_info.packet_number != (ctx->last_packet_received + 1)) )
                 {
-                    IotLogWarn("Packets received out of order last:%d current:%d\n",
+                    IotLogWarn("OUT OF ORDER last:%d current:%d\n",
                                 ctx->last_packet_received, queue_chunk->chunk_info.packet_number);
                 }
 
@@ -1197,7 +1213,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
                 }
 
                 IotLogDebug("Written packet %d of %d to offset:%ld of %ld\n",
-                            (ctx->last_packet_received +1), ctx->total_packets, ctx->last_offset, ctx->total_image_size);
+                            ctx->last_packet_received, ctx->total_packets, ctx->last_offset, ctx->total_image_size);
                 if (ctx->total_bytes_written >= ctx->total_image_size)
                 {
                     IotLogInfo("Done writing all packets! %ld of %ld\n", (ctx->last_packet_received +1), ctx->total_packets);
@@ -1211,7 +1227,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
             }
         }
 
-        if (waitfor & OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT)
+        if (waitfor & OTA_EVENT_AGENT_PACKET_TIMEOUT)
         {
             IotLogWarn("Timeout waiting for a packet - fail\n");
             cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_MQTT_DATA_FAIL, 0);
@@ -1259,6 +1275,7 @@ cy_rslt_t cy_ota_mqtt_get(cy_ota_context_t *ctx)
 
     cy_rtos_deinit_timer(&ctx->u.mqtt.mqtt_timer);
 
+    cy_rtos_deinit_mutex(&ctx->sub_callback_mutex);
     cy_rtos_deinit_mutex(&ctx->recv_mutex);
 
     IotLogDebug("%s() MQTT DONE result: 0x%lx\n", __func__, result);

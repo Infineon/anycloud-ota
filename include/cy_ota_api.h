@@ -37,14 +37,16 @@
  *
  * Basic concept
  * =============
- *  MCUBoot runs current application in Primary Slot.
+ *  MCUBoot runs the current application in Primary Slot.
  *  A New application is downloaded and stored in the Secondary Slot.
- *  The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.
- *  Reboot system
- *  MCUBoot sees that there is a New Application in the Secondary Slot.
- *  MCUBoot copies over New Application from Secondary Slot to Primary Slot.
+ *  The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.\n
+ *  If validate_after_reboot == 0 then Secondary Slot will be tagged as "perm"\n
+ *  If validate_after_reboot == 1 then Secondary Slot will be tagged as "test"\n
+ *  If  reboot_upon_completion == 1, the system will reboot automatically.\n
+ *  On the next system reboot, MCUBoot sees that there is a New Application in the Secondary Slot.
+ *  MCUBoot then copies the New Application from Secondary Slot to Primary Slot.
  *  MCUBoot runs New Application in Primary Slot.
- *  New Application must validate itself and call cy_ota_validated() to complete the process.
+ *  If validate_after_reboot == 1 then the New Application must validate itself and call cy_ota_validated() to complete the process.
  *
  * API
  * ===
@@ -59,19 +61,26 @@
  *   timer\n
  *   events\n
  * The start function returns a context pointer that is used in subsequent calls.\n
- * This uses callbacks to signal application when events happen events.\n
- * `cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ctxt);`
+ * The OTA Agent uses callbacks to signal application when events happen events.\n
+ * `cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr);`
+ * \n
+ * These defines determine when the checks happen. Between checks, the OTA Agent is not checking for updates.\n
+ * CY_OTA_INITIAL_CHECK_SECS
+ * CY_OTA_NEXT_CHECK_INTERVAL_SECS
+ * CY_OTA_RETRY_INTERVAL_SECS
+ * CY_OTA_CHECK_TIME_SECS
+ *
  *
  * Stop OTA agent
  * --------------
  * When you want to stop the OTA agent from checking for updates.\n
- * `cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ota_ctxt);`
+ * `cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ota_ptr);`
  *
  * Trigger a check right now.
  * ----------------------------------------------
  * Use this when you want to trigger a check for an OTA update earlier than
  * is currently scheduled. The OTA agent must have been started already.\n
- * `cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt);`
+ * `cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);`
  *
  *
  * Set up cy_ota_config.h for application-specific over-riding defines
@@ -91,9 +100,15 @@
  * // This is used to re-start the timer after failing to contact the server during an OTA update check.
  * #define CY_OTA_RETRY_INTERVAL_SECS          (5)                 // seconds between retries after an error
  *
+ * // Length of time to check for downloads
+ * // OTA Agent wakes up, connects to server, and waits this much time before stopping checks.
+ * // This allows the OTA Agent to be inactive for long periods of time, only checking at the interval.
+ * // Use 0x00 to continue checking once started.
+ * #define CY_OTA_CHECK_TIME_SECS                (60)              // 1 minute
+ *
  * // Expected maximum download time between each OTA packet arrival.
  * // This is used check that the download occurs in a reasonable time frame.
- * #define CY_OTA_DOWNLOAD_INTERVAL_SECS       (60)                // 1 minute
+ * #define CY_OTA_PACKET_INTERVAL_SECS       (60)                // 1 minute
  *
  * // Number of retries when attempting OTA update
  * // This is used to determine # retries when attempting an OTA update.
@@ -296,20 +311,21 @@ extern "C" {
 #define CY_RSLT_MODULE_OTA_BADARG               (CY_RSLT_MODULE_OTA_BASE +  2) /**< Bad argument             */
 #define CY_RSLT_MODULE_OTA_UNSUPPORTED          (CY_RSLT_MODULE_OTA_BASE +  3) /**< Unsupported feature      */
 #define CY_RSLT_MODULE_OTA_ALREADY_STARTED      (CY_RSLT_MODULE_OTA_BASE +  4) /**< OTA Already started      */
-#define CY_RSLT_MODULE_OTA_MQTT_INIT_ERROR      (CY_RSLT_MODULE_OTA_BASE +  5) /**< MQTT init failed         */
-#define CY_RSLT_MODULE_OTA_TCP_INIT_ERROR       (CY_RSLT_MODULE_OTA_BASE +  6) /**< TCP init failed          */
-#define CY_RSLT_MODULE_OTA_CONNECT_ERROR        (CY_RSLT_MODULE_OTA_BASE +  7) /**< Server coinnect Failed   */
-#define CY_RSLT_MODULE_OTA_MQTT_DROPPED_CNCT    (CY_RSLT_MODULE_OTA_BASE +  8) /**< MQTT Broker no ping resp */
-#define CY_RSLT_MODULE_OTA_GET_ERROR            (CY_RSLT_MODULE_OTA_BASE +  9) /**< Failed to get OTA Image  */
-#define CY_RSLT_MODULE_OTA_NOT_A_REDIRECT       (CY_RSLT_MODULE_OTA_BASE + 10) /**< Not Supported Yet        */
-#define CY_RSLT_MODULE_OTA_NOT_A_HEADER         (CY_RSLT_MODULE_OTA_BASE + 11) /**< No header in payload     */
-#define CY_RSLT_MODULE_OTA_DISCONNECT_ERROR     (CY_RSLT_MODULE_OTA_BASE + 12) /**< Server disconnect error  */
-#define CY_RSLT_MODULE_OTA_OPEN_STORAGE_ERROR   (CY_RSLT_MODULE_OTA_BASE + 13) /**< Local storage open error */
-#define CY_RSLT_MODULE_OTA_WRITE_STORAGE_ERROR  (CY_RSLT_MODULE_OTA_BASE + 14) /**< Write to local storage error */
-#define CY_RSLT_MODULE_OTA_CLOSE_STORAGE_ERROR  (CY_RSLT_MODULE_OTA_BASE + 15) /**< Close local storage error    */
-#define CY_RSLT_MODULE_OTA_VERIFY_ERROR         (CY_RSLT_MODULE_OTA_BASE + 16) /**< Verify image failure     */
-#define CY_RSLT_MODULE_OTA_OUT_OF_MEMORY_ERROR  (CY_RSLT_MODULE_OTA_BASE + 17) /**< Out of Memory Error      */
-#define CY_RSLT_MODULE_OTA_INVALID_VERSION      (CY_RSLT_MODULE_OTA_BASE + 18) /**< Payload invalid version  */
+#define CY_RSLT_MODULE_NO_UPDATE_AVAILABLE      (CY_RSLT_MODULE_OTA_BASE +  5) /**< No OTA update on Server  */
+#define CY_RSLT_MODULE_OTA_MQTT_INIT_ERROR      (CY_RSLT_MODULE_OTA_BASE +  6) /**< MQTT init failed         */
+#define CY_RSLT_MODULE_OTA_TCP_INIT_ERROR       (CY_RSLT_MODULE_OTA_BASE +  7) /**< TCP init failed          */
+#define CY_RSLT_MODULE_OTA_CONNECT_ERROR        (CY_RSLT_MODULE_OTA_BASE +  8) /**< Server connect Failed    */
+#define CY_RSLT_MODULE_OTA_MQTT_DROPPED_CNCT    (CY_RSLT_MODULE_OTA_BASE +  9) /**< MQTT Broker no ping resp */
+#define CY_RSLT_MODULE_OTA_GET_ERROR            (CY_RSLT_MODULE_OTA_BASE + 10) /**< Failed to get OTA Image  */
+#define CY_RSLT_MODULE_OTA_NOT_A_REDIRECT       (CY_RSLT_MODULE_OTA_BASE + 11) /**< Not Supported Yet        */
+#define CY_RSLT_MODULE_OTA_NOT_A_HEADER         (CY_RSLT_MODULE_OTA_BASE + 12) /**< No header in payload     */
+#define CY_RSLT_MODULE_OTA_DISCONNECT_ERROR     (CY_RSLT_MODULE_OTA_BASE + 13) /**< Server disconnect error  */
+#define CY_RSLT_MODULE_OTA_OPEN_STORAGE_ERROR   (CY_RSLT_MODULE_OTA_BASE + 14) /**< Local storage open error */
+#define CY_RSLT_MODULE_OTA_WRITE_STORAGE_ERROR  (CY_RSLT_MODULE_OTA_BASE + 15) /**< Write to local storage error */
+#define CY_RSLT_MODULE_OTA_CLOSE_STORAGE_ERROR  (CY_RSLT_MODULE_OTA_BASE + 16) /**< Close local storage error    */
+#define CY_RSLT_MODULE_OTA_VERIFY_ERROR         (CY_RSLT_MODULE_OTA_BASE + 17) /**< Verify image failure     */
+#define CY_RSLT_MODULE_OTA_OUT_OF_MEMORY_ERROR  (CY_RSLT_MODULE_OTA_BASE + 18) /**< Out of Memory Error      */
+#define CY_RSLT_MODULE_OTA_INVALID_VERSION      (CY_RSLT_MODULE_OTA_BASE + 19) /**< Payload invalid version  */
 
  /** \} group_ota_macros */
 
@@ -334,9 +350,9 @@ extern "C" {
  *
  * This applies to:
  *  Initial wait after call to cy_ota_agent_start() before contacting server.
- *  Also used for checking wait value after failing or completing an OTA download.
+ *  Wait value after failing or completing an OTA download.
  */
-#define CY_OTA_INTERVAL_SECS_MAX        (60 * 60 * 24 * 31)     /* one month */
+#define CY_OTA_INTERVAL_SECS_MAX        (60 * 60 * 24 * 365)     /* one year */
 
 /*
  * Check for valid define values
@@ -355,6 +371,11 @@ extern "C" {
     #error  "CY_OTA_NEXT_CHECK_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
 #endif
 
+/* we don't check minimum as this number can be 0 */
+#if (CY_OTA_CHECK_TIME_SECS > CY_OTA_INTERVAL_SECS_MAX)
+    #error  "CY_OTA_CHECK_TIME_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
+#endif
+
 #if (CY_OTA_RETRY_INTERVAL_SECS < CY_OTA_INTERVAL_SECS_MIN)
     #error  "CY_OTA_RETRY_INTERVAL_SECS must be greater or equal to CY_OTA_INTERVAL_SECS_MIN."
 #endif
@@ -362,11 +383,11 @@ extern "C" {
     #error  "CY_OTA_RETRY_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
 #endif
 
-#if (CY_OTA_DOWNLOAD_INTERVAL_SECS < CY_OTA_INTERVAL_SECS_MIN)
-    #error  "CY_OTA_DOWNLOAD_INTERVAL_SECS must be greater or equal to CY_OTA_INTERVAL_SECS_MIN."
+#if (CY_OTA_PACKET_INTERVAL_SECS < CY_OTA_INTERVAL_SECS_MIN)
+    #error  "CY_OTA_PACKET_INTERVAL_SECS must be greater or equal to CY_OTA_INTERVAL_SECS_MIN."
 #endif
-#if (CY_OTA_DOWNLOAD_INTERVAL_SECS > CY_OTA_INTERVAL_SECS_MAX)
-    #error  "CY_OTA_DOWNLOAD_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
+#if (CY_OTA_PACKET_INTERVAL_SECS > CY_OTA_INTERVAL_SECS_MAX)
+    #error  "CY_OTA_PACKET_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
 #endif
 
 /***********************************************************************
@@ -407,6 +428,7 @@ typedef enum {
     CY_OTA_REASON_DISCONNECTED,                 /**< Agent disconnected from server */
     CY_OTA_REASON_OTA_VERIFIED,                 /**< OTA download verify succeeded  */
     CY_OTA_REASON_OTA_COMPLETED,                /**< OTA download completed         */
+    CY_OTA_REASON_NO_UPDATE,                    /**< OTA No update at this time     */
 
     CY_OTA_LAST_REASON                          /**< Do not use                     */
 } cy_ota_cb_reason_t;
@@ -436,6 +458,7 @@ typedef enum
     OTA_ERROR_NONE = 0,
     OTA_ERROR_CONNECTING,           /**< Error connecting to update server or Broker    */
     OTA_ERROR_DOWNLOADING,          /**< Error downloading update                       */
+    OTA_ERROR_NO_UPDATE,            /**< Error no update available                      */
     OTA_ERROR_WRITING_TO_FLASH,     /**< Error Writing to FLASH                         */
     OTA_ERROR_VERIFY_FAILED,        /**< Error Verify Step failed                       */
     OTA_ERROR_INVALID_VERSION,      /**< Error Invalid version                          */
@@ -577,12 +600,12 @@ typedef struct cy_ota_agent_params_s {
  *
  * @param[in]  network_params   pointer to Network parameter structure
  * @param[in]  agent_params     pointer to Agent timing parameter structure
- * @param[out] ota_ctxt         Handle to OTA Agent context structure pointer
+ * @param[out] ota_ptr          Handle to OTA Agent context structure pointer
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_MODULE_OTA_ERROR
  */
-cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ctxt);
+cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr);
 
 
 /**
@@ -590,7 +613,7 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
  *
  *  Stop thread to monitor OTA updates and release resources.
  *
- * @param[in] ota_ctxt         pointer to OTA Agent context storage returned from cy_ota_agent_start();
+ * @param[in] ota_ptr         pointer to OTA Agent context storage returned from cy_ota_agent_start();
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_MODULE_OTA_ERROR
@@ -600,7 +623,7 @@ cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ota_ptr);
 /**
  * @brief Check for OTA update availability and download update now.
  *
- * @param[in] ota_ctxt         pointer to OTA Agent context storage returned from cy_ota_agent_start();
+ * @param[in] ota_ptr         pointer to OTA Agent context storage returned from cy_ota_agent_start();
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_MODULE_OTA_ERROR

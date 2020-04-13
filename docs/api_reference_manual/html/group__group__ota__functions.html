@@ -112,9 +112,9 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga4d4fbdff6685c19d13ff185cbdb0b949"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949">cy_ota_agent_start</a> (<a class="el" href="structcy__ota__network__params__t.html">cy_ota_network_params_t</a> *network_params, <a class="el" href="structcy__ota__agent__params__t.html">cy_ota_agent_params_t</a> *agent_params, <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *ota_ctxt)</td></tr>
-<tr class="memdesc:ga4d4fbdff6685c19d13ff185cbdb0b949"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start OTA Background Agent.  <a href="#ga4d4fbdff6685c19d13ff185cbdb0b949">More...</a><br /></td></tr>
-<tr class="separator:ga4d4fbdff6685c19d13ff185cbdb0b949"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga84d744546862b858ddc65334be5b63c3"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start</a> (<a class="el" href="structcy__ota__network__params__t.html">cy_ota_network_params_t</a> *network_params, <a class="el" href="structcy__ota__agent__params__t.html">cy_ota_agent_params_t</a> *agent_params, <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *ota_ptr)</td></tr>
+<tr class="memdesc:ga84d744546862b858ddc65334be5b63c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start OTA Background Agent.  <a href="#ga84d744546862b858ddc65334be5b63c3">More...</a><br /></td></tr>
+<tr class="separator:ga84d744546862b858ddc65334be5b63c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga14b8129ff45b6af3bd71235676a220be"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be">cy_ota_agent_stop</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *ota_ptr)</td></tr>
 <tr class="memdesc:ga14b8129ff45b6af3bd71235676a220be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop OTA Background Agent.  <a href="#ga14b8129ff45b6af3bd71235676a220be">More...</a><br /></td></tr>
 <tr class="separator:ga14b8129ff45b6af3bd71235676a220be"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -165,7 +165,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="ga4d4fbdff6685c19d13ff185cbdb0b949"></a>
+<a class="anchor" id="ga84d744546862b858ddc65334be5b63c3"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -185,7 +185,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *&#160;</td>
-          <td class="paramname"><em>ota_ctxt</em>&#160;</td>
+          <td class="paramname"><em>ota_ptr</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -201,7 +201,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">network_params</td><td>pointer to Network parameter structure </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">agent_params</td><td>pointer to Agent timing parameter structure </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ctxt</td><td>Handle to OTA Agent context structure pointer</td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ptr</td><td>Handle to OTA Agent context structure pointer</td></tr>
   </table>
   </dd>
 </dl>
@@ -227,7 +227,7 @@ Functions</h2></td></tr>
 <p>Stop thread to monitor OTA updates and release resources.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ctxt</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
   </table>
   </dd>
 </dl>
@@ -252,7 +252,7 @@ Functions</h2></td></tr>
 <p>Check for OTA update availability and download update now. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ctxt</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
   </table>
   </dd>
 </dl>
@@ -307,7 +307,7 @@ Functions</h2></td></tr>
 <p>Get OTA Agent State. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context returned from <a class="el" href="group__group__ota__functions.html#ga4d4fbdff6685c19d13ff185cbdb0b949" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>; </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>; </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>Current OTA State</td></tr>
   </table>
   </dd>
