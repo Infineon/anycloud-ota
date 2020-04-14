@@ -138,7 +138,7 @@ Preparing MCUBootApp requires a few steps.
 ## Additional Information
 
 - [OTA RELEASE.md]()
-- [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/docs/index.html)
+- [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/api_reference_manual/html/index.html)
 - [ModusToolbox Software Environment, Quick Start Guide, Documentation, and Videos](https://www.cypress.com/products/modustoolbox-software-environment)
 
 
