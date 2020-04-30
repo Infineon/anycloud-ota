@@ -3,6 +3,8 @@ var searchData=
   ['cy_5fota_5flast_5ferror',['CY_OTA_LAST_ERROR',['../group__group__ota__typedefs.html#gga4ee62ce2e7209c650cd20166490956dfae98a5c5260db049210daaea046950690',1,'cy_ota_api.h']]],
   ['cy_5fota_5flast_5freason',['CY_OTA_LAST_REASON',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a6f1fe12d222a4fcb6aef59d045cc40af',1,'cy_ota_api.h']]],
   ['cy_5fota_5flast_5fstate',['CY_OTA_LAST_STATE',['../group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa2f46829c6ff9798d1afa8b69173ffd4e',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fmqtt_5fsession_5fclean',['CY_OTA_MQTT_SESSION_CLEAN',['../group__group__ota__typedefs.html#gga6424608a6e19ecd99e52f4013354fa82a63a3e6f75f26a0026b89674544f8c162',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fmqtt_5fsession_5frestart',['CY_OTA_MQTT_SESSION_RESTART',['../group__group__ota__typedefs.html#gga6424608a6e19ecd99e52f4013354fa82a4c63654c806aac390a44fa5708f9838a',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fagent_5fstarted',['CY_OTA_REASON_AGENT_STARTED',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a60698bfdf2dc5820b7d1f30c33888f40',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fconencted_5fto_5fserver',['CY_OTA_REASON_CONENCTED_TO_SERVER',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ace8e36912ffe8502cd3bc1b47405dd23',1,'cy_ota_api.h']]],
   ['cy_5fota_5freason_5fconnecting',['CY_OTA_REASON_CONNECTING',['../group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a71a1336b87e0c668b3601da7e1e6f0c3',1,'cy_ota_api.h']]],

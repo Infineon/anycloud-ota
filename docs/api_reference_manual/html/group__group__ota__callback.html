@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: Cypress Over The Air (OTA) API</title>
+<title>Cypress Over The Air: OTA Agent Callback</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -77,7 +77,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('group__group__cy__ota.html','');});
+$(document).ready(function(){initNavTree('group__group__ota__callback.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -96,30 +96,45 @@ $(document).ready(function(){initNavTree('group__group__cy__ota.html','');});
 
 <div class="header">
   <div class="summary">
-<a href="#groups">API Reference</a>  </div>
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle">
-<div class="title">Cypress Over The Air (OTA) API</div>  </div>
+<div class="title">OTA Agent Callback<div class="ingroups"><a class="el" href="group__group__cy__ota.html">Cypress Over The Air (OTA) API</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">General Description</h2>
-<p>OTA support for downloading and installing firmware updates. </p>
+<p>OTA Agent callback function. </p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="groups"></a>
-API Reference</h2></td></tr>
-<tr class="memitem:group__group__ota__callback"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__callback.html">OTA Agent Callback</a></td></tr>
-<tr class="memdesc:group__group__ota__callback"><td class="mdescLeft">&#160;</td><td class="mdescRight">OTA Agent callback function. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__group__ota__functions"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html">OTA Functions</a></td></tr>
-<tr class="memdesc:group__group__ota__functions"><td class="mdescLeft">&#160;</td><td class="mdescRight">OTA functions for starting, stopping, and getting information about the OTA Agent. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__group__ota__structures"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></td></tr>
-<tr class="memdesc:group__group__ota__structures"><td class="mdescLeft">&#160;</td><td class="mdescRight">Structures used for Network connection and OTA Agent behavior. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__group__ota__macros"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__macros.html">OTA Macros</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:group__group__ota__typedefs"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html">OTA Typedefs</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__callback.html#ga8286ce2144f78d501ca224b1f4c8df4f">cy_ota_callback_t</a> )(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td></tr>
+<tr class="memdesc:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application informational callback from OTA Agent.  <a href="#ga8286ce2144f78d501ca224b1f4c8df4f">More...</a><br /></td></tr>
+<tr class="separator:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Typedef Documentation</h2>
+<a class="anchor" id="ga8286ce2144f78d501ca224b1f4c8df4f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void(* cy_ota_callback_t)(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Application informational callback from OTA Agent. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">reason</td><td>- Callback reason <a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>- When callback reason is CY_OTA_REASON_DOWNLOAD_PERCENT<br />
+ The value is the percentage of the download completed </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">cb_arg</td><td>- user supplied data ptr</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>- N/A </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

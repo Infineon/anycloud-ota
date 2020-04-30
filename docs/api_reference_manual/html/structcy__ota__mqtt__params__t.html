@@ -85,7 +85,7 @@ $(document).ready(function(){initNavTree('structcy__ota__mqtt__params__t.html','
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Groups</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Groups</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -98,7 +98,7 @@ $(document).ready(function(){initNavTree('structcy__ota__mqtt__params__t.html','
   <div class="summary">
 <a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">cy_ota_mqtt_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">Structures</a></div></div>  </div>
+<div class="title">cy_ota_mqtt_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -106,7 +106,7 @@ $(document).ready(function(){initNavTree('structcy__ota__mqtt__params__t.html','
 Data Fields</h2></td></tr>
 <tr class="memitem:a426a5dcd872c5e7aa8f1e5b5a812dc41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a426a5dcd872c5e7aa8f1e5b5a812dc41"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#a426a5dcd872c5e7aa8f1e5b5a812dc41">awsIotMqttMode</a></td></tr>
-<tr class="memdesc:a426a5dcd872c5e7aa8f1e5b5a812dc41"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 = AFR AWS mode <br /></td></tr>
+<tr class="memdesc:a426a5dcd872c5e7aa8f1e5b5a812dc41"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = normal MQTT, 1 = Special Amazon mode <br /></td></tr>
 <tr class="separator:a426a5dcd872c5e7aa8f1e5b5a812dc41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad34d95200fc95de6118ec4e3d699afd6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad34d95200fc95de6118ec4e3d699afd6"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#ad34d95200fc95de6118ec4e3d699afd6">pIdentifier</a></td></tr>
@@ -120,6 +120,14 @@ uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="s
 const char **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#a7bb69c553cb9c13d8f32b3cb196ad0f9">pTopicFilters</a></td></tr>
 <tr class="memdesc:a7bb69c553cb9c13d8f32b3cb196ad0f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Topic Filter text. <br /></td></tr>
 <tr class="separator:a7bb69c553cb9c13d8f32b3cb196ad0f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c08bc782786d64fcf57aa94e3d446cd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8c08bc782786d64fcf57aa94e3d446cd"></a>
+<a class="el" href="group__group__ota__typedefs.html#ga6424608a6e19ecd99e52f4013354fa82">cy_ota_mqtt_session_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#a8c08bc782786d64fcf57aa94e3d446cd">session_type</a></td></tr>
+<tr class="memdesc:a8c08bc782786d64fcf57aa94e3d446cd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="group__group__ota__typedefs.html#ga6424608a6e19ecd99e52f4013354fa82">cy_ota_mqtt_session_type_t</a> <br /></td></tr>
+<tr class="separator:a8c08bc782786d64fcf57aa94e3d446cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa491d7cc6cc845ffc73e4c60df3efc5b"></a>
+IotMqttConnection_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#aa491d7cc6cc845ffc73e4c60df3efc5b">app_mqtt_connection</a></td></tr>
+<tr class="memdesc:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application MQTT connection information. <br /></td></tr>
+<tr class="separator:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

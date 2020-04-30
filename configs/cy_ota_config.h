@@ -58,14 +58,14 @@ extern "C" {
  * This allows the OTA Agent to be inactive for long periods of time, only checking for short periods.
  * Use 0x00 to continue checking once started.
  */
-#define CY_OTA_CHECK_TIME_SECS                (60 * 10)         /* 10 minutes */
+#define CY_OTA_CHECK_TIME_SECS              (60 * 10)           /* 10 minutes */
 
 /**
  * @brief Expected maximum download time between each OTA packet arrival
  *
  * This is used check that the download occurs in a reasonable time frame.
  */
-#define CY_OTA_PACKET_INTERVAL_SECS       (60)                  /* 1 minute */
+#define CY_OTA_PACKET_INTERVAL_SECS         (60)                /* 1 minute */
 
 
 /**
@@ -91,12 +91,12 @@ extern "C" {
  *
  * An MQTT ping request will be sent periodically at this interval.
  */
-#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS           ( 60 )     /* 60 second keep-alive */
+#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS      (60)                /* 60 second keep-alive */
 
 /**
  * @brief The timeout for MQTT operations.
  */
-#define CY_OTA_MQTT_TIMEOUT_MS                    ( 5000 )  /* 5 second timeout waiting for MQTT response */
+#define CY_OTA_MQTT_TIMEOUT_MS              (5000)              /* 5 second timeout waiting for MQTT response */
 
 
 #ifdef __cplusplus

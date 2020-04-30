@@ -54,7 +54,7 @@ const char *cy_ota_reason_strings[CY_OTA_LAST_REASON] = {
     "OTA EXCEEDED RETRIES",
     "OTA SERVER CONNECT FAILED",
     "OTA DOWNLOAD FAILED",
-    "OTA SERVER KEEPALIVE PING FAILED",
+    "OTA SERVER DROPPED CONNECTION",
     "OTA_FLASH WRITE_FAILED",
     "OTA VERIFY FAILED",
     "OTA INVALID VERSION",
@@ -85,7 +85,7 @@ const char *cy_ota_state_strings[CY_OTA_LAST_STATE] = {
 const char *cy_ota_error_strings[CY_OTA_LAST_ERROR] = {
     "OTA NO ERRORS",
     "OTA ERROR CONNECTING TO SERVER",
-    "OTA ERROR DOWNLOADING OTA IIMAGE",
+    "OTA ERROR DOWNLOADING OTA IMAGE",
     "OTA ERROR NO UPDATE AVAILABLE",
     "OTA ERROR WRITING TO FLASH",
     "OTA ERROR OTA IMAGE VERIFICATION FAILURE",
@@ -164,6 +164,7 @@ cy_rslt_t cy_ota_stop_timer(cy_ota_context_t *ctx)
     CY_OTA_CONTEXT_ASSERT(ctx);
     return cy_rtos_stop_timer(&ctx->ota_timer);
 }
+
 cy_rslt_t cy_ota_start_timer(cy_ota_context_t *ctx, uint32_t secs, ota_events_t event)
 {
     cy_rslt_t result;
@@ -204,6 +205,26 @@ cy_rslt_t cy_ota_redirect(cy_ota_context_t *ctx)
 }
 
 /* --------------------------------------------------------------- */
+cy_rslt_t cy_ota_clear_received_stats(cy_ota_context_t *ctx)
+{
+    /* sanity check */
+    if (ctx == NULL)
+    {
+        IotLogError("%s() BAD ARG\n", __func__);
+        return CY_RSLT_MODULE_OTA_BADARG;
+    }
+    CY_OTA_CONTEXT_ASSERT(ctx);
+
+    ctx->last_offset = 0;
+    ctx->last_packet_received = 0;
+    ctx->last_size = 0;
+    ctx->total_bytes_written = 0;
+    ctx->total_image_size = 0;
+    ctx->total_packets = 0;
+
+    return CY_RSLT_SUCCESS;
+}
+/* --------------------------------------------------------------- */
 
 cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)
 {
@@ -217,6 +238,16 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)
     }
     CY_OTA_CONTEXT_ASSERT(ctx);
 
+    if (ctx->curr_state < CY_OTA_STATE_AGENT_WAITING )
+    {
+        return CY_RSLT_MODULE_OTA_ERROR;
+    }
+
+    if (ctx->curr_state > CY_OTA_STATE_AGENT_WAITING )
+    {
+        return CY_RSLT_MODULE_OTA_ALREADY_STARTED;
+    }
+
     cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_START_UPDATE, 0);
 
     return CY_RSLT_SUCCESS;
@@ -229,13 +260,10 @@ static void cy_ota_agent( cy_thread_arg_t arg )
     cy_ota_context_t *ctx = (cy_ota_context_t *)arg;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    IotLogInfo("%s() Entered OTA Agent Thread \n", __func__);
+    IotLogDebug("%s() Entered OTA Agent Thread \n", __func__);
 
     /* let cy_ota_agent_start() know we are alive */
     cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_RUNNING, 0);
-
-    /* open before we start - this takes ~17 secs, we don't want to interfere with anything */
-    cy_ota_storage_open(ctx);
 
     /* waiting for an event */
     last_error = OTA_ERROR_NONE;
@@ -249,7 +277,7 @@ static void cy_ota_agent( cy_thread_arg_t arg )
         /* get event */
         waitfor = OTA_EVENT_AGENT_THREAD_EVENTS;
         result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor, 1, 0, CY_OTA_WAIT_FOR_EVENTS_MS);
-        IotLogInfo("%s() MQTT cy_rtos_waitbits_event: 0x%lx type:%d mod:0x%lx code:%d\n", __func__, waitfor,
+        IotLogDebug("%s() MQTT cy_rtos_waitbits_event: 0x%lx type:%d mod:0x%lx code:%d\n", __func__, waitfor,
                     CY_RSLT_GET_TYPE(result), CY_RSLT_GET_MODULE(result), CY_RSLT_GET_CODE(result) );
 
         /* We only want to act on events we are waiting on.
@@ -264,7 +292,7 @@ static void cy_ota_agent( cy_thread_arg_t arg )
         if (waitfor & OTA_EVENT_AGENT_SHUTDOWN_NOW)
         {
             cy_ota_stop_timer(ctx);
-            IotLogInfo("%s() SHUTDOWN NOW \n", __func__);
+            IotLogDebug("%s() SHUTDOWN NOW \n", __func__);
             break;
         }
 
@@ -320,6 +348,9 @@ static void cy_ota_agent( cy_thread_arg_t arg )
             ctx->contact_server_retry_count = 0;
             ctx->download_retry_count = 0;
 
+            /* open before we connect - this takes ~17 secs, we don't want to interfere with anything */
+            cy_ota_storage_open(ctx);
+
             IotLogDebug("%s() send event OTA_EVENT_AGENT_CONNECT\n", __func__);
             /* tell ourselves to start the process by connecting to the server */
             cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_CONNECT, 0);
@@ -327,6 +358,9 @@ static void cy_ota_agent( cy_thread_arg_t arg )
         }
         if (waitfor & OTA_EVENT_AGENT_CONNECT)
         {
+            /* clear lst error  */
+            last_error = OTA_ERROR_NONE;
+
             cy_ota_set_state(ctx, CY_OTA_STATE_CONNECTING);
             cy_ota_internal_call_cb(ctx, CY_OTA_REASON_CONNECTING, 0);
 
@@ -397,7 +431,7 @@ static void cy_ota_agent( cy_thread_arg_t arg )
                 /* Use CY_OTA_CHECK_TIME_SECS to set timer for when we stop checking */
                 if (ctx->check_timeout_sec > 0)
                 {
-                    IotLogInfo("%s() START DOWNLOAD CHECK TIMER %ld secs\n", __func__, ctx->check_timeout_sec);
+                    IotLogDebug("%s() START DOWNLOAD CHECK TIMER %ld secs\n", __func__, ctx->check_timeout_sec);
                     cy_ota_start_timer(ctx, ctx->check_timeout_sec, OTA_EVENT_AGENT_DOWNLOAD_TIMEOUT);
                 }
             }
@@ -406,8 +440,15 @@ static void cy_ota_agent( cy_thread_arg_t arg )
 
         if (waitfor & OTA_EVENT_AGENT_DOWNLOAD)
         {
+            /* clear last error */
+            last_error = OTA_ERROR_NONE;
+
             cy_ota_set_state(ctx, CY_OTA_STATE_DOWNLOADING);
             cy_ota_internal_call_cb(ctx, CY_OTA_REASON_DOWNLOAD_STARTED, 0);
+
+            /* clear received / written info before we start */
+            cy_ota_clear_received_stats(ctx);
+
             if (ctx->curr_transport == CY_OTA_TRANSPORT_MQTT)
             {
                 result = cy_ota_mqtt_get(ctx);
@@ -418,6 +459,10 @@ static void cy_ota_agent( cy_thread_arg_t arg )
                 result = cy_ota_http_get(ctx);
             }
 #endif
+
+            /* close storage doesn't matter if we succeeded or failed */
+            cy_ota_storage_close(ctx);
+
             if (result != CY_RSLT_SUCCESS)
             {
                 /* set error info */
@@ -454,9 +499,22 @@ static void cy_ota_agent( cy_thread_arg_t arg )
                     /* set error info */
                     last_error = OTA_ERROR_SERVER_DROPPED;
 
-                    cy_ota_set_state(ctx, CY_OTA_STATE_DISCONNECTING);
-                    cy_ota_internal_call_cb(ctx, CY_OTA_REASON_SERVER_DROPPED_US, 0);
-                    cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_DISCONNECT, 0);
+                    if ( ctx->network_params.u.mqtt.app_mqtt_connection != NULL)
+                    {
+                        /* The app provided an MQTT connection, exit
+                         * the OTA Agent thread.
+                         */
+                        cy_ota_internal_call_cb(ctx, CY_OTA_REASON_SERVER_DROPPED_US, 0);
+                        IotLogWarn("%s() Exiting OTA Agent - App created MQTT Connection and we got disconnected.\n", __func__);
+                        break;
+                    }
+                    else
+                    {
+                        /* If OTA Agent made the MQTT connection, re-try */
+                        cy_ota_set_state(ctx, CY_OTA_STATE_AGENT_WAITING);
+                        cy_ota_internal_call_cb(ctx, CY_OTA_REASON_SERVER_DROPPED_US, 0);
+                        cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_CONNECT, 0 );
+                    }
                 }
                 else if (result == CY_RSLT_MODULE_NO_UPDATE_AVAILABLE)
                 {
@@ -467,6 +525,9 @@ static void cy_ota_agent( cy_thread_arg_t arg )
                 {
                     if (++ctx->download_retry_count < CY_OTA_MAX_DOWNLOAD_TRIES)
                     {
+                        /* open again before retrying the download */
+                        cy_ota_storage_open(ctx);
+
                         /* retry */
                         cy_ota_set_state(ctx, CY_OTA_STATE_DOWNLOADING);
                         cy_ota_internal_call_cb(ctx, CY_OTA_REASON_DOWNLOAD_FAILED, 0);
@@ -592,10 +653,7 @@ static void cy_ota_agent( cy_thread_arg_t arg )
 
     cy_ota_stop_timer(ctx);
 
-    /* close after get completed or failed */
-    cy_ota_storage_close(ctx);
-
-    IotLogInfo("%s() OTA_EVENT_AGENT_EXITING\n", __func__);
+    IotLogDebug("%s() OTA_EVENT_AGENT_EXITING\n", __func__);
     /* let mainline know we are exiting */
     cy_rtos_setbits_event(&ctx->ota_event, OTA_EVENT_AGENT_EXITING, 0);
 

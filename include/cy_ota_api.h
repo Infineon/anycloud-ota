@@ -26,257 +26,16 @@
  * \{
  * OTA support for downloading and installing firmware updates.
  *
- * \defgroup group_ota_functions Functions
- * \defgroup group_ota_structures Structures
- * \defgroup group_ota_macros Macros
- * \defgroup group_ota_typedefs Typedefs
+ * \defgroup group_ota_callback OTA Agent Callback
+ * \defgroup group_ota_functions OTA Functions
+ * \defgroup group_ota_structures OTA Structures
+ * \defgroup group_ota_macros OTA Macros
+ * \defgroup group_ota_typedefs OTA Typedefs
  */
 
 /**
- *  \mainpage
- *
- * Basic concept
- * =============
- *  MCUBoot runs the current application in Primary Slot.
- *  A New application is downloaded and stored in the Secondary Slot.
- *  The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.\n
- *  If validate_after_reboot == 0 then Secondary Slot will be tagged as "perm"\n
- *  If validate_after_reboot == 1 then Secondary Slot will be tagged as "test"\n
- *  If  reboot_upon_completion == 1, the system will reboot automatically.\n
- *  On the next system reboot, MCUBoot sees that there is a New Application in the Secondary Slot.
- *  MCUBoot then copies the New Application from Secondary Slot to Primary Slot.
- *  MCUBoot runs New Application in Primary Slot.
- *  If validate_after_reboot == 1 then the New Application must validate itself and call cy_ota_validated() to complete the process.
- *
- * API
- * ===
- *
- * Start background agent to check for updates
- * -------------------------------------------
- * This is a non-blocking call.\n
- * This consumes resources while running.\n
- *   Thread\n
- *   RAM\n
- *   socket\n
- *   timer\n
- *   events\n
- * The start function returns a context pointer that is used in subsequent calls.\n
- * The OTA Agent uses callbacks to signal application when events happen events.\n
- * `cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr);`
- * \n
- * These defines determine when the checks happen. Between checks, the OTA Agent is not checking for updates.\n
- * CY_OTA_INITIAL_CHECK_SECS
- * CY_OTA_NEXT_CHECK_INTERVAL_SECS
- * CY_OTA_RETRY_INTERVAL_SECS
- * CY_OTA_CHECK_TIME_SECS
  *
  *
- * Stop OTA agent
- * --------------
- * When you want to stop the OTA agent from checking for updates.\n
- * `cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ota_ptr);`
- *
- * Trigger a check right now.
- * ----------------------------------------------
- * Use this when you want to trigger a check for an OTA update earlier than
- * is currently scheduled. The OTA agent must have been started already.\n
- * `cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);`
- *
- *
- * Set up cy_ota_config.h for application-specific over-riding defines
- * ===================================================================
- * You must create a file called <b>"cy_ota_config.h"</b> to contain over-riding defines for:
- *
- * \code
- * // Initial time for checking for OTA updates
- * // This is used to start the timer for the initial OTA update check after calling cy_ota_agent_start().
- * #define CY_OTA_INITIAL_CHECK_SECS           (10)                // 10 seconds
- *
- * // Next time for checking for OTA updates
- * // This is used to re-start the timer after an OTA update check in the OTA Agent.
- * #define CY_OTA_NEXT_CHECK_INTERVAL_SECS     (24 * 60 * 60)      // one day between checks
- *
- * // Retry time which checking for OTA updates
- * // This is used to re-start the timer after failing to contact the server during an OTA update check.
- * #define CY_OTA_RETRY_INTERVAL_SECS          (5)                 // seconds between retries after an error
- *
- * // Length of time to check for downloads
- * // OTA Agent wakes up, connects to server, and waits this much time before stopping checks.
- * // This allows the OTA Agent to be inactive for long periods of time, only checking at the interval.
- * // Use 0x00 to continue checking once started.
- * #define CY_OTA_CHECK_TIME_SECS                (60)              // 1 minute
- *
- * // Expected maximum download time between each OTA packet arrival.
- * // This is used check that the download occurs in a reasonable time frame.
- * #define CY_OTA_PACKET_INTERVAL_SECS       (60)                // 1 minute
- *
- * // Number of retries when attempting OTA update
- * // This is used to determine # retries when attempting an OTA update.
- * #define CY_OTA_RETRIES                       (5)                // retry entire process 5 times
- *
- * // Number of retries when attempting to contact the server
- * // This is used to determine # retries when connecting to the server during an OTA update check.
- * #define CY_OTA_CONNECT_RETRIES              (3)                 // 3 server connect retries
- *
- * // The number of MQTT Topics to subscribe to
- * #define CY_OTA_MQTT_MAX_TOPICS               (2)                 // 2 topics
- *
- * // The keep-alive interval for MQTT
- * // An MQTT ping request will be sent periodically at this interval.
- * #define CY_OTA_MQTT_KEEP_ALIVE_SECONDS           ( 60 )         // 60 second keep-alive
- *
- * // The timeout for MQTT operations.
- * #define CY_OTA_MQTT_TIMEOUT_MS                   ( 5000 )       // 5 second timeout waiting for MQTT response
- *
- * // This queue allows us to always access FLASH from the same thread, and release
- * // the MQTT packet as soon as possible.
- * // This is the number of queue elements in the queue.
- * // Total queue size is a bit more than (CY_OTA_RECV_QUEUE_LEN * CY_OTA_MQTT_BUFFER_SIZE_MAX)
- * // Increasing the buffer size allows more data to be transferred per packet, but also consumes RAM.
- * #define CY_OTA_RECV_QUEUE_LEN                   (4)
- *
- * // Max OTA payload data size (not MQTT payload size)
- * #define CY_OTA_MQTT_BUFFER_SIZE_MAX             (8 * 1024)
- * \endcode
- *
- * Example of call sequence to start OTA agent
- * ===========================================
- * \code
- *
- * #define OTA_SERVER_URL                      "test.mosquitto.org";
- *
- * #define OTA_MQTT_SERVER_PORT                (1883)
- * #define OTA_MQTT_SECURE_SERVER_PORT         (8883)
- *
- * // MQTT identifier
- * #define OTA_MQTT_ID                         "CY8CP_062_4343W"
- *
- * // MQTT topics
- * const char * my_topics[ CY_OTA_MQTT_MAX_TOPICS ] =
- * {
- *        "anycloud/ota/image"
- * };
- *
- * // MQTT Credentials for OTA
- * struct IotNetworkCredentials    credentials = { 0 };
- *
- * // network parameters for OTA
- * cy_ota_network_params_t     ota_test_network_params = { 0 };
- *
- * //brief aAgent parameters for OTA
- * cy_ota_agent_params_t     ota_test_agent_params = { 0 };
- *
- * //forward declaration for OTA callback function
- * static void ota_callback(cy_ota_cb_reason_t reason, uint32_t value, void *cb_arg );
- *
- * //OTA context
- * cy_ota_context_ptr ota_context;
- *
- * // OTA callback function
- * static void ota_callback(cy_ota_cb_reason_t reason, uint32_t value, void *cb_arg )
- * {
- *    cy_ota_agent_state_t ota_state;
- *    cy_ota_context_ptr ctx = *((cy_ota_context_ptr *)cb_arg);
- *    cy_ota_get_state(ctx, &ota_state);
- *    printf("Application OTA callback ctx:%p reason:%d %s value:%ld state:%d %s", ctx,
- *            reason, cy_ota_get_callback_reason_string(reason), value,
- *            ota_state, cy_ota_get_state_string(ota_state) );
- * }
- *
- *  main ()
- * {
- *    // Initialize the Wifi and connect to an AP here
- *    // Do what is appropriate for your board
- *
- *    // Initialize underlying support code that is needed for OTA and MQTT
- *    if (IotSdk_Init() != 1)
- *    {
- *        printf("IotSdk_Init Failed.");
- *        while(true)
- *        {
- *            cy_rtos_delay_milliseconds(10);
- *        }
- *    }
- *
- *    // Call the Network Secured Sockets initialization function.
- *    IotNetworkError_t networkInitStatus = IOT_NETWORK_SUCCESS;
- *    networkInitStatus = IotNetworkSecureSockets_Init();
- *    if( networkInitStatus != IOT_NETWORK_SUCCESS )
- *    {
- *        printf("IotNetworkSecureSockets_Init Failed.");
- *        while(true)
- *        {
- *            cy_rtos_delay_milliseconds(10);
- *        }
- *    }
- *
- *    // Initialize the MQTT subsystem
- *    if( IotMqtt_Init() != IOT_MQTT_SUCCESS )
- *    {
- *        printf("IotMqtt_Init Failed.");
- *        while(true)
- *        {
- *            cy_rtos_delay_milliseconds(10);
- *        }
- *    }
- *
- *    // Prepare structures for initializing OTA Agent
- *    ota_test_network_params.server.pHostName = OTA_SERVER_URL;    // URL must not be a local variable
- *    ota_test_network_params.server.port = OTA_MQTT_SERVER_PORT;
- *    // For MQTT
- *    ota_test_network_params.transport = CY_OTA_TRANSPORT_MQTT;
- *    ota_test_network_params.u.mqtt.numTopicFilters = 1;
- *    ota_test_network_params.u.mqtt.pTopicFilters = my_topics;
- *    ota_test_network_params.u.mqtt.pIdentifier = OTA_MQTT_ID;
- *    ota_test_network_params.network_interface = (void *)IOT_NETWORK_INTERFACE_CY_SECURE_SOCKETS;
- *
- *    - Set up the credentials information
- * #if (OTA_MQTT_USE_TLS == 1)
- *    credentials.pAlpnProtos = NULL;
- *    credentials.maxFragmentLength = 0;
- *    credentials.disableSni = 0;
- *    credentials.pRootCa = (const char *) \&root_ca_certificate;
- *    credentials.rootCaSize = sizeof(root_ca_certificate) - 1;
- *    credentials.pClientCert = (const char *) \&client_cert;
- *    credentials.clientCertSize = sizeof(client_cert) - 1;
- *    credentials.pPrivateKey = (const char *) \&client_key;
- *    credentials.privateKeySize = sizeof(client_key) - 1;
- *    credentials.pUserName = "Test";
- *    credentials.userNameSize = strlen("Test");
- *    credentials.pPassword = "";
- *    credentials.passwordSize = 0;
- *    ota_test_network_params.credentials = \&credentials;
- *    ota_test_network_params.server.port = OTA_MQTT_SECURE_SERVER_PORT;
- * #else
- *    ota_test_network_params.credentials = NULL;
- *    ota_test_network_params.server.port = OTA_MQTT_SERVER_PORT;
- * #endif
- *    ota_test_network_params.u.mqtt.awsIotMqttMode = 0;
- *
- *    // OTA Agent parameters
- *    ota_test_agent_params.validate_after_reboot = 0;
- *    ota_test_agent_params.reboot_upon_completion = 1;
- *    ota_test_agent_params.cb_func = ota_callback;
- *    ota_test_agent_params.cb_arg = \&ota_context;
- *
- *    result = cy_ota_agent_start(\&ota_test_network_params, \&ota_test_agent_params, \&ota_context);
- *    if (result != CY_RSLT_SUCCESS)
- *    {
- *        printf("cy_ota_agent_start() Failed - result: 0x%lx", result);
- *        while(true)
- *        {
- *            cy_rtos_delay_milliseconds(10);
- *        }
- *    }
- *
- *   // OTA Agent is running in another thread
- *   // The rest of the code can run here
- *    while(true)
- *    {
- *        cy_rtos_delay_milliseconds(10);
- *    }
- * }
- * \endcode
  **********************************************************************/
 
 #ifndef CY_OTA_API_H__
@@ -295,6 +54,8 @@ extern "C" {
 #include "cybsp_wifi.h"
 
 #include "iot_network.h"
+
+#include "iot_mqtt_types.h"
 
  /**
   * \addtogroup group_ota_macros
@@ -383,9 +144,6 @@ extern "C" {
     #error  "CY_OTA_RETRY_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
 #endif
 
-#if (CY_OTA_PACKET_INTERVAL_SECS < CY_OTA_INTERVAL_SECS_MIN)
-    #error  "CY_OTA_PACKET_INTERVAL_SECS must be greater or equal to CY_OTA_INTERVAL_SECS_MIN."
-#endif
 #if (CY_OTA_PACKET_INTERVAL_SECS > CY_OTA_INTERVAL_SECS_MAX)
     #error  "CY_OTA_PACKET_INTERVAL_SECS must be less than CY_OTA_INTERVAL_SECS_MAX."
 #endif
@@ -407,6 +165,17 @@ typedef enum {
 } cy_ota_transport_t;
 
 /**
+ * @brief MQTT Session clean flag
+ *
+ * This flag signals the MQTT broker to start a new session or restart an existing session
+ */
+typedef enum {
+    CY_OTA_MQTT_SESSION_CLEAN = 0,  /**< Start a clean MQTT session with the broker         */
+    CY_OTA_MQTT_SESSION_RESTART     /**< Restart an existing MQTT session with the broker   */
+} cy_ota_mqtt_session_type_t;
+
+
+/**
  * @brief OTA callback reasons
  */
 typedef enum {
@@ -415,7 +184,10 @@ typedef enum {
     CY_OTA_REASON_EXCEEDED_RETRIES,             /**< Connection failed > retries    */
     CY_OTA_REASON_SERVER_CONNECT_FAILED,        /**< Server connection failed       */
     CY_OTA_REASON_DOWNLOAD_FAILED,              /**< OTA Download failed            */
-    CY_OTA_REASON_SERVER_DROPPED_US,            /**< Broker did not respond to ping */
+    CY_OTA_REASON_SERVER_DROPPED_US,            /**< Broker did not respond to ping *
+                                                 *   or disconnected. If App        *
+                                                 *   provided the MQTT connection   *
+                                                 *   the OTA Agent will exit        */
     CY_OTA_REASON_OTA_FLASH_WRITE_ERROR,        /**< OTA writing to FLASH failed    */
     CY_OTA_REASON_OTA_VERIFY_FAILED,            /**< OTA download verify failed     */
     CY_OTA_REASON_OTA_INVALID_VERSION,          /**< OTA download version failed    */
@@ -480,22 +252,25 @@ typedef void *cy_ota_context_ptr;
 /** \} group_ota_typedefs */
 
 /**
- * \addtogroup group_ota_functions
+ * \addtogroup group_ota_callback
  * \{
+ *  OTA Agent callback function.
+ *
  */
 
 /**
  *  @brief Application informational callback from OTA Agent
  *
- * @param[in]  reason       - Callback reason
- * @param[in]  value        - used for %
+ * @param[in]  reason       - Callback reason @ref cy_ota_cb_reason_t
+ * @param[in]  value        - When callback reason is CY_OTA_REASON_DOWNLOAD_PERCENT\n
+ *                            The value is the percentage of the download completed
  * @param[in]  cb_arg       - user supplied data ptr
  *
  * @return - N/A
  */
 typedef void (*cy_ota_callback_t)(cy_ota_cb_reason_t reason, uint32_t value, void *cb_arg );
 
-/** \} group_ota_functions */
+/** \} group_ota_callback */
 
 /***********************************************************************
  *
@@ -506,6 +281,7 @@ typedef void (*cy_ota_callback_t)(cy_ota_cb_reason_t reason, uint32_t value, voi
 /**
  * \addtogroup group_ota_structures
  * \{
+ *  Structures used for Network connection and OTA Agent behavior.
  */
 
 /**
@@ -532,10 +308,14 @@ typedef struct cy_ota_http_params_s {
  */
 typedef struct cy_ota_mqtt_params_s {
     /* MQTT info */
-    bool                    awsIotMqttMode;    /**< 1 = AFR AWS mode                        */
-    const char              *pIdentifier;      /**< Ptr to device ID                        */
-    uint8_t                 numTopicFilters;   /**< Number of Topics for MQTT Subscribe     */
-    const char              **pTopicFilters;   /**< Topic Filter text                       */
+    bool                        awsIotMqttMode;    /**< 0 = normal MQTT, 1 = Special Amazon mode    */
+    const char                  *pIdentifier;      /**< Ptr to device ID                            */
+    uint8_t                     numTopicFilters;   /**< Number of Topics for MQTT Subscribe         */
+    const char                  **pTopicFilters;   /**< Topic Filter text                           */
+    cy_ota_mqtt_session_type_t  session_type;      /**< @ref cy_ota_mqtt_session_type_t             */
+
+    /* If application already has an MQTT connection, set true and provide connection pointer */
+    IotMqttConnection_t         app_mqtt_connection;   /**< Application MQTT connection information    */
 
 } cy_ota_mqtt_params_t;
 
@@ -590,6 +370,7 @@ typedef struct cy_ota_agent_params_s {
 /**
  * \addtogroup group_ota_functions
  * \{
+ * OTA functions for starting, stopping, and getting information about the OTA Agent.
  */
 
 /**
@@ -598,9 +379,10 @@ typedef struct cy_ota_agent_params_s {
  * Start thread to monitor for OTA updates.
  * This consumes resources until cy_ota_agent_stop() is called.
  *
- * @param[in]  network_params   pointer to Network parameter structure
- * @param[in]  agent_params     pointer to Agent timing parameter structure
- * @param[out] ota_ptr          Handle to OTA Agent context structure pointer
+ * @param[in]  network_params   pointer to @ref cy_ota_network_params_s
+ * @param[in]  agent_params     pointer to @ref cy_ota_agent_params_s
+ * @param[out] ota_ptr          Handle to store OTA Agent context structure pointer\n
+ *                               which is used in other OTA calls.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_MODULE_OTA_ERROR
@@ -613,7 +395,7 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
  *
  *  Stop thread to monitor OTA updates and release resources.
  *
- * @param[in] ota_ptr         pointer to OTA Agent context storage returned from cy_ota_agent_start();
+ * @param[in] ota_ptr         pointer to OTA Agent context storage returned from @ref cy_ota_agent_start();
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_MODULE_OTA_ERROR
@@ -623,10 +405,12 @@ cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ota_ptr);
 /**
  * @brief Check for OTA update availability and download update now.
  *
- * @param[in] ota_ptr         pointer to OTA Agent context storage returned from cy_ota_agent_start();
+ * @param[in] ota_ptr         pointer to OTA Agent context storage returned from @ref cy_ota_agent_start();
  *
  * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_MODULE_OTA_BADARG
  *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_MODULE_OTA_ALREADY_STARTED
  */
 cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);
 
@@ -645,7 +429,7 @@ cy_rslt_t cy_ota_validated(void);
 /**
  * @brief Get OTA Agent State
  *
- * @param[in]  ota_ptr          pointer to OTA Agent context returned from cy_ota_agent_start();
+ * @param[in]  ota_ptr          pointer to OTA Agent context returned from @ref cy_ota_agent_start();
  * @param[out] state            Current OTA State
  *
  * @result @ref cy_ota_agent_state_t
@@ -655,9 +439,9 @@ cy_rslt_t cy_ota_get_state(cy_ota_context_ptr ota_ptr, cy_ota_agent_state_t *sta
 /**
  * @brief Get Last OTA Error
  *
- * This can be called after cy_ota_agent_stop(), the value is persistent.
+ * The last error value is persistent, and can be queried after @ref cy_ota_agent_stop().
  *
- * @result Last error reported
+ * @result @ref cy_ota_error_t
  */
 cy_ota_error_t cy_ota_last_error(void);
 

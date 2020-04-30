@@ -52,11 +52,6 @@ extern "C" {
 #define SECS_TO_MILLISECS(secs)         (secs * 1000)
 
 /**
- * @brief Time to wait for queue to be free / data available
- */
-#define CY_OTA_RECV_QUEUE_TIMEOUT_MS        (500)
-
-/**
  * @brief Tag value used to validate the OTA context
  */
 #define CY_OTA_TAG      0x0ad38f41
@@ -146,6 +141,11 @@ typedef enum
  */
 #define CY_OTA_CONTEXT_ASSERT(ctx)  CY_ASSERT((ctx!=0) && (ctx->tag==CY_OTA_TAG))
 
+/**
+ * @brief max number of packets to check for missing & duplicate packets
+ */
+#define CY_OTA_MAX_PACKETS     (2048)  /* Handle checking for 2M OTA code using 1k packets */
+
 /***********************************************************************
  *
  * Structures
@@ -163,6 +163,10 @@ typedef struct cy_ota_mqtt_context_s {
 
     cy_timer_t          mqtt_timer;                     /**< for detecting early end of download    */
     ota_events_t        mqtt_timer_event;               /**< event to trigger when timer goes off   */
+
+    uint16_t            last_num_packets_received;              /**< last time we saw how many were received        */
+    uint8_t             received_packets[CY_OTA_MAX_PACKETS];   /**< keep track of packets for missing / duplicates */
+
 } cy_ota_mqtt_context_t;
 
 #ifdef OTA_HTTP_SUPPORT
@@ -207,10 +211,10 @@ typedef struct cy_ota_context_s {
     uint32_t                last_size;              /**< last size of data written from cy_ota_storage_write()          */
     uint16_t                last_packet_received;   /**< Last Packet of data we have received                           */
     uint16_t                total_packets;          /**< Total number of Packets of data for the OTA Image              */
+    uint16_t                num_packets_received;   /**< Total number of Packets received                               */
 
     cy_mutex_t              sub_callback_mutex;     /**< Keep subscription callbacks from being timesliced              */
-    cy_mutex_t              recv_mutex;             /**< Keep data_queue from being accessed by multi threads           */
-    cy_queue_t              recv_data_queue;        /**< Pass data from callbacks to cy_ota_get() loop                  */
+    uint8_t                 sub_callback_mutex_inited;  /**< 1 = sub_callback_mutex initialized                         */
 
     /* Network connection */
     int                     contact_server_retry_count; /**< Keep count of # tries to contact server                    */
@@ -252,8 +256,8 @@ typedef struct cy_ota_storage_write_info_s {
     uint16_t        packet_number;  /**< This packet number                             */
     uint16_t        total_packets;  /**< Total packets in OTA Image                     */
 #ifdef OTA_SIGNING_SUPPORT
-                    /* we are always base64 */
-    char            signature_scheme[CY_OTA_MAX_SIGN_LENGTH];   /* eg: “sig-ecdsa-sha256” empty indicates not signed    */
+                    /* we are always base64  FUTURE SUPPORT */
+    char            signature_scheme[CY_OTA_MAX_SIGN_LENGTH];   /* eg: sig-ecdsa-sha256 empty indicates not signed  */
     uint8_t         *signature_ptr;  /* Points to the signature length, Only valid if signature scheme is not empty */
 #endif
 } cy_ota_storage_write_info_t;

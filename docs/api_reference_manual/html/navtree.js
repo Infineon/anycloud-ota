@@ -1,6 +1,7 @@
 var NAVTREE =
 [
   [ "Cypress Over The Air", "index.html", [
+    [ "Overview", "index.html", null ],
     [ "API Reference", "modules.html", "modules" ]
   ] ]
 ];

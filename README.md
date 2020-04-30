@@ -1,34 +1,25 @@
-# Over The Air update middleware library
+﻿# Over-the-Air update middleware library
 
-***This library is still in development. This will be available when this comment is removed.***
+This library provides support for OTA updating using WiFi of the application code running on a PSoC® 6 MCU with CYW4343W or CYW43012 connectivity device.
 
-This code library provides support for OTA updating a PSoC® 6 MCU and CYW4343W or 43012 connectivity device. In this example, device establishes connection with designated MQTT Broker. Once the connection completes successfully, the device subscribes to a topic. When an update is available, the customer will publish the update and the device saves the update to FLASH. On the next reboot, MCUBoot will copy the new application over to the Primary slot, and run the application.
+In this example, device establishes connection with designated MQTT Broker. Once the connection completes successfully, the device subscribes to a topic. The topic is defined by the user and passed as a parameter when starting the OTA Agent.
 
-This library provides application developers a library enabling Over The Air firmware update capability using Wi-Fi.
+When an update is available, the customer will publish the update to the MQTT broker. The device receives and saves the update to FLASH Secondary slot (slot1). On the next reboot, MCUBoot bootloader will copy the new version of the application over to the Primary slot (slot 0) and run the application.
 
-The ModusToolbox OTA code examples download this library automatically, so you don't need to.
+The ModusToolbox OTA code examples import this library automatically.
 
 ## Features and functionality
 
-This library utilizes MQTT and TLS to securely connect to an MQTT Broker and download an update for your application. Other features:
+This library utilizes MQTT and TLS to securely connect to an MQTT Broker and download an update for the users application.
 
-- Configuration to adjust multiple timing values to customize how often and other parameters for the MQTT Broker connection.
-- Runs in a separate background thread, only connecting to MQTT broker based on your configuration.
+Other features:
+
+- Configuration to adjust multiple timing values to customize how often to check for updates, and other parameters for the MQTT Broker connection.
+- Runs in a separate background thread, only connecting to MQTT broker based on the application configuration.
 - Run-time parameters for MQTT broker, credentials, and other parameters.
 - Provides a callback mechanism to report stages of connect, download %, and errors.
 
-Once the application starts the OTA agent, the OTA agent will contact the MQTT broker at the defined intervals to see if there is an update available. If so, it will download the update. If the "reset_after_complete" flag was set in the agnet parameters, the OTA agent will automatically reset the device. If not set, on the next manual reset, MCUBoot will perform the update.
-
-## Integration Notes
-
-- A pre-defined configuration file has been bundled with this library.
-
-  The developer is expected to:
-
-  - Copy the cy_ota_config.h file from the libs/aucloud-ota/include directory to the top level code example directory in the project.
-
-- Add the following to COMPONENTS in the code example project's Makefile - FREERTOS, PSOC6HAL, LWIP, MBEDTLS and either 4343W or 43012 depending on the platform. For instance, if [CY8CKIT-062](https://jira.cypress.com/browse/CY8CKIT-062)S2-43012 is chosen, then the Makefile entry would look like
-  COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS 43012
+Once the application starts the OTA agent, the OTA agent will contact the MQTT broker at the defined intervals to see if there is an update available. If an update is available, it will be downloaded. If the "reset_after_complete" flag was set in the agent parameters, the OTA agent will automatically reset the device. If not set, on the next manual reset, MCUBoot will perform the update.
 
 ## Requirements
 
@@ -36,10 +27,26 @@ Once the application starts the OTA agent, the OTA agent will contact the MQTT b
 - [MCUBoot](https://juullabs-oss.github.io/mcuboot/)
 - Programming Language: C
 
+## Supported Toolchains
+
+- GCC
+- IAR
+- ARM6
+
+## Supported OS
+
+- FreeRTOS
+
 ## Supported Kits
 
 - [PSoC 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
 - [PSoC 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
+
+Only kits with 2M of Internal FLASH are supported at this time. The kit-specific things that need to be changed:
+
+- FLASH locations and sizes for Bootloader, Primary Slot (slot 0) and Secondary Slot (slot 1).
+  - See further information in the Prepare MCUBoot section below.
+- Linker script for the new kit needs to be created.
 
 ## Hardware Setup
 
@@ -52,61 +59,85 @@ This example uses the board's default configuration. See the kit user guide to e
 - Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 - Python Interpreter. This code example is tested with [Python 3.8.1](https://www.python.org/downloads/release/python-381/).
 
+## Enabling Debug Output
+
+- define LIBRARY_LOG_LEVEL to one of these defines, in order from no debug output to maximum debug output.
+  - IOT_LOG_NONE
+  - IOT_LOG_ERROR
+  - IOT_LOG_WARN
+  - IOT_LOG_INFO
+  - IOT_LOG_DEBUG
+
 ## Prepare MCUbootApp
 
 OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the Secondary Slot.  MCUboot will do the actual update from the Secondary Slot to the Primary Slot on the next reboot of the device. In order for the OTA software and MCUBoot to have the same information on where the two Slots are in FLASH, we need to tell MCUBoot where the Slots are located. We also use some of the same code (exact .h and .c files) in the OTA code so that they are both in agreement.
 
 Preparing MCUBootApp requires a few steps.
 
-### In Command-line Interface (CLI):
+## Flash Partitioning
 
-1. Clone the MCUBoot repository onto your local machine.
+Currently only internal flash is supported.
 
-2. Open a CLI terminal and navigate to the mcuboot folder.
+Primary Slot      (Slot 0): start: 0x012000, size: 0xEE000
 
-3. Change the branch to work with
+Secondary Slot (Slot 1): start: 0x100000, size: 0xEE000
 
-   1. git checkout cypress-201912.00
+### Building MCUBootApp using Cygwin Command-line Interface (CLI):
 
-4. Import required libraries by executing the `make getlibs` command.
+Clone the MCUBoot repository onto your local machine, **outside of your application's directory.**
 
-5. We need to pull in mcuboot sub-modules to build mcuboot
+1. git clone https://github.com/JuulLabs-OSS/mcuboot.git
 
-   1. `cd libs/mcuboot`
-   2. `git submodule update --init --recursive`
-   7. `cd ../..`
+Open a CLI terminal and navigate to the mcuboot folder.
 
-6. We need to adjust MCUBootApp FLASH locations
+Change the branch to get the Cypress version.
 
-   NOTE: These values are used when the Primary and Secondary Slots are both in **internal** FLASH. To adjust the settings for your device/application, please read the application's notes.
+1. `cd mcuboot`
+2. `git checkout v1.5.0-cypress`
 
-   1. Edit libs/mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk
+We need to pull in mcuboot sub-modules to build mcuboot.
 
-      `Add at line 48`
+1. `git submodule update --init --recursive`
 
-      `DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=2000`
+Install the required python packages mentioned in `mcuboot\scripts\requirements.txt`.
 
-      `DEFINES_APP +=-DCY_BOOT_BOOTLOADER_SIZE=0x12000`
+1.  `cd mcuboot/scripts`
+2. `pip install -r requirements.txt`
 
-      `DEFINES_APP +=-DCY_BOOT_SCRATCH_SIZE=0x10000`
+#### Adjust MCUBootApp FLASH locations.
 
-      `DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x0EE000`
+It is important for both MCUBoot and the application to have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader refer to the [MCUBoot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
 
-      `DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x0EE000`
+NOTE: These values are used when the Primary and Secondary Slots are both in **internal** FLASH. To adjust the settings for your device/application, please read your application's notes.
 
-7. Change MCUBoot to ignore Primary Slot verify. Note that This is where the application is run from, the OTA download stores in Secondary slot, and it is verified before copying to Primary slot.
+1. Edit libs/mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk
 
-   1. Edit libs/mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h:
+   `Add at line 48`
 
-   `line 77`
+   `DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=2000`
 
-   `//#define MCUBOOT_VALIDATE_PRIMARY_SLOT`
+   `DEFINES_APP +=-DCY_BOOT_BOOTLOADER_SIZE=0x12000`
 
-8. Adjust signing type for MCUBoot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUBoot will not find the magic_number and fail to copy Secondary slot to Primary slot.
+   `DEFINES_APP +=-DCY_BOOT_SCRATCH_SIZE=0x10000`
 
-   1. Edit libs/mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h
+   `DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x0EE000`
 
-      `line 36 comment out these two lines`
+   `DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x0EE000`
+
+#### Change MCUBoot to ignore Primary Slot verify.
+
+​	Notes:
+
+- The Primary Slot is where the application is run from.
+- The OTA download stores in Secondary Slot.
+- MCUBoot verifies the signature in the Secondary Slot before copying to Primary slot.
+- Signature verify takes some time. Removing the verify allows for a faster bring up of your application.
+
+1. Adjust signing type for MCUBoot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUBoot will not find the magic_number and fail to copy Secondary slot to Primary slot.
+
+   1. Edit mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h
+
+      `line 38 & 39 comment out these two lines`
 
       `/* Uncomment for ECDSA signatures using curve P-256. */`
 
@@ -114,34 +145,72 @@ Preparing MCUBootApp requires a few steps.
 
       `//#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable`
 
+   2. Edit mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h:
 
-#### Building and programming MCUBootApp
+      `line 77`
 
-1. `cd libs/mcuboot/cypress`
+      `//#define MCUBOOT_VALIDATE_PRIMARY_SLOT`
 
-2. Make the application
+#### Building MCUBootApp
 
-   `make app APP_NAME=MCUBootApp TARGET=CY8CPROTO-062-4343W`
+Ensure that the toolchain path is set for the compiler. Check that the path is correct for your installed version of ModusToolbox.
 
-3. Use Cypress Programmer to program MCUBoot. Remember to close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUBOOT .elf file is here:
+​		`export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.1/gcc-7.2.1`
 
-   `libs/mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Debug/MCUBootApp.elf`
+Build the Application
 
-## Operation
+​		`cd mcuboot/boot/cypress`
+
+​		`make app APP_NAME=MCUBootApp TARGET=CY8CPROTO-062-4343W`
+
+Use Cypress Programmer to program MCUBoot. Remember to close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUBOOT .elf file is here:
+
+​		`mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Debug/MCUBootApp.elf`
+
+#### Program MCUBootApp
 
 1. Connect the board to your PC using the provided USB cable through the USB connector.
-2. Copy the file configs/cy_ota_config.h to your application's top level directory. Edit and adjust timing parameters.
-3. Consult the README.md file for configuration of the Example Application.
-4. Open a terminal program and select the KitProg3 COM port. Set the serial port parameters to 8N1 and 115200 baud.
-5. Program the board using the instructions in your Customer Example Application notes.
+2. Program the board using the instructions in your Customer Example Application notes.
+
+### Prepare for Building your Application
+
+Copy libs/anycloud-ota/configs/cy_ota_config.h to your application's top level directory, and adjust for your application needs.
+
+Consult the README.md file for configuration of the Example Application and other information.
+
+## Limitations
+1. If the device is not subscribed to the topic on the MQTT Broker, it will miss the update messages published by the broker.
+2. Currently only internal flash is supported. This currently limits OTA functionality to platforms that have 2M of internal FLASH.
+3. Be sure to have a reliable network connection before starting an OTA update. If your Network connection is poor, OTA update may fail due to lost packets or lost connection.
+4. Be sure to have a fully charged device before starting an OTA update. If you device's battery is low, OTA may fail.
+
+## Unsupported Features
+
+1. HTTP OTA Updates are not implemented at this time.
+2. Application supplying MQTT connection information to OTA Agent not supported at this time.
 
 ## Additional Information
 
 - [OTA RELEASE.md]()
 - [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/api_reference_manual/html/index.html)
+- [Cypress OTA Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt )
 - [ModusToolbox Software Environment, Quick Start Guide, Documentation, and Videos](https://www.cypress.com/products/modustoolbox-software-environment)
+-  [MCUBoot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation
 
+Cypress also provides a wealth of data at www.cypress.com to help you select the right device, and quickly and effectively integrate it into your design.
 
+For PSoC 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Cypress community.
+
+## Document History
+
+| Version | Description of Change  |
+| ------- | ---------------------- |
+| 1.0.1   | Documentation updates  |
+| 1.0.0   | New middleware library |
+
+------
+
+All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
 ![Banner](images/Banner.png)
 

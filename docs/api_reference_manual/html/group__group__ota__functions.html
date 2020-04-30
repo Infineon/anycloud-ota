@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: Functions</title>
+<title>Cypress Over The Air: OTA Functions</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -85,7 +85,7 @@ $(document).ready(function(){initNavTree('group__group__ota__functions.html','')
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Groups</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Groups</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -96,20 +96,14 @@ $(document).ready(function(){initNavTree('group__group__ota__functions.html','')
 
 <div class="header">
   <div class="summary">
-<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
-<div class="title">Functions<div class="ingroups"><a class="el" href="group__group__cy__ota.html">Cypress Over The Air (OTA) API</a></div></div>  </div>
+<div class="title">OTA Functions<div class="ingroups"><a class="el" href="group__group__cy__ota.html">Cypress Over The Air (OTA) API</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">General Description</h2>
+<p>OTA functions for starting, stopping, and getting information about the OTA Agent. </p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
-Typedefs</h2></td></tr>
-<tr class="memitem:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga8286ce2144f78d501ca224b1f4c8df4f">cy_ota_callback_t</a> )(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td></tr>
-<tr class="memdesc:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application informational callback from OTA Agent.  <a href="#ga8286ce2144f78d501ca224b1f4c8df4f">More...</a><br /></td></tr>
-<tr class="separator:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ga84d744546862b858ddc65334be5b63c3"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start</a> (<a class="el" href="structcy__ota__network__params__t.html">cy_ota_network_params_t</a> *network_params, <a class="el" href="structcy__ota__agent__params__t.html">cy_ota_agent_params_t</a> *agent_params, <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *ota_ptr)</td></tr>
@@ -140,30 +134,6 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga1f3276614aeca5a8d7c176f171024d66"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get String representation for callback reason.  <a href="#ga1f3276614aeca5a8d7c176f171024d66">More...</a><br /></td></tr>
 <tr class="separator:ga1f3276614aeca5a8d7c176f171024d66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="ga8286ce2144f78d501ca224b1f4c8df4f"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef void(* cy_ota_callback_t)(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Application informational callback from OTA Agent. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">reason</td><td>- Callback reason </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>- used for % </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_arg</td><td>- user supplied data ptr</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>- N/A </dd></dl>
-
-</div>
-</div>
 <h2 class="groupheader">Function Documentation</h2>
 <a class="anchor" id="ga84d744546862b858ddc65334be5b63c3"></a>
 <div class="memitem">
@@ -199,9 +169,10 @@ Functions</h2></td></tr>
 <p>Start thread to monitor for OTA updates. This consumes resources until <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be" title="Stop OTA Background Agent. ">cy_ota_agent_stop()</a> is called.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">network_params</td><td>pointer to Network parameter structure </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">agent_params</td><td>pointer to Agent timing parameter structure </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ptr</td><td>Handle to OTA Agent context structure pointer</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">network_params</td><td>pointer to <a class="el" href="structcy__ota__network__params__s.html">cy_ota_network_params_s</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">agent_params</td><td>pointer to <a class="el" href="structcy__ota__agent__params__s.html">cy_ota_agent_params_s</a> </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ptr</td><td>Handle to store OTA Agent context structure pointer<br />
+ which is used in other OTA calls.</td></tr>
   </table>
   </dd>
 </dl>
@@ -227,7 +198,7 @@ Functions</h2></td></tr>
 <p>Stop thread to monitor OTA updates and release resources.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start()</a>;</td></tr>
   </table>
   </dd>
 </dl>
@@ -252,11 +223,11 @@ Functions</h2></td></tr>
 <p>Check for OTA update availability and download update now. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>;</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start()</a>;</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_ERROR </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_BADARG CY_RSLT_MODULE_OTA_ERROR CY_RSLT_MODULE_OTA_ALREADY_STARTED </dd></dl>
 
 </div>
 </div>
@@ -307,7 +278,7 @@ Functions</h2></td></tr>
 <p>Get OTA Agent State. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>; </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start()</a>; </td></tr>
     <tr><td class="paramdir">[out]</td><td class="paramname">state</td><td>Current OTA State</td></tr>
   </table>
   </dd>
@@ -331,8 +302,8 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get Last OTA Error. </p>
-<p>This can be called after <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be" title="Stop OTA Background Agent. ">cy_ota_agent_stop()</a>, the value is persistent.</p>
-<dl class="section return"><dt>Returns</dt><dd>Last error reported </dd></dl>
+<p>The last error value is persistent, and can be queried after <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be">cy_ota_agent_stop()</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a> </dd></dl>
 
 </div>
 </div>

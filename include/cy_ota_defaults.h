@@ -87,7 +87,7 @@ extern "C" {
 * This is used check that the download occurs in a reasonable time frame.
 */
 #ifndef CY_OTA_PACKET_INTERVAL_SECS
-#define CY_OTA_PACKET_INTERVAL_SECS       (60)            /* 1 minute */
+#define CY_OTA_PACKET_INTERVAL_SECS       (60)             /* 1 minute */
 #endif
 
 /**
@@ -98,7 +98,7 @@ extern "C" {
  * Use 0x00 to continue checking once started.
  */
 #ifndef CY_OTA_CHECK_TIME_SECS
-#define CY_OTA_CHECK_TIME_SECS                (60 * 10)     /* 10 minutes */
+#define CY_OTA_CHECK_TIME_SECS                (60 * 10)    /* 10 minutes */
 #endif
 
 /**
@@ -110,7 +110,7 @@ extern "C" {
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_RETRIES
-#define CY_OTA_RETRIES                      (5)             /* 5 overall OTA retries */
+#define CY_OTA_RETRIES                          (5)        /* 5 overall OTA retries */
 #endif
 
 /**
@@ -122,7 +122,7 @@ extern "C" {
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_CONNECT_RETRIES
-#define CY_OTA_CONNECT_RETRIES              (3)             /* 3 server connect retries  */
+#define CY_OTA_CONNECT_RETRIES                  (3)         /* 3 server connect retries  */
 #endif
 
 /**
@@ -134,7 +134,7 @@ extern "C" {
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_MAX_DOWNLOAD_TRIES
-#define CY_OTA_MAX_DOWNLOAD_TRIES           (3)             /* 3 download OTA Image retries */
+#define CY_OTA_MAX_DOWNLOAD_TRIES               (3)         /* 3 download OTA Image retries */
 #endif
 
 /**
@@ -146,7 +146,7 @@ extern "C" {
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_MQTT_MAX_TOPICS
-#define CY_OTA_MQTT_MAX_TOPICS              (2)
+#define CY_OTA_MQTT_MAX_TOPICS                  (2)
 #endif
 
 /***********************************************************************
@@ -171,7 +171,7 @@ extern "C" {
  *   client identifer for each connection.
  */
 #ifndef CLIENT_IDENTIFIER_PREFIX
-#define CLIENT_IDENTIFIER_PREFIX                    "iotdevice"
+#define CLIENT_IDENTIFIER_PREFIX                "iotdevice"
 #endif
 
 /**
@@ -180,40 +180,14 @@ extern "C" {
  * An MQTT ping request will be sent periodically at this interval.
  */
 #ifndef MQTT_KEEP_ALIVE_SECONDS
-#define MQTT_KEEP_ALIVE_SECONDS                     (60)
+#define MQTT_KEEP_ALIVE_SECONDS                 (60)
 #endif
 
 /**
  * @brief The timeout for MQTT operations.
  */
 #ifndef MQTT_TIMEOUT_MS
-#define MQTT_TIMEOUT_MS                             (5000)
-#endif
-
-/**
- * @brief Length of Queue to pass data from callback to OTA Agent thread
- *
- * This allows us to always access FLASH from the same thread, and release
- * the MQTT packet as soon as possible.
- * This is the number of queue elements in the queue.
- *
- * Total queue size is a bit more than (CY_OTA_RECV_QUEUE_LEN * CY_OTA_MQTT_BUFFER_SIZE_MAX)
- * Increasing the buffer size allows more data to be transferred per packet, but also consumes RAM.
- */
-#ifndef CY_OTA_RECV_QUEUE_LEN
-#define CY_OTA_RECV_QUEUE_LEN                   (4)
-#endif
-
-/**
- * @brief Max OTA payload data size (not MQTT payload size)
- *
- * This is the data trasnfered to be written to FLASH, without header.
- *
- * Total queue size is a bit more than (CY_OTA_RECV_QUEUE_LEN * CY_OTA_MQTT_BUFFER_SIZE_MAX)
- * Increasing the buffer size allows more data to be transferred per packet, but also consumes RAM.
- */
-#ifndef CY_OTA_MQTT_BUFFER_SIZE_MAX
-#define CY_OTA_MQTT_BUFFER_SIZE_MAX             (8 * 1024)
+#define MQTT_TIMEOUT_MS                         (5000)
 #endif
 
 /** \} group_ota_typedefs */

@@ -50,13 +50,11 @@ export LANG=C.UTF-8
 CY_OUTPUT_BIN=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.bin
 CY_OUTPUT_ELF=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.elf
 CY_OUTPUT_HEX=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.unsigned.hex
+CY_OUTPUT_SIGNED_HEX=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.hex
+CY_OUTPUT_FILE_WILD=$CY_OUTPUT_NAME.*
 CY_OUTPUT_FILE_NAME_BIN=$CY_OUTPUT_NAME.bin
 CY_OUTPUT_FILE_NAME_TAR=$CY_OUTPUT_NAME.tar
-CY_OUTPUT_SIGNED_HEX=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.hex
-CY_OUTPUT_FILE_PATH_WILD=$CY_OUTPUT_PATH/$CY_OUTPUT_NAME.*
-
 CY_COMPONENTS_JSON_NAME=components.json
-
 #
 # For elf -> hex conversion
 #
@@ -68,6 +66,7 @@ else
     CY_ELF_TO_HEX_FILE_1=$CY_OUTPUT_HEX
     CY_ELF_TO_HEX_FILE_2=$CY_OUTPUT_ELF
 fi
+
 #
 # Leave here for debugging
 #echo " CY_OUTPUT_NAME           $CY_OUTPUT_NAME"
@@ -95,26 +94,32 @@ then
 FLASH_ERASE_ARG="-R 0"
 fi
 
+# set Python executable based on Host OS
+PYTHON_PATH=python3
+if [[ "$OS" = "Windows_NT" ]]
+then
+    PYTHON_PATH=python
+fi
+
 echo ""
 echo "Create  unsigned.hex"
 # echo "$CY_ELF_TO_HEX $CY_ELF_TO_HEX_OPTIONS $CY_ELF_TO_HEX_FILE_1 $CY_ELF_TO_HEX_FILE_2"
 "$CY_ELF_TO_HEX" $CY_ELF_TO_HEX_OPTIONS $CY_ELF_TO_HEX_FILE_1 $CY_ELF_TO_HEX_FILE_2
 
-echo  "imgtool $IMGTOOL_COMMAND_ARG signed .hex."
-cd $MCUBOOT_SCRIPT_FILE_DIR
-# echo "$IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX"
-python $IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX
-
-# back to our build directory
-cd $CY_OUTPUT_PATH
+echo "imgtool $IMGTOOL_COMMAND_ARG signed .hex."
+echo "$IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX"
+$PYTHON_PATH $MCUBOOT_SCRIPT_FILE_DIR/$IMGTOOL_SCRIPT_NAME $IMGTOOL_COMMAND_ARG $FLASH_ERASE_ARG -e little --pad-header --align 8 -H $MCUBOOT_HEADER_SIZE -M $MCUBOOT_MAX_IMG_SECTORS -v $CY_BUILD_VERSION -L $CY_BOOT_PRIMARY_1_START -S $CY_BOOT_PRIMARY_1_SIZE $CY_SIGNING_KEY_ARG $CY_OUTPUT_HEX $CY_OUTPUT_SIGNED_HEX
 
 #
-# Convert signed hex file to Binary for AWS uploading
+# Convert signed hex file to Binary
 echo "Signed .hex to .bin"
 "$CY_HEX_TO_BIN" --input-target=ihex --output-target=binary $CY_OUTPUT_SIGNED_HEX $CY_OUTPUT_BIN
 
 # get size of binary file for components.json
 BIN_SIZE=$(ls -l $CY_OUTPUT_BIN | awk '{printf $6}')
+
+# Navigate to build directory
+cd $CY_OUTPUT_PATH
 
 # create "components.json" file
 echo "{\"numberOfComponents\":\"2\",\"version\":\"$CY_BUILD_VERSION\",\"files\":["                    >  $CY_COMPONENTS_JSON_NAME
@@ -138,8 +143,8 @@ then
     echo "Signing key: $SIGNING_KEY_PATH"
 fi
 echo ""
-#
-ls -l $CY_OUTPUT_FILE_PATH_WILD
+
+ls -l $CY_OUTPUT_FILE_WILD
 echo ""
 
 echo "$CY_OUTPUT_FILE_NAME_TAR File List"

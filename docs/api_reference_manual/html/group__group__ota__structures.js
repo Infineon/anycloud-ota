@@ -8,7 +8,9 @@ var group__group__ota__structures =
       [ "awsIotMqttMode", "structcy__ota__mqtt__params__t.html#a426a5dcd872c5e7aa8f1e5b5a812dc41", null ],
       [ "pIdentifier", "structcy__ota__mqtt__params__t.html#ad34d95200fc95de6118ec4e3d699afd6", null ],
       [ "numTopicFilters", "structcy__ota__mqtt__params__t.html#ac806ee0d85cccc193de4b7b9be601477", null ],
-      [ "pTopicFilters", "structcy__ota__mqtt__params__t.html#a7bb69c553cb9c13d8f32b3cb196ad0f9", null ]
+      [ "pTopicFilters", "structcy__ota__mqtt__params__t.html#a7bb69c553cb9c13d8f32b3cb196ad0f9", null ],
+      [ "session_type", "structcy__ota__mqtt__params__t.html#a8c08bc782786d64fcf57aa94e3d446cd", null ],
+      [ "app_mqtt_connection", "structcy__ota__mqtt__params__t.html#aa491d7cc6cc845ffc73e4c60df3efc5b", null ]
     ] ],
     [ "cy_ota_network_params_t", "structcy__ota__network__params__t.html", [
       [ "transport", "structcy__ota__network__params__t.html#addafb95726e9f6f399f5a34c3109a409", null ],
