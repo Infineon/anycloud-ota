@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: Overview</title>
+<title>Over The Air (OTA) Update Library: Over The Air v2.0.0 Overview</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -96,31 +96,40 @@ $(document).ready(function(){initNavTree('index.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Overview </div>  </div>
+<div class="title">Over The Air v2.0.0 Overview </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This library provides support for OTA updating using WiFi of the application code running on a PSoC 6 MCU with CYW4343W or CYW43012 connectivity device. In this example, device establishes connection with designated MQTT Broker. Once the connection completes successfully, the device subscribes to a topic. The topic is defined by the user and passed as a parameter when starting the OTA Agent.</p>
-<p>When an update is available, the customer will publish the update to the MQTT broker. The device receives and saves the update to the Secondary slot (slot1) in FLASH. On the next reboot, MCUBoot bootloader will copy the new version of the application over to the Primary slot (slot 0) and run the application.</p>
+<div class="textblock"><p>This library provides support for OTA updating using WiFi of the application code running on a PSoC 6 MCU with CYW4343W or CYW43012 connectivity device. For simplification, this document will refer to an MQTT Broker or an HTTP Server as "server".</p>
+<p>The library provides a number of combinations on how to get the OTA Image. One or two steps can be used to get the OTA Image. The two steps are "get job" and "get data". The caller can skip the "get job" step and get the OTA Image directly.</p>
+<p>Step 1 - Get Job:<br />
+</p><ul>
+<li>The OTA Agent downloads a JSON "job" document (default name "ota_update.json").<br />
+</li>
+<li>The Job document has information about an update that is available, including location.</li>
+</ul>
+<p>Step 2: - Get Data:<br />
+</p><ul>
+<li>The OTA Agent will download the OTA Image to the Secondary Slot (slot 1).<br />
+ On the next reboot, MCUBoot will copy the new version of the application from the Secondary Slot (slot 1) to the Primary slot (slot 0) and run the application.</li>
+</ul>
+<p>The user can skip Step 1 by setting the field use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to CY_OTA_DIRECT_FLOW when calling <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>.</p>
 <p>The ModusToolbox OTA code examples import this library automatically.</p>
 <h1><a class="anchor" id="section_features"></a>
 Features and functionality</h1>
-<p>This library utilizes MQTT and TLS to securely connect to an MQTT Broker and download an update for the users application.</p>
+<p>This library utilizes MQTT or HTTPS and TLS to securely connect to and download an update for the users application.</p>
 <p>Other features:</p>
 <ul>
 <li>Configuration to adjust multiple timing values to customize how often to check for updates, and other parameters for the MQTT Broker connection.</li>
-<li>Runs in a separate background thread, only connecting to MQTT broker based on the application configuration.</li>
-<li>Run-time parameters for MQTT broker, credentials, and other parameters.</li>
-<li>Provides a callback mechanism to report stages of connect, download %, and errors.</li>
+<li>Runs in a separate background thread, only connecting to the server based on the parameters passed to <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>.</li>
+<li>Server info, credentials, and other parameters are passed into <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start()</a>.</li>
+<li>Provides a callback mechanism to report stages of connect, download percentage, and errors.</li>
 </ul>
-<p>Once the application starts the OTA agent, the OTA agent will contact the MQTT broker at the defined intervals to see if there is an update available.</p>
+<p>Once the application starts the OTA agent, the OTA agent will contact the server at the defined intervals to see if there is an update available.</p>
 <h1><a class="anchor" id="section_notes"></a>
 Integration notes</h1>
-<ul>
-<li>A pre-defined configuration file has been bundled with this library.<br />
-<br />
+<p>A pre-defined configuration file has been bundled with this library.<br />
  The user is expected to:<br />
-<br />
-<ul>
+</p><ul>
 <li>Copy the cy_ota_config.h file from the libs/anycloud-ota/configs<br />
  directory to the top-level code example directory.<br />
 <br />
@@ -128,29 +137,34 @@ Integration notes</h1>
 <li>Add the following to COMPONENTS in the code example project's Makefile<br />
 <ul>
 <li>FREERTOS, PSOC6HAL, LWIP, MBEDTLS and either 4343W or 43012 depending on the platform.<br />
- For instance, if <a href="https://jira.cypress.com/browse/CY8CKIT-062">CY8CKIT-062</a>S2-43012 is<br />
- chosen, then the Makefile entry would look like:<br />
-<div class="fragment"><div class="line">COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS 43012 </div>
-</div><!-- fragment --> <br />
- </li>
-</ul>
-</li>
+ For instance, if CY8CKIT-062]S2-43012 is chosen, then the Makefile entry would be:<br />
+<div class="fragment"><div class="line">COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS 43012</div>
+</div><!-- fragment --></li>
 </ul>
 </li>
 </ul>
 <h1><a class="anchor" id="section_concept"></a>
 General Concept</h1>
-<p>The OTA Agent stores the update to the Secondary Slot and uses MCUBoot to<br />
- validate and copy the update from the Secondary Slot to the Primary Slot.<br />
- MCUBoot runs the current application in Primary Slot.<br />
- The OTA Agent downloads the update and stores it in the Secondary Slot.<br />
- The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.<br />
- If validate_after_reboot == 0 then Secondary Slot will be tagged as "perm"<br />
- If validate_after_reboot == 1 then Secondary Slot will be tagged as "test"<br />
- If reboot_upon_completion == 1, the system will reboot automatically.<br />
- On the next system reboot, MCUBoot sees that there is an update in the Secondary Slot.<br />
- MCUBoot then copies the update from the Secondary Slot to the Primary Slot. MCUBoot runs update in Primary Slot. If validate_after_reboot == 1 then the update must validate itself and call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a><br />
- to inform MCUBoot that it is now "perm" to complete the process.</p>
+<p>The OTA Agent stores the update to the Secondary Slot and uses MCUBoot to validate and copy the update from the Secondary Slot to the Primary Slot.<br />
+</p><ul>
+<li>MCUBoot runs the current application in Primary Slot.<br />
+</li>
+<li>The OTA Agent downloads the update and stores it in the Secondary Slot.<br />
+</li>
+<li>The Secondary Slot is marked so that MCUBoot will copy it over to the Primary Slot.<br />
+</li>
+<li>If validate_after_reboot == 0 then Secondary Slot will be tagged as "perm"<br />
+</li>
+<li>If validate_after_reboot == 1 then Secondary Slot will be tagged as "test"<br />
+</li>
+<li>If reboot_upon_completion == 1, the system will reboot automatically.<br />
+</li>
+<li>On the next system reboot, MCUBoot sees that there is an update in the Secondary Slot and copies the update to the Primary Slot.<br />
+</li>
+<li>MCUBoot runs the current application (now the update) in Primary Slot.<br />
+</li>
+<li>If validate_after_reboot == 1 then the updated application must validate itself and call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> to inform MCUBoot that it is now "perm" to complete the process.</li>
+</ul>
 <h1><a class="anchor" id="section_api_overview"></a>
 API Overview</h1>
 <h2>Start The OTA Agent </h2>
@@ -158,7 +172,7 @@ API Overview</h1>
  The OTA Agent uses callbacks to signal application when events occur.<br />
  <br />
  <code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start OTA Background Agent. ">cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr)</a>;</code></p>
-<p>These defines determine when the checks happen. Between checks, the OTA Agent is not checking for updates.<br />
+<p>These defines determine when the checks happen. Between checks, the OTA Agent is not conencted to a server, and not checking for updates.<br />
 </p><ul>
 <li>CY_OTA_INITIAL_CHECK_SECS</li>
 <li>CY_OTA_NEXT_CHECK_INTERVAL_SECS</li>
@@ -176,52 +190,121 @@ API Overview</h1>
  <code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga749e2780daeb68e40d47ca8c90a6922c" title="Check for OTA update availability and download update now. ">cy_ota_get_update_now(cy_ota_context_ptr ota_ptr)</a>;</code></p>
 <h1><a class="anchor" id="section_override"></a>
 Override default settings</h1>
-<p>Copy the cy_ota_config.h file from the libs/anycloud-ota/include<br />
+<p>Copy the cy_ota_config.h file from the libs/anycloud-ota/configs<br />
  directory to the top-level code example directory in the project.<br />
  Change these values to your preferred settings.</p>
-<div class="fragment"><div class="line"><span class="comment">// Initial time for checking for OTA updates</span></div>
-<div class="line"><span class="comment">// This is used to start the timer for the initial OTA update check after calling cy_ota_agent_start().</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_INITIAL_CHECK_SECS             (10)              // 10 seconds</span></div>
+<div class="fragment"><div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_INITIAL_CHECK_SECS           (10)            </span><span class="comment">/* 10 seconds */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Next time for checking for OTA updates</span></div>
-<div class="line"><span class="comment">// This is used to re-start the timer after an OTA update check in the OTA Agent.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_NEXT_CHECK_INTERVAL_SECS       (24 * 60 * 60)    // one day between checks</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_NEXT_CHECK_INTERVAL_SECS     (24 * 60 * 60)  </span><span class="comment">/* 1 day between checks */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Retry time which checking for OTA updates</span></div>
-<div class="line"><span class="comment">// This is used to re-start the timer after failing to contact the server during an OTA update check.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_RETRY_INTERVAL_SECS            (5)               // seconds between retries after an error</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_RETRY_INTERVAL_SECS          (5)             </span><span class="comment">/* 5 seconds between retries after an error */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Length of time to check for downloads</span></div>
-<div class="line"><span class="comment">// OTA Agent wakes up, connects to server, and waits this much time before stopping checks.</span></div>
-<div class="line"><span class="comment">// This allows the OTA Agent to be inactive for long periods of time, only checking at the interval.</span></div>
-<div class="line"><span class="comment">// Use 0x00 to continue checking once started.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_CHECK_TIME_SECS                (60)              // 1 minute</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_CHECK_TIME_SECS              (10 * 60)       </span><span class="comment">/* 10 minutes */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Expected maximum download time between each OTA packet arrival.</span></div>
-<div class="line"><span class="comment">// This is used check that the download occurs in a reasonable time frame.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_PACKET_INTERVAL_SECS           (60)              // 1 minute</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_PACKET_INTERVAL_SECS         (0)             </span><span class="comment">/* default disabled */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Number of retries when attempting OTA update</span></div>
-<div class="line"><span class="comment">// This is used to determine # retries when attempting an OTA update.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_RETRIES                        (5)               // retry entire process 5 times</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_JOB_CHECK_TIME_SECS           (30)               </span><span class="comment">/* 30 seconds */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// Number of retries when attempting to contact the server</span></div>
-<div class="line"><span class="comment">// This is used to determine # retries when connecting to the server during an OTA update check.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_CONNECT_RETRIES                (3)               // 3 server connect retries</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_DATA_CHECK_TIME_SECS          (5 * 60)           </span><span class="comment">/* 5 minutes */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// The number of MQTT Topics to subscribe to</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_MAX_TOPICS                (2)               // 2 topics</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_RETRIES                      (3)             </span><span class="comment">/* retry entire process 3 times */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// The keep-alive interval for MQTT</span></div>
-<div class="line"><span class="comment">// An MQTT ping request will be sent periodically at this interval.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS        (60)              // 60 second keep-alive</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_CONNECT_RETRIES              (3)             </span><span class="comment">/* 3 server connect retries  */</span><span class="preprocessor"></span></div>
 <div class="line"></div>
-<div class="line"><span class="comment">// The timeout for MQTT operations.</span></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_TIMEOUT_MS                (5000)            // 5 second timeout waiting for MQTT response</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MAX_DOWNLOAD_TRIES           (3)             </span><span class="comment">/* 3 download OTA Image retries */</span><span class="preprocessor"></span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">/**********************************************************************</span></div>
+<div class="line"><span class="comment"> * Message Defines</span></div>
+<div class="line"><span class="comment"> **********************************************************************/</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define PUBLISHER_LISTEN_TOPIC              &quot;publish_notify&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define COMPANY_TOPIC_PREPEND               &quot;anycloud&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define PUBLISHER_DIRECT_TOPIC               &quot;OTAImage&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_RESULT_SUCCESS               &quot;Success&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_RESULT_FAILURE               &quot;Failure&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_SUBSCRIBE_UPDATES_AVAIL \</span></div>
+<div class="line"><span class="preprocessor">&quot;{\</span></div>
+<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;Update Availability\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;UniqueTopicName\&quot;: \&quot;%s\&quot;\</span></div>
+<div class="line"><span class="preprocessor">}&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_DOWNLOAD_REQUEST \</span></div>
+<div class="line"><span class="preprocessor">&quot;{\</span></div>
+<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;Request Update\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;UniqueTopicName\&quot;: \&quot;%s\&quot;\</span></div>
+<div class="line"><span class="preprocessor">}&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_DOWNLOAD_DIRECT_REQUEST \</span></div>
+<div class="line"><span class="preprocessor">&quot;{\</span></div>
+<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;Send Direct Update\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot; \</span></div>
+<div class="line"><span class="preprocessor">}&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_RESULT_JSON \</span></div>
+<div class="line"><span class="preprocessor">&quot;{\</span></div>
+<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;%s\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;UniqueTopicName\&quot;: \&quot;%s\&quot;\</span></div>
+<div class="line"><span class="preprocessor">}&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_HTTP_RESULT_JSON \</span></div>
+<div class="line"><span class="preprocessor">&quot;{\</span></div>
+<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;%s\&quot;, \</span></div>
+<div class="line"><span class="preprocessor">\&quot;File\&quot;:\&quot;%s\&quot; \</span></div>
+<div class="line"><span class="preprocessor">}&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#ifndef CY_OTA_HTTP_GET_TEMPLATE</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_HTTP_GET_TEMPLATE \</span></div>
+<div class="line"><span class="preprocessor">    &quot;GET %s HTTP/1.1\r\n&quot; \</span></div>
+<div class="line"><span class="preprocessor">    &quot;Host: %s:%d \r\n&quot; \</span></div>
+<div class="line"><span class="preprocessor">    &quot;\r\n&quot;</span></div>
+<div class="line"><span class="preprocessor">#endif</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#ifndef CY_OTA_HTTP_POST_TEMPLATE</span></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_HTTP_POST_TEMPLATE \</span></div>
+<div class="line"><span class="preprocessor">    &quot;POST %s HTTP/1.1\r\n&quot; \</span></div>
+<div class="line"><span class="preprocessor">    &quot;Content-Length:%ld \r\n&quot; \</span></div>
+<div class="line"><span class="preprocessor">    &quot;\r\n%s&quot;</span></div>
+<div class="line"><span class="preprocessor">#endif</span></div>
+<div class="line"></div>
+<div class="line"><span class="comment">/**********************************************************************</span></div>
+<div class="line"><span class="comment"> * MQTT Defines</span></div>
+<div class="line"><span class="comment"> **********************************************************************/</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS          (60)                </span><span class="comment">/* 60 second keep-alive */</span><span class="preprocessor"></span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_MAX_TOPICS                  (2)</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_TOPIC_PREFIX                &quot;cy_ota_device&quot;</span></div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">#define CY_OTA_MQTT_CLIENT_ID_PREFIX            &quot;cy_device&quot;</span></div>
+<div class="line"></div>
 </div><!-- fragment --><h1><a class="anchor" id="section_snippets"></a>
 Code Snippets</h1>
 <p><br />
- The following code snip demonstrates an example for initializing the <a class="el" href="structcy__ota__network__params__t.html">cy_ota_network_params_t</a> and ota_agent_params structures required to start the OTA agent.<br />
+ The following code snip demonstrates an example for initializing the <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> and ota_agent_params structures required to start the OTA agent.<br />
  </p><div class="fragment"><div class="line"><span class="comment">/* Macro to enable/disable TLS */</span></div>
 <div class="line"><span class="preprocessor">#define ENABLE_TLS          (false)</span></div>
 <div class="line"></div>
@@ -263,7 +346,7 @@ Code Snippets</h1>
 <div class="line"><span class="preprocessor">#define CLIENT_KEY              &quot;&quot;</span></div>
 <div class="line"></div>
 <div class="line"><span class="comment">/* OTA context */</span></div>
-<div class="line"><a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ota_context;</div>
+<div class="line"><span class="keyword">static</span> <a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ota_context;</div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">void</span> ota_callback(<a class="code" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, <span class="keywordtype">void</span> *cb_arg );</div>
 <div class="line"></div>
@@ -281,29 +364,30 @@ Code Snippets</h1>
 <div class="line"><span class="comment">/* Network parameters for OTA */</span></div>
 <div class="line"><a class="code" href="structcy__ota__network__params__t.html">cy_ota_network_params_t</a> ota_network_params =</div>
 <div class="line">{</div>
-<div class="line">    .<a class="code" href="structcy__ota__network__params__t.html#a7bac54a6f8eb5e55801b4ba2b6e5e9e2">server</a> =</div>
-<div class="line">    {</div>
-<div class="line">        .<a class="code" href="structcy__ota__server__into__t.html#acb57842d853d038d0381d8c42241a593">pHostName</a> = <span class="stringliteral">&quot;test.mosquitto.org&quot;</span>,  <span class="comment">/* MQTT Broker endpoint */</span></div>
+<div class="line"> .connection = <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>,</div>
+<div class="line"> .mqtt =</div>
+<div class="line"> {</div>
+<div class="line">     .awsIotMqttMode = 0,                <span class="comment">/* This parameter must be 1 when using the AWS IoT MQTT server, 0 otherwise */</span></div>
+<div class="line">     .pIdentifier = <span class="stringliteral">&quot;CY_IOT_DEVICE&quot;</span>,     <span class="comment">/* MQTT identifier - less than 17 characters */</span></div>
+<div class="line">     .pTopicFilters = mqtt_topics,</div>
+<div class="line">     .numTopicFilters = MQTT_TOPIC_FILTER_NUM,</div>
+<div class="line">     .broker =</div>
+<div class="line">     {</div>
+<div class="line">         .pHostName = <span class="stringliteral">&quot;test.mosquitto.org&quot;</span>,  <span class="comment">/* MQTT Broker endpoint */</span></div>
 <div class="line"><span class="preprocessor">#if (ENABLE_TLS == true)</span></div>
-<div class="line">        .port = 8884                        <span class="comment">/* MQTT Server Port */</span></div>
+<div class="line">         .port = 8884                        <span class="comment">/* MQTT Server Port */</span></div>
 <div class="line"><span class="preprocessor">#else</span></div>
-<div class="line">        .port = 1883</div>
+<div class="line">         .port = 1883</div>
 <div class="line"><span class="preprocessor">#endif</span></div>
-<div class="line">    },</div>
-<div class="line">    .transport = <a class="code" href="group__group__ota__typedefs.html#gga31d8af0870c63149fb34f51dfd6f9d1aa1a4d4fbd02c4619f06fbe430e2a41b46">CY_OTA_TRANSPORT_MQTT</a>,</div>
-<div class="line">    .u.mqtt =</div>
-<div class="line">    {</div>
-<div class="line">        .pTopicFilters = mqtt_topics,</div>
-<div class="line">        .numTopicFilters = MQTT_TOPIC_FILTER_NUM,</div>
-<div class="line">        .pIdentifier = <span class="stringliteral">&quot;CY_IOT_DEVICE&quot;</span>,     <span class="comment">/* MQTT identifier - less than 17 characters */</span></div>
-<div class="line">        .awsIotMqttMode = 0                 <span class="comment">/* This parameter must be 1 when using the AWS IoT MQTT server, 0 otherwise */</span></div>
-<div class="line">    },</div>
+<div class="line">     },</div>
 <div class="line"><span class="preprocessor">#if (ENABLE_TLS == true)</span></div>
-<div class="line">    .credentials = &amp;tls_credentials</div>
+<div class="line">     .credentials = &amp;tls_credentials</div>
 <div class="line"><span class="preprocessor">#else</span></div>
-<div class="line">    .credentials = NULL</div>
+<div class="line">     .credentials = NULL</div>
 <div class="line"><span class="preprocessor">#endif</span></div>
+<div class="line"> },</div>
 <div class="line">};</div>
+<div class="line"></div>
 <div class="line"></div>
 <div class="line"><span class="comment">/* Parameters for OTA agent */</span></div>
 <div class="line"><a class="code" href="structcy__ota__agent__params__t.html">cy_ota_agent_params_t</a> ota_agent_params =</div>
@@ -317,20 +401,216 @@ Code Snippets</h1>
  The example function demonstrates the usage of OTA callback function to print the status of every OTA event. The callback feature is optional but be aware that the OTA middleware will not print the status of the OTA agent on its own.<br />
  <br />
  Note: User needs to initialize retarget-io to use the debug UART port.<br />
- </p><div class="fragment"><div class="line"><span class="comment">/* Setup callback function to print OTA status */</span></div>
-<div class="line"><span class="keywordtype">void</span> ota_callback(<a class="code" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, <span class="keywordtype">void</span> *cb_arg )</div>
+ </p><div class="fragment"><div class="line"><span class="comment">/*******************************************************************************</span></div>
+<div class="line"><span class="comment"> * Function Name: ota_callback()</span></div>
+<div class="line"><span class="comment"> *******************************************************************************</span></div>
+<div class="line"><span class="comment"> * Summary:</span></div>
+<div class="line"><span class="comment"> *  Got a callback from OTA</span></div>
+<div class="line"><span class="comment"> *</span></div>
+<div class="line"><span class="comment"> *  @param[in][out] cb_data - structure holding information for the Application</span></div>
+<div class="line"><span class="comment"> *</span></div>
+<div class="line"><span class="comment"> * Return:</span></div>
+<div class="line"><span class="comment"> *  CY_OTA_CB_RSLT_OTA_CONTINUE - OTA Agent to continue with function, using modified data from Application</span></div>
+<div class="line"><span class="comment"> *  CY_OTA_CB_RSLT_OTA_STOP     - OTA Agent to End current update session (do not quit).</span></div>
+<div class="line"><span class="comment"> *  CY_OTA_CB_RSLT_APP_SUCCESS  - Application completed task, OTA Agent use success</span></div>
+<div class="line"><span class="comment"> *  CY_OTA_CB_RSLT_APP_FAILED   - Application completed task, OTA Agent use failure</span></div>
+<div class="line"><span class="comment"> *</span></div>
+<div class="line"><span class="comment"> *******************************************************************************/</span></div>
+<div class="line"><span class="keyword">static</span> <a class="code" href="group__group__ota__typedefs.html#ga83280df2ca46db528cc12901d949fd63">cy_ota_callback_results_t</a> ota_callback(<a class="code" href="structcy__ota__cb__struct__t.html">cy_ota_cb_struct_t</a> *cb_data)</div>
 <div class="line">{</div>
-<div class="line">    <a class="code" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> ota_state;</div>
-<div class="line">    <a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx = *((<a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *)cb_arg);</div>
-<div class="line">    <a class="code" href="group__group__ota__functions.html#gacc6737f1ddf83bc6e8918bcc16695b30">cy_ota_get_state</a>(ctx, &amp;ota_state);</div>
-<div class="line">    printf(<span class="stringliteral">&quot;Application OTA callback ctx:%p reason:%d %s value:%ld state:%d %s %s\n&quot;</span>,</div>
-<div class="line">            ctx,</div>
-<div class="line">            reason,</div>
-<div class="line">            <a class="code" href="group__group__ota__functions.html#ga1f3276614aeca5a8d7c176f171024d66">cy_ota_get_callback_reason_string</a>(reason),</div>
-<div class="line">            value,</div>
-<div class="line">            ota_state,</div>
-<div class="line">            <a class="code" href="group__group__ota__functions.html#gafcd8ac0ada4557076da8070d11101f95">cy_ota_get_state_string</a>(ota_state),</div>
-<div class="line">            <a class="code" href="group__group__ota__functions.html#ga04b4063c3feb289ed5b4396b9ef7e107">cy_ota_get_error_string</a>(<a class="code" href="group__group__ota__functions.html#ga75cb3bded33614c98c90bce30dbfd62c">cy_ota_last_error</a>()));</div>
+<div class="line">    <a class="code" href="group__group__ota__typedefs.html#ga83280df2ca46db528cc12901d949fd63">cy_ota_callback_results_t</a>   cb_result = <a class="code" href="group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63a9b6b16fa9fcb36760749ced06ea21513">CY_OTA_CB_RSLT_OTA_CONTINUE</a>;    <span class="comment">/* OTA Agent to continue as normal */</span></div>
+<div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span>                  *state_string;</div>
+<div class="line">    <span class="keyword">const</span> <span class="keywordtype">char</span>                  *error_string;</div>
+<div class="line">    <a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>          ctx = NULL;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> (cb_data == NULL)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">return</span> <a class="code" href="group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63ab33edc4fae91e1c99f93933fc3a06bd5">CY_OTA_CB_RSLT_OTA_STOP</a>;</div>
+<div class="line">    }</div>
+<div class="line">    ctx = *((<a class="code" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> *)cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#afa47e10a9fe4712558dded6625a3c484">cb_arg</a>);</div>
+<div class="line">    <span class="keywordflow">if</span> (ctx == NULL)</div>
+<div class="line">    {</div>
+<div class="line">        <span class="keywordflow">return</span> <a class="code" href="group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63ab33edc4fae91e1c99f93933fc3a06bd5">CY_OTA_CB_RSLT_OTA_STOP</a>;</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    state_string = <a class="code" href="group__group__ota__functions.html#gafcd8ac0ada4557076da8070d11101f95">cy_ota_get_state_string</a>(cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a>);</div>
+<div class="line">    error_string = <a class="code" href="group__group__ota__functions.html#gaffc74d5bb4dd74ede1031222b9efcd9b">cy_ota_get_error_string</a>(<a class="code" href="group__group__ota__functions.html#ga7149423078fe0b9d401bddc1d0e808d1">cy_ota_get_last_error</a>());</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">switch</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ae28ffd179023e8902cbd3e88785540ad">reason</a>)</div>
+<div class="line">    {</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a6f1fe12d222a4fcb6aef59d045cc40af">CY_OTA_LAST_REASON</a>:                <span class="comment">/* to keep linker happy */</span></div>
+<div class="line">        <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a98710a7a1d2678890cda211ab2c89689">CY_OTA_REASON_SUCCESS</a>:</div>
+<div class="line">        printf(<span class="stringliteral">&quot;APP CB OTA SUCCESS state:%d %s last_error:%s\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a>, state_string, error_string);</div>
+<div class="line">        <span class="keywordflow">break</span>;</div>
+<div class="line">    <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60ad2bf02c326de5c6c95551123155e14bd">CY_OTA_REASON_FAILURE</a>:</div>
+<div class="line">        printf(<span class="stringliteral">&quot;APP CB OTA FAILURE state:%d %s last_error:%s\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a>, state_string, error_string);</div>
+<div class="line">        <span class="keywordflow">break</span>;</div>
+<div class="line">    <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggad852fa8cdb0431df709ccf12bb37cd60a7d2f0693d44fd480e23c7de3c2f68d10">CY_OTA_REASON_STATE_CHANGE</a>:</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">switch</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a>)</div>
+<div class="line">        {</div>
+<div class="line">            <span class="comment">/* informational */</span></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fae28d1cd8c5a985bb343a0828c234fdd0">CY_OTA_STATE_NOT_INITIALIZED</a>:</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fab4dff9b84c5eafa48e4d3eaff2302ba5">CY_OTA_STATE_EXITING</a>:</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa4980922c9b3cf3c4e1269324d4563d78">CY_OTA_STATE_INITIALIZING</a>:</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375faa1a4033af52d14af2873066da8f89098">CY_OTA_STATE_AGENT_STARTED</a>:</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375faf2dbf8dcfb8d9329549fa539970d9e54">CY_OTA_STATE_AGENT_WAITING</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA STATE CHANGE state:%d %s last_error:%s\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a>, state_string, error_string);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fad8e99bc84c807fa17f23b119900d4c1a">CY_OTA_STATE_START_UPDATE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA STATE CHANGE CY_OTA_STATE_START_UPDATE\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa4b481536d237fc9672cff019e5a24392">CY_OTA_STATE_STORAGE_OPEN</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA STORAGE OPEN\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375faf8b6a7adfb042c0b4379db005eb03fcb">CY_OTA_STATE_STORAGE_WRITE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA STORAGE WRITE %ld%% (%ld of %ld)\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a1d802b856542ce6b7e59e2559026307d">percentage</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ab43108a89dadf59dcad71d4b4c75411d">bytes_written</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ad29859423d69a8e0815a833a70284bdb">total_size</a>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa8177ec48fc37847b69d33f90a3b4333b">CY_OTA_STATE_STORAGE_CLOSE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA STORAGE CLOSE\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fafdf0e2e6deb544bc5bdc5dec53b0609f">CY_OTA_STATE_JOB_CONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA CONNECT FOR JOB using &quot;</span>);</div>
+<div class="line">            <span class="comment">/* NOTE:</span></div>
+<div class="line"><span class="comment">             *  MQTT - json_doc holds the MQTT JSON request doc</span></div>
+<div class="line"><span class="comment">             *  HTTP - json_doc holds the HTTP &quot;GET&quot; request</span></div>
+<div class="line"><span class="comment">             */</span></div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: server:%s port: %d\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: server:%s port: %d\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa53922a893f09e01688b27c5d225e27a5">CY_OTA_STATE_JOB_DOWNLOAD</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA JOB DOWNLOAD using &quot;</span>);</div>
+<div class="line">            <span class="comment">/* NOTE:</span></div>
+<div class="line"><span class="comment">             *  MQTT - json_doc holds the MQTT JSON request doc</span></div>
+<div class="line"><span class="comment">             *  HTTP - json_doc holds the HTTP &quot;GET&quot; request</span></div>
+<div class="line"><span class="comment">             */</span></div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: &#39;%s&#39;&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">                printf(<span class="stringliteral">&quot;                 topic: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3">unique_topic</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: &#39;%s&#39;&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a71bfd9cf787fc18dfd42b54950103a25">file</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa5f9288e902dc5473fd3e681eb2c43012">CY_OTA_STATE_JOB_DISCONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA JOB DISCONNECT\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa1a5597cb918e3a60890c003ca2b35926">CY_OTA_STATE_JOB_PARSE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA PARSE JOB: &#39;%.*s&#39; \n&quot;</span>, strlen(cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>), cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa7d1ad039e8599533b1bd50c4068a41da">CY_OTA_STATE_JOB_REDIRECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA JOB REDIRECT\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fab8c745b4b9dd7c582c1cc6735ad1401e">CY_OTA_STATE_DATA_CONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA CONNECT FOR DATA using &quot;</span>);</div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: %s:%d \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: %s:%d \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa2821523d7c323f672da8b19b45d5d935">CY_OTA_STATE_DATA_DOWNLOAD</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA DATA DOWNLOAD using &quot;</span>);</div>
+<div class="line">            <span class="comment">/* NOTE:</span></div>
+<div class="line"><span class="comment">             *  MQTT - json_doc holds the MQTT JSON request doc</span></div>
+<div class="line"><span class="comment">             *  HTTP - json_doc holds the HTTP &quot;GET&quot; request</span></div>
+<div class="line"><span class="comment">             */</span></div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">                printf(<span class="stringliteral">&quot;                       topic: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3">unique_topic</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">                printf(<span class="stringliteral">&quot;                        file: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a71bfd9cf787fc18dfd42b54950103a25">file</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa1957660855d0051d85c9c6bc52bee808">CY_OTA_STATE_DATA_DISCONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA DATA DISCONNECT\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa64f1d70db6ac1c7b6053aa72a829cfd7">CY_OTA_STATE_VERIFY</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA VERIFY\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa155daa564765a5efdb0f5e647832c25b">CY_OTA_STATE_RESULT_REDIRECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA RESULT REDIRECT\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa32bb3fbef7ed0e85e1130a8f8c206ac2">CY_OTA_STATE_RESULT_CONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA SEND RESULT CONNECT using &quot;</span>);</div>
+<div class="line">            <span class="comment">/* NOTE:</span></div>
+<div class="line"><span class="comment">             *  MQTT - json_doc holds the MQTT JSON request doc</span></div>
+<div class="line"><span class="comment">             *  HTTP - json_doc holds the HTTP &quot;GET&quot; request</span></div>
+<div class="line"><span class="comment">             */</span></div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: Broker:%s port: %d\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">                printf(<span class="stringliteral">&quot;                                      topic: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3">unique_topic</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: Server:%s port: %d\n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a0a79919e0a3bb279b462942fb410cb5b">pHostName</a>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a>.<a class="code" href="structcy__ota__server__info__t.html#a824fa715a00ad3c161b7a8cde090914d">port</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa38c70df41f2fab401d96e10bc21cb395">CY_OTA_STATE_RESULT_SEND</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA SENDING RESULT using &quot;</span>);</div>
+<div class="line">            <span class="comment">/* NOTE:</span></div>
+<div class="line"><span class="comment">             *  MQTT - json_doc holds the MQTT JSON request doc</span></div>
+<div class="line"><span class="comment">             *  HTTP - json_doc holds the HTTP &quot;PUT&quot;</span></div>
+<div class="line"><span class="comment">             */</span></div>
+<div class="line">            <span class="keywordflow">if</span> (cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a> == <a class="code" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98">CY_OTA_CONNECTION_MQTT</a>)</div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;MQTT: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">else</span></div>
+<div class="line">            {</div>
+<div class="line">                printf(<span class="stringliteral">&quot;HTTP: &#39;%s&#39; \n&quot;</span>, cb_data-&gt;<a class="code" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a>);</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa559e81062c0a2f47f03dcbffefbc7a75">CY_OTA_STATE_RESULT_RESPONSE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA Got Result response\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa7608a11942fc4b42c3487335639fd719">CY_OTA_STATE_RESULT_DISCONNECT</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA Result Disconnect\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375fa1a0a36230c7f92d5b5af2394e14fa6a1">CY_OTA_STATE_OTA_COMPLETE</a>:</div>
+<div class="line">            printf(<span class="stringliteral">&quot;APP CB OTA Session Complete\n&quot;</span>);</div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">case</span> <a class="code" href="group__group__ota__typedefs.html#ggab1539ebc23219f1ca64318286e9d375faabbd5e53bc741afd226adfd143dde572">CY_OTA_NUM_STATES</a>: <span class="comment">/* to keep compiler happy */</span></div>
+<div class="line">            <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">        }   <span class="comment">/* switch state */</span></div>
+<div class="line">        <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> cb_result;</div>
 <div class="line">}</div>
 <div class="line"></div>
 </div><!-- fragment --><p> <br />
@@ -362,7 +642,7 @@ Code Snippets</h1>
 </p>
 <h1><a class="anchor" id="section_example"></a>
 Code Example</h1>
-<p>For code example, please refer to this example:<br />
+<p>For AnyCloud OTA v1.2.0 code example, please refer to this example:<br />
  <a href="https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt">https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt</a><br />
  <br />
 </p>
@@ -372,7 +652,7 @@ Code Example</h1>
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

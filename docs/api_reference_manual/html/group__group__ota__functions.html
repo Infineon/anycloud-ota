@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: OTA Functions</title>
+<title>Over The Air (OTA) Update Library: OTA Functions</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -102,7 +102,8 @@ $(document).ready(function(){initNavTree('group__group__ota__functions.html','')
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">General Description</h2>
-<p>OTA functions for starting, stopping, and getting information about the OTA Agent. </p>
+<p>Functions to start/stop and query the OTA Agent. </p>
+<p>OTA functions for starting, stopping, and getting information about the OTA Agent.</p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
@@ -121,12 +122,12 @@ Functions</h2></td></tr>
 <tr class="memitem:gacc6737f1ddf83bc6e8918bcc16695b30"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gacc6737f1ddf83bc6e8918bcc16695b30">cy_ota_get_state</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ota_ptr, <a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> *state)</td></tr>
 <tr class="memdesc:gacc6737f1ddf83bc6e8918bcc16695b30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get OTA Agent State.  <a href="#gacc6737f1ddf83bc6e8918bcc16695b30">More...</a><br /></td></tr>
 <tr class="separator:gacc6737f1ddf83bc6e8918bcc16695b30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga75cb3bded33614c98c90bce30dbfd62c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga75cb3bded33614c98c90bce30dbfd62c">cy_ota_last_error</a> (void)</td></tr>
-<tr class="memdesc:ga75cb3bded33614c98c90bce30dbfd62c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Last OTA Error.  <a href="#ga75cb3bded33614c98c90bce30dbfd62c">More...</a><br /></td></tr>
-<tr class="separator:ga75cb3bded33614c98c90bce30dbfd62c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga04b4063c3feb289ed5b4396b9ef7e107"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga04b4063c3feb289ed5b4396b9ef7e107">cy_ota_get_error_string</a> (<a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a> error)</td></tr>
-<tr class="memdesc:ga04b4063c3feb289ed5b4396b9ef7e107"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Error String.  <a href="#ga04b4063c3feb289ed5b4396b9ef7e107">More...</a><br /></td></tr>
-<tr class="separator:ga04b4063c3feb289ed5b4396b9ef7e107"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7149423078fe0b9d401bddc1d0e808d1"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga7149423078fe0b9d401bddc1d0e808d1">cy_ota_get_last_error</a> (void)</td></tr>
+<tr class="memdesc:ga7149423078fe0b9d401bddc1d0e808d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get Last OTA Error.  <a href="#ga7149423078fe0b9d401bddc1d0e808d1">More...</a><br /></td></tr>
+<tr class="separator:ga7149423078fe0b9d401bddc1d0e808d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaffc74d5bb4dd74ede1031222b9efcd9b"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gaffc74d5bb4dd74ede1031222b9efcd9b">cy_ota_get_error_string</a> (cy_rslt_t error)</td></tr>
+<tr class="memdesc:gaffc74d5bb4dd74ede1031222b9efcd9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get String representation of error.  <a href="#gaffc74d5bb4dd74ede1031222b9efcd9b">More...</a><br /></td></tr>
+<tr class="separator:gaffc74d5bb4dd74ede1031222b9efcd9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gafcd8ac0ada4557076da8070d11101f95"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gafcd8ac0ada4557076da8070d11101f95">cy_ota_get_state_string</a> (<a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> state)</td></tr>
 <tr class="memdesc:gafcd8ac0ada4557076da8070d11101f95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get String Representation of OTA state.  <a href="#gafcd8ac0ada4557076da8070d11101f95">More...</a><br /></td></tr>
 <tr class="separator:gafcd8ac0ada4557076da8070d11101f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -169,14 +170,13 @@ Functions</h2></td></tr>
 <p>Start thread to monitor for OTA updates. This consumes resources until <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be" title="Stop OTA Background Agent. ">cy_ota_agent_stop()</a> is called.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">network_params</td><td>pointer to <a class="el" href="structcy__ota__network__params__s.html">cy_ota_network_params_s</a> </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">agent_params</td><td>pointer to <a class="el" href="structcy__ota__agent__params__s.html">cy_ota_agent_params_s</a> </td></tr>
-    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ptr</td><td>Handle to store OTA Agent context structure pointer<br />
- which is used in other OTA calls.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">network_params</td><td>pointer to <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">agent_params</td><td>pointer to <a class="el" href="structcy__ota__agent__params__t.html" title="OTA Agent parameters structure. ">cy_ota_agent_params_t</a> </td></tr>
+    <tr><td class="paramdir">[out]</td><td class="paramname">ota_ptr</td><td>Handle to store OTA Agent context structure pointer Which is used for other OTA calls.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_ERROR </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BADARG CY_RSLT_OTA_ERROR_ALREADY_STARTED CY_RSLT_OTA_ERROR </dd></dl>
 
 </div>
 </div>
@@ -202,7 +202,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_ERROR </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BADARG </dd></dl>
 
 </div>
 </div>
@@ -221,13 +221,14 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Check for OTA update availability and download update now. </p>
+<p>Once cy_ota_start() has returned CY_RSLT_SUCCESS, you can initiate an OTA update availability check whenever you desire, this supercede the timing values. It does not change the timer values, and will set the timer to the current values after an OTA download cycle.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context storage returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start()</a>;</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_BADARG CY_RSLT_MODULE_OTA_ERROR CY_RSLT_MODULE_OTA_ALREADY_STARTED </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BADARG CY_RSLT_OTA_ERROR_ALREADY_STARTED </dd></dl>
 
 </div>
 </div>
@@ -247,7 +248,7 @@ Functions</h2></td></tr>
 
 <p>Application calls to validate the OTA Image. </p>
 <p>If validate_after_reboot is set to 1 in OTA start parameters, this must be called after MCUBoot copies Secondary slot to Primary slot and updated Application is running.</p>
-<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_MODULE_OTA_ERROR </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_GENERAL </dd></dl>
 
 </div>
 </div>
@@ -276,6 +277,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get OTA Agent State. </p>
+<p>Use this function to determine what state the OTA Agent is in. You may not want to check if the OTA Agent is in CY_OTA_STATE_AGENT_WAITING so you don't interrupt an OTA cycle.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramdir">[in]</td><td class="paramname">ota_ptr</td><td>pointer to OTA Agent context returned from <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3">cy_ota_agent_start()</a>; </td></tr>
@@ -283,16 +285,16 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS sets <a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> CY_RSLT_OTA_ERROR_GENERAL </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga75cb3bded33614c98c90bce30dbfd62c"></a>
+<a class="anchor" id="ga7149423078fe0b9d401bddc1d0e808d1"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a> cy_ota_last_error </td>
+          <td class="memname">cy_rslt_t cy_ota_get_last_error </td>
           <td>(</td>
           <td class="paramtype">void&#160;</td>
           <td class="paramname"></td><td>)</td>
@@ -303,33 +305,33 @@ Functions</h2></td></tr>
 
 <p>Get Last OTA Error. </p>
 <p>The last error value is persistent, and can be queried after <a class="el" href="group__group__ota__functions.html#ga14b8129ff45b6af3bd71235676a220be">cy_ota_agent_stop()</a>.</p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>cy_rslt_t </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="ga04b4063c3feb289ed5b4396b9ef7e107"></a>
+<a class="anchor" id="gaffc74d5bb4dd74ede1031222b9efcd9b"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">const char* cy_ota_get_error_string </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga4ee62ce2e7209c650cd20166490956df">cy_ota_error_t</a>&#160;</td>
+          <td class="paramtype">cy_rslt_t&#160;</td>
           <td class="paramname"><em>error</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Get Error String. </p>
+<p>Get String representation of error. </p>
 <p>This can be called at any time.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">error</td><td>value returned from <a class="el" href="group__group__ota__functions.html#ga75cb3bded33614c98c90bce30dbfd62c" title="Get Last OTA Error. ">cy_ota_last_error()</a></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">error</td><td>value returned from <a class="el" href="group__group__ota__functions.html#ga7149423078fe0b9d401bddc1d0e808d1" title="Get Last OTA Error. ">cy_ota_get_last_error()</a></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>pointer to a string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to a string (NULL for unknown error) </dd></dl>
 
 </div>
 </div>
@@ -351,11 +353,11 @@ Functions</h2></td></tr>
 <p>This can be called at any time.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">state</td><td><a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">state</td><td><a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>pointer to string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to string (NULL for unknown state) </dd></dl>
 
 </div>
 </div>
@@ -377,11 +379,11 @@ Functions</h2></td></tr>
 <p>This can be called at any time.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">reason</td><td><a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a></td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">reason</td><td><a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>pointer to string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to string (NULL for unknown reason) </dd></dl>
 
 </div>
 </div>
@@ -391,7 +393,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

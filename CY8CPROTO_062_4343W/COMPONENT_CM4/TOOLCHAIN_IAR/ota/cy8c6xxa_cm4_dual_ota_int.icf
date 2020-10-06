@@ -53,7 +53,7 @@ define symbol __ICFEDIT_intvec_start__ = 0x00000000;
  * where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.icf'.
  */
 /* RAM */
-define symbol __ICFEDIT_region_IRAM1_start__ = 0x08002000;
+define symbol __ICFEDIT_region_IRAM1_start__ = 0x08020000;
 define symbol __ICFEDIT_region_IRAM1_end__   = 0x080FF800;
 /* Flash */
 define symbol __ICFEDIT_region_IROM1_start__ = 0x10000000;

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: cy_ota_mqtt_params_t Struct Reference</title>
+<title>Over The Air (OTA) Update Library: cy_ota_mqtt_params_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -101,7 +101,9 @@ $(document).ready(function(){initNavTree('structcy__ota__mqtt__params__t.html','
 <div class="title">cy_ota_mqtt_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
+<a name="details" id="details"></a><h2 class="groupheader">Description</h2>
+<div class="textblock"><p>OTA MQTT specific Connection parameters. </p>
+</div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:a426a5dcd872c5e7aa8f1e5b5a812dc41"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a426a5dcd872c5e7aa8f1e5b5a812dc41"></a>
@@ -124,18 +126,37 @@ const char **&#160;</td><td class="memItemRight" valign="bottom"><a class="el" h
 <a class="el" href="group__group__ota__typedefs.html#ga6424608a6e19ecd99e52f4013354fa82">cy_ota_mqtt_session_type_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#a8c08bc782786d64fcf57aa94e3d446cd">session_type</a></td></tr>
 <tr class="memdesc:a8c08bc782786d64fcf57aa94e3d446cd"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="group__group__ota__typedefs.html#ga6424608a6e19ecd99e52f4013354fa82">cy_ota_mqtt_session_type_t</a> <br /></td></tr>
 <tr class="separator:a8c08bc782786d64fcf57aa94e3d446cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa491d7cc6cc845ffc73e4c60df3efc5b"></a>
-IotMqttConnection_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#aa491d7cc6cc845ffc73e4c60df3efc5b">app_mqtt_connection</a></td></tr>
-<tr class="memdesc:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application MQTT connection information. <br /></td></tr>
-<tr class="separator:aa491d7cc6cc845ffc73e4c60df3efc5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afdf94288c07eb7e6648cb76779060f34"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structcy__ota__server__info__t.html">cy_ota_server_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#afdf94288c07eb7e6648cb76779060f34">broker</a></td></tr>
+<tr class="memdesc:afdf94288c07eb7e6648cb76779060f34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Broker to get Job or OTA Image.  <a href="#afdf94288c07eb7e6648cb76779060f34">More...</a><br /></td></tr>
+<tr class="separator:afdf94288c07eb7e6648cb76779060f34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42decbf03c92b95bde685ed5c6eb7ae3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a42decbf03c92b95bde685ed5c6eb7ae3"></a>
+IotNetworkCredentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__mqtt__params__t.html#a42decbf03c92b95bde685ed5c6eb7ae3">credentials</a></td></tr>
+<tr class="memdesc:a42decbf03c92b95bde685ed5c6eb7ae3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS) <br /></td></tr>
+<tr class="separator:a42decbf03c92b95bde685ed5c6eb7ae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="afdf94288c07eb7e6648cb76779060f34"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structcy__ota__server__info__t.html">cy_ota_server_info_t</a> cy_ota_mqtt_params_t::broker</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Broker to get Job or OTA Image. </p>
+<p>set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine OTA update flow. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

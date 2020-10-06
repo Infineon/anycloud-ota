@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: cy_ota_network_params_t Struct Reference</title>
+<title>Over The Air (OTA) Update Library: cy_ota_network_params_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -101,34 +101,32 @@ $(document).ready(function(){initNavTree('structcy__ota__network__params__t.html
 <div class="title">cy_ota_network_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
+<a name="details" id="details"></a><h2 class="groupheader">Description</h2>
+<div class="textblock"><p>OTA Connection parameters structure. </p>
+<p>This information is used for MQTT and HTTP connections. </p>
+</div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:addafb95726e9f6f399f5a34c3109a409"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="addafb95726e9f6f399f5a34c3109a409"></a>
-<a class="el" href="group__group__ota__typedefs.html#ga31d8af0870c63149fb34f51dfd6f9d1a">cy_ota_transport_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#addafb95726e9f6f399f5a34c3109a409">transport</a></td></tr>
-<tr class="memdesc:addafb95726e9f6f399f5a34c3109a409"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transport Type <a class="el" href="group__group__ota__typedefs.html#ga31d8af0870c63149fb34f51dfd6f9d1a">cy_ota_transport_t</a>. <br /></td></tr>
-<tr class="separator:addafb95726e9f6f399f5a34c3109a409"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26462f0de994e878be9a1a5b162c04b0"><td class="memItemLeft" ><a class="anchor" id="a26462f0de994e878be9a1a5b162c04b0"></a>
-union {</td></tr>
-<tr class="memitem:a1a971622494f7e20c6eb6c4416bb9538"><td class="memItemLeft" ><a class="anchor" id="a6fa4db81577b20f350b43153adad5c9e"></a>
-&#160;&#160;&#160;<a class="el" href="structcy__ota__mqtt__params__t.html">cy_ota_mqtt_params_t</a>&#160;&#160;&#160;<a class="el" href="structcy__ota__network__params__t.html#a6fa4db81577b20f350b43153adad5c9e">mqtt</a></td></tr>
-<tr class="memdesc:a1a971622494f7e20c6eb6c4416bb9538"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT transport information. <br /></td></tr>
-<tr class="separator:a1a971622494f7e20c6eb6c4416bb9538"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a26462f0de994e878be9a1a5b162c04b0"><td class="memItemLeft" valign="top">}&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#a26462f0de994e878be9a1a5b162c04b0">u</a></td></tr>
-<tr class="memdesc:a26462f0de994e878be9a1a5b162c04b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Union for different transport (FUTURE) <br /></td></tr>
-<tr class="separator:a26462f0de994e878be9a1a5b162c04b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7bac54a6f8eb5e55801b4ba2b6e5e9e2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7bac54a6f8eb5e55801b4ba2b6e5e9e2"></a>
-<a class="el" href="structcy__ota__server__into__t.html">cy_ota_server_into_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#a7bac54a6f8eb5e55801b4ba2b6e5e9e2">server</a></td></tr>
-<tr class="memdesc:a7bac54a6f8eb5e55801b4ba2b6e5e9e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Server/MQTT Broker. <br /></td></tr>
-<tr class="separator:a7bac54a6f8eb5e55801b4ba2b6e5e9e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5fe951baf88e1b86da63de3709ccc555"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5fe951baf88e1b86da63de3709ccc555"></a>
-IotNetworkCredentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#a5fe951baf88e1b86da63de3709ccc555">credentials</a></td></tr>
-<tr class="memdesc:a5fe951baf88e1b86da63de3709ccc555"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting the credentials pointer uses TlS. <br /></td></tr>
-<tr class="separator:a5fe951baf88e1b86da63de3709ccc555"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abcc290be8049d49f332165ac7aafb3e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abcc290be8049d49f332165ac7aafb3e0"></a>
+<a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#abcc290be8049d49f332165ac7aafb3e0">initial_connection</a></td></tr>
+<tr class="memdesc:abcc290be8049d49f332165ac7aafb3e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initial Connection Type <a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>. <br /></td></tr>
+<tr class="separator:abcc290be8049d49f332165ac7aafb3e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fa4db81577b20f350b43153adad5c9e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fa4db81577b20f350b43153adad5c9e"></a>
+<a class="el" href="structcy__ota__mqtt__params__t.html">cy_ota_mqtt_params_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#a6fa4db81577b20f350b43153adad5c9e">mqtt</a></td></tr>
+<tr class="memdesc:a6fa4db81577b20f350b43153adad5c9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT Connection information. <br /></td></tr>
+<tr class="separator:a6fa4db81577b20f350b43153adad5c9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adeff13d7efd88ae4d641bcd3b33a37d9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adeff13d7efd88ae4d641bcd3b33a37d9"></a>
+<a class="el" href="structcy__ota__http__params__t.html">cy_ota_http_params_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#adeff13d7efd88ae4d641bcd3b33a37d9">http</a></td></tr>
+<tr class="memdesc:adeff13d7efd88ae4d641bcd3b33a37d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP Connection information. <br /></td></tr>
+<tr class="separator:adeff13d7efd88ae4d641bcd3b33a37d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf5643e6336accb1b9bb7e5b219f3553"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf5643e6336accb1b9bb7e5b219f3553"></a>
 const void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#abf5643e6336accb1b9bb7e5b219f3553">network_interface</a></td></tr>
-<tr class="memdesc:abf5643e6336accb1b9bb7e5b219f3553"><td class="mdescLeft">&#160;</td><td class="mdescRight">network interface <br /></td></tr>
+<tr class="memdesc:abf5643e6336accb1b9bb7e5b219f3553"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application network interface for use by OTA. <br /></td></tr>
 <tr class="separator:abf5643e6336accb1b9bb7e5b219f3553"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5668e310a824240b5b756b23f63095c0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5668e310a824240b5b756b23f63095c0"></a>
+<a class="el" href="group__group__ota__typedefs.html#gaa14519d9111acc0f50e9fd5307283766">cy_ota_update_flow_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__network__params__t.html#a5668e310a824240b5b756b23f63095c0">use_get_job_flow</a></td></tr>
+<tr class="memdesc:a5668e310a824240b5b756b23f63095c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Job Flow (CY_OTA_JOB_FLOW or CY_OTA_DIRECT_FLOW) <br /></td></tr>
+<tr class="separator:a5668e310a824240b5b756b23f63095c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -136,7 +134,7 @@ const void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

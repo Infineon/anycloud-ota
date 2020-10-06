@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['reboot_5fupon_5fcompletion',['reboot_upon_completion',['../structcy__ota__agent__params__t.html#adf754cf9aaa07e786e366dc2204d6429',1,'cy_ota_agent_params_t']]]
+  ['json_5fdoc',['json_doc',['../structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa',1,'cy_ota_cb_struct_t']]]
 ];

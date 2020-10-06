@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: OTA Agent Callback</title>
+<title>Over The Air (OTA) Update Library: OTA Agent Callback</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -102,36 +102,34 @@ $(document).ready(function(){initNavTree('group__group__ota__callback.html','');
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">General Description</h2>
-<p>OTA Agent callback function. </p>
+<p>An application can get callbacks from the OTA Agent. </p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memItemLeft" align="right" valign="top">typedef void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__callback.html#ga8286ce2144f78d501ca224b1f4c8df4f">cy_ota_callback_t</a> )(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td></tr>
-<tr class="memdesc:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Application informational callback from OTA Agent.  <a href="#ga8286ce2144f78d501ca224b1f4c8df4f">More...</a><br /></td></tr>
-<tr class="separator:ga8286ce2144f78d501ca224b1f4c8df4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gada4cd31993f1831e886a4beac9039220"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="group__group__ota__typedefs.html#ga83280df2ca46db528cc12901d949fd63">cy_ota_callback_results_t</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__callback.html#gada4cd31993f1831e886a4beac9039220">cy_ota_callback_t</a> )(<a class="el" href="structcy__ota__cb__struct__t.html">cy_ota_cb_struct_t</a> *cb_data)</td></tr>
+<tr class="memdesc:gada4cd31993f1831e886a4beac9039220"><td class="mdescLeft">&#160;</td><td class="mdescRight">OTA Agent callback to the Application.  <a href="#gada4cd31993f1831e886a4beac9039220">More...</a><br /></td></tr>
+<tr class="separator:gada4cd31993f1831e886a4beac9039220"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="ga8286ce2144f78d501ca224b1f4c8df4f"></a>
+<a class="anchor" id="gada4cd31993f1831e886a4beac9039220"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef void(* cy_ota_callback_t)(<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> reason, uint32_t value, void *cb_arg)</td>
+          <td class="memname">typedef <a class="el" href="group__group__ota__typedefs.html#ga83280df2ca46db528cc12901d949fd63">cy_ota_callback_results_t</a>(* cy_ota_callback_t)(<a class="el" href="structcy__ota__cb__struct__t.html">cy_ota_cb_struct_t</a> *cb_data)</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Application informational callback from OTA Agent. </p>
+<p>OTA Agent callback to the Application. </p>
+<p>The Application can use the callback to override the default OTA functions.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">reason</td><td>- Callback reason <a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">value</td><td>- When callback reason is CY_OTA_REASON_DOWNLOAD_PERCENT<br />
- The value is the percentage of the download completed </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">cb_arg</td><td>- user supplied data ptr</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">[out]</td><td>cb_data current information that Application callback can use/modify</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>- N/A </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd></dd></dl>
 
 </div>
 </div>
@@ -141,7 +139,7 @@ Typedefs</h2></td></tr>
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>

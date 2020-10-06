@@ -89,7 +89,7 @@ fi
 # If value is 0xFF, we do not specify anything!
 #
 FLASH_ERASE_ARG=
-if [ $FLASH_ERASE_VALUE -eq 0 ]
+if [ "$FLASH_ERASE_VALUE" == "0x00" ]
 then
 FLASH_ERASE_ARG="-R 0"
 fi
@@ -135,7 +135,7 @@ echo "Application Name                         : $CY_OUTPUT_NAME"
 echo "Application Version                      : $CY_BUILD_VERSION"
 echo "Primary 1 Slot Start                     : $CY_BOOT_PRIMARY_1_START"
 echo "Primary 1 Slot Size                      : $CY_BOOT_PRIMARY_1_SIZE"
-echo "FLASH ERASE Value (NOTE: Empty for 0xff) : $FLASH_ERASE_VALUE"
+echo "FLASH ERASE Value                        : $FLASH_ERASE_VALUE"
 echo "Cypress MCUBoot Header size              : $MCUBOOT_HEADER_SIZE"
 echo "Max 512 bytes sectors for Application    : $MCUBOOT_MAX_IMG_SECTORS"
 if [ "$SIGNING_KEY_PATH" != "" ]

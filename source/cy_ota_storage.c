@@ -84,13 +84,13 @@
  * @return   0 on success
  *          -1 on error
  */
-static int eraseSlotTwo( void )
+static int eraseSlotTwo(void)
 {
     const struct flash_area *fap;
 
     if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
     {
-        IotLogError("%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0)) failed\r\n", __func__);
+        IotLogError("%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
         return -1;
     }
     if (flash_area_erase(fap, 0, fap->fa_size) != 0)
@@ -112,7 +112,7 @@ static int eraseSlotTwo( void )
  * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
  *
  * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_OTA_ERROR_OPEN_STORAGE
  */
 cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
 {
@@ -134,8 +134,8 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
 
     if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
     {
-        IotLogError( "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0)) failed\r\n", __func__);
-        return CY_RSLT_MODULE_OTA_OPEN_STORAGE_ERROR;
+        IotLogError("%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
+        return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
     }
     ctx->storage_loc = (void *)fap;
 
@@ -149,7 +149,7 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
  * @param[in]   chunk_info  - pointer to chunk information
  *
  * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_OTA_ERROR_WRITE_STORAGE
  */
 cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_t *chunk_info)
 {
@@ -166,14 +166,14 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_
     fap = (const struct flash_area *)ctx->storage_loc;
     if (fap == NULL)
     {
-        return CY_RSLT_MODULE_OTA_WRITE_STORAGE_ERROR;
+        return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     }
 
     rc = flash_area_write(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size);
     if (rc != 0)
     {
-        IotLogError("%s() flash_area_write() failed rc:%d\n", __func__, rc);
-        return CY_RSLT_MODULE_OTA_WRITE_STORAGE_ERROR;
+        IotLogError("%s() flash_area_write() failed result:%d\n", __func__, rc);
+        return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     }
 
     return CY_RSLT_SUCCESS;
@@ -185,7 +185,7 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_
  * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
  *
  * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_OTA_ERROR_CLOSE_STORAGE
  */
 cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx)
 {
@@ -198,7 +198,7 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx)
     fap = (const struct flash_area *)ctx->storage_loc;
     if (fap == NULL)
     {
-        return CY_RSLT_MODULE_OTA_CLOSE_STORAGE_ERROR;
+        return CY_RSLT_OTA_ERROR_CLOSE_STORAGE;
     }
     flash_area_close(fap);
 
@@ -211,44 +211,37 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx)
  * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
  *
  * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_OTA_ERROR_GENERAL
  */
 cy_rslt_t cy_ota_storage_verify(cy_ota_context_t *ctx)
 {
-    cy_rslt_t result = CY_RSLT_SUCCESS;
-    IotLogDebug("%s()\n", __func__);
+    int boot_ret;
+    int boot_pending;
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    /* Verify secondary slot here */
-    /* TODO: Add download verify routine here */
-    if (result == CY_RSLT_SUCCESS)
-    {
-        int boot_ret;
-        int boot_pending = 1;
+    /* We do not verify the slot - we expect that the Application
+     * will do verification in the callback.
+     */
 
-        if (ctx->agent_params.validate_after_reboot == 1)
-        {
-            boot_pending = 0;
-        }
-        /*
-         * boot_set_pending( x )
-         *
-         * 0 - We want the New Application to call cy_ota_storage_validated() on boot.
-         * 1 - We believe this to be good and ready to move to Primary Slot
-         *     without having to test on re-boot
-         * */
-        boot_ret = boot_set_pending(boot_pending);
-        if (boot_ret != 0)
-        {
-            IotLogError("%s() boot_set_pending() Failed\n", __func__);
-            return CY_RSLT_MODULE_OTA_VERIFY_ERROR;
-        }
-    }
-    else
+    boot_pending = 1;
+    if (ctx->agent_params.validate_after_reboot == 1)
     {
-        IotLogError("%s() Validation Failed\n", __func__);
-        return CY_RSLT_MODULE_OTA_VERIFY_ERROR;
+        boot_pending = 0;
+    }
+    /*
+     * boot_set_pending(x)
+     *
+     * 0 - We want the New Application to call cy_ota_storage_validated() on boot.
+     * 1 - We believe this to be good and ready to move to Primary Slot
+     *     without having to test on re-boot
+     * */
+    boot_ret = boot_set_pending(boot_pending);
+    IotLogDebug("%s() boot_set_pending(%d) result:%d\n", __func__, boot_pending, boot_ret);
+    if (boot_ret != 0)
+    {
+        IotLogError("%s() boot_set_pending() Failed\n", __func__);
+        return CY_RSLT_OTA_ERROR_VERIFY;
     }
     return CY_RSLT_SUCCESS;
 }
@@ -262,18 +255,18 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_t *ctx)
  * @param   N/A
  *
  * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_MODULE_OTA_ERROR
+ *          CY_RSLT_OTA_ERROR_GENERAL
  */
 cy_rslt_t cy_ota_storage_validated(void)
 {
-    int result;
+    int16_t boot_result;
     /* Mark Image in Primary Slot as valid
      * For AWS, there is a separate callback after a re-boot "self-test"
      */
-    result = boot_set_confirmed();
-    if (result != 0)
+    boot_result = boot_set_confirmed();
+    if (boot_result != 0)
     {
-        return CY_RSLT_MODULE_OTA_ERROR;
+        return CY_RSLT_OTA_ERROR_GENERAL;
     }
 
     return CY_RSLT_SUCCESS;

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['server',['server',['../structcy__ota__network__params__t.html#a7bac54a6f8eb5e55801b4ba2b6e5e9e2',1,'cy_ota_network_params_t']]],
-  ['session_5ftype',['session_type',['../structcy__ota__mqtt__params__t.html#a8c08bc782786d64fcf57aa94e3d446cd',1,'cy_ota_mqtt_params_t']]]
+  ['mqtt',['mqtt',['../structcy__ota__network__params__t.html#a6fa4db81577b20f350b43153adad5c9e',1,'cy_ota_network_params_t']]],
+  ['mqtt_5fconnection',['mqtt_connection',['../structcy__ota__cb__struct__t.html#a28a3f0ac910477bfea4b8f799e91f095',1,'cy_ota_cb_struct_t']]]
 ];

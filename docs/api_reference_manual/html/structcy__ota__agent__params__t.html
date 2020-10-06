@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cypress Over The Air: cy_ota_agent_params_t Struct Reference</title>
+<title>Over The Air (OTA) Update Library: cy_ota_agent_params_t Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">Cypress Over The Air</div>
+   <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
  </tr>
  </tbody>
@@ -101,24 +101,27 @@ $(document).ready(function(){initNavTree('structcy__ota__agent__params__t.html',
 <div class="title">cy_ota_agent_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></div></div>  </div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
+<a name="details" id="details"></a><h2 class="groupheader">Description</h2>
+<div class="textblock"><p>OTA Agent parameters structure. </p>
+<p>These parameters are for describing some aspects of the OTA Agent. </p>
+</div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
 <tr class="memitem:adf754cf9aaa07e786e366dc2204d6429"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf754cf9aaa07e786e366dc2204d6429"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#adf754cf9aaa07e786e366dc2204d6429">reboot_upon_completion</a></td></tr>
-<tr class="memdesc:adf754cf9aaa07e786e366dc2204d6429"><td class="mdescLeft">&#160;</td><td class="mdescRight">Automatically reboot upon download completion and verify. <br /></td></tr>
+<tr class="memdesc:adf754cf9aaa07e786e366dc2204d6429"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 = Automatically reboot upon download completion and verify <br /></td></tr>
 <tr class="separator:adf754cf9aaa07e786e366dc2204d6429"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4474305852ba2b1f29e8b0d15ca671c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4474305852ba2b1f29e8b0d15ca671c5"></a>
 uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a4474305852ba2b1f29e8b0d15ca671c5">validate_after_reboot</a></td></tr>
-<tr class="memdesc:a4474305852ba2b1f29e8b0d15ca671c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = OTA will set mcuboot to permanent before reboot * 1 = Application must call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> after reboot <br /></td></tr>
+<tr class="memdesc:a4474305852ba2b1f29e8b0d15ca671c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = OTA will set mcuboot to permanent before reboot 1 = Application must call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> after reboot <br /></td></tr>
 <tr class="separator:a4474305852ba2b1f29e8b0d15ca671c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f3b68d908f64e031aca84d871554850"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2f3b68d908f64e031aca84d871554850"></a>
-<a class="el" href="group__group__ota__callback.html#ga8286ce2144f78d501ca224b1f4c8df4f">cy_ota_callback_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a2f3b68d908f64e031aca84d871554850">cb_func</a></td></tr>
-<tr class="memdesc:a2f3b68d908f64e031aca84d871554850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback notification function. <br /></td></tr>
+<a class="el" href="group__group__ota__callback.html#gada4cd31993f1831e886a4beac9039220">cy_ota_callback_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a2f3b68d908f64e031aca84d871554850">cb_func</a></td></tr>
+<tr class="memdesc:a2f3b68d908f64e031aca84d871554850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notification callback function. <br /></td></tr>
 <tr class="separator:a2f3b68d908f64e031aca84d871554850"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8734130b240a3c0121a412c1a92afffa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8734130b240a3c0121a412c1a92afffa"></a>
 void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a8734130b240a3c0121a412c1a92afffa">cb_arg</a></td></tr>
-<tr class="memdesc:a8734130b240a3c0121a412c1a92afffa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque arg used in callback function. <br /></td></tr>
+<tr class="memdesc:a8734130b240a3c0121a412c1a92afffa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque arg passed to Notification callback function. <br /></td></tr>
 <tr class="separator:a8734130b240a3c0121a412c1a92afffa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
@@ -127,7 +130,7 @@ void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="st
 <div id="nav-path" class="navpath">
     <ul>
         <li class="footer">
-            Generated for <b>Cypress Over The Air</b> by <b>Cypress Semiconductor Corporation</b>.
+            Generated for <b>Over The Air (OTA) Update Library</b> by <b>Cypress Semiconductor Corporation</b>.
             All rights reserved.
         </li>
     </ul>
