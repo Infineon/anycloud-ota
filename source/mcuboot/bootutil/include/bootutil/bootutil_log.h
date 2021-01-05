@@ -26,7 +26,7 @@ extern "C" {
 #include <mcuboot_config/mcuboot_config.h>
 #include <mcuboot_config/mcuboot_logging.h>
 
-#ifdef MCUBOOT_HAVE_LOGGING
+#if 1 //def MCUBOOT_HAVE_LOGGING
 
 #define BOOT_LOG_ERR(...) MCUBOOT_LOG_ERR(__VA_ARGS__)
 #define BOOT_LOG_WRN(...) MCUBOOT_LOG_WRN(__VA_ARGS__)

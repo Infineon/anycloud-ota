@@ -28,20 +28,22 @@ KIT = "CY8CPROTO_062_4343W"
 
 # Subscriptions
 COMPANY_TOPIC_PREPEND = "anycloud"
+EXTRA_TOPIC_PREPEND    = ""         # add string here (or on command line) and in app to be unique
 PUBLISHER_LISTEN_TOPIC = "publish_notify"
 PUBLISHER_DIRECT_TOPIC = "OTAImage"
 
 # These are created at runtime so that KIT can be replaced
 
-# SUBSCRIBER_PUBLISH_TOPIC = "anycloud/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC    # Device sends messages to Publisher
-# PUBLISHER_DIRECT_REQUEST_TOPIC = "anycloud/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC            # Device asks for Download Directly (no Job)
+# SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC    # Device sends messages to Publisher
+# PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC            # Device asks for Download Directly (no Job)
 
 BAD_JSON_DOC = "MALFORMED JSON DOCUMENT"            # Bad incoming message
 UPDATE_AVAILABLE_REQUEST = "Update Availability"    # Device requests if there is an Update avaialble
 NO_AVAILABLE_REPONSE = "No Update Available"        # Publisher sends back to Device when no update available
 AVAILABLE_REPONSE = "Update Available"              # Publisher sends back to Device when update is available
 SEND_UPDATE_REQUEST = "Request Update"              # Device requests Publisher send the OTA Image
-SEND_DIRECT_UPDATE = "Send Direct Update"           # Device sent Update Direct request
+SEND_DIRECT_UPDATE = "Send Direct Update"           # Device sends Update Direct request
+SEND_CHUNK_REQUEST = "Request Data Chunk"           # Device sends Single Chunk Request
 REPORTING_RESULT_SUCCESS = "Success"                # Device sends the OTA result Success
 REPORTING_RESULT_FAILURE = "Failure"                # Device sends the OTA result Failure
 RESULT_REPONSE = "Result Received"                  # Publisher sends back to Device so Device knows Publisher received the results
@@ -69,7 +71,7 @@ SUBSCRIBER_MQTT_CLIENT_ID = "OTASubscriber"
 AMAZON_BROKER_ADDRESS = "a33jl9z28enc1q-ats.iot.us-west-1.amazonaws.com"
 
 # Set the Broker using command line arguments "-b eclipse"
-ECLIPSE_BROKER_ADDRESS = "mqtt.eclipse.org"
+ECLIPSE_BROKER_ADDRESS = "mqtt.eclipseprojects.io"
 
 # Set the Broker using command line arguments "-b mosquitto"
 MOSQUITTO_BROKER_ADDRESS = "test.mosquitto.org"
@@ -104,6 +106,8 @@ VERSION_BUILD = 0
 
 MAGIC_POS = 0
 DATA_START_POS = 1
+TOTAL_FILE_SIZE_POS = 6
+FILE_OFFSET_POS = 7
 PAYLOAD_SIZE_POS = 8
 TOTAL_PAYLOADS_POS = 9
 PAYLOAD_INDEX_POS = 10
@@ -111,6 +115,10 @@ PAYLOAD_INDEX_POS = 10
 ca_certs = "no ca_certs"
 certfile = "no certfile"
 keyfile = "no keyfile"
+
+# If we are requesting a chunk at a time
+request_file_in_chunks = False
+file_in_chunks_chunk_size = CHUNK_SIZE
 
 # Define a class to encapsulate some variables
 
@@ -121,6 +129,15 @@ class MQTTSubscriber(mqtt.Client):
       self.subscribe_mid=-1
       self.publish_mid=-1
       self.download_complete=False
+      # When we request chunks individually
+      self.request_file_in_chunks = False
+      self.received_a_chunk=0
+      self.chunks_received=0
+      self.current_offset = 0
+      self.chunk_size = 0
+      self.file_size = 0
+      self.last_message = ""
+
 
 # Handle ctrl-c to end program w/threading
 # store the original SIGINT handler
@@ -211,22 +228,40 @@ def parse_incoming_message(message_string):
 # -----------------------------------------------------------
 #   reassemble_image
 # -----------------------------------------------------------
-def reassemble_image(image_file):
-    print(" Opening " + image_file + " to write output file" )
-    with open(image_file, 'wb') as out_file:
-        # print(" Opened .. write the file" )
-        if len(sub_mqtt_msgs) != sub_total_payloads:
+def reassemble_image(client, image_file):
+    global sub_total_payloads
+    num_chunks = sub_total_payloads
+    with open(image_file, 'ab') as out_file:
+        # print(" Opened .. write the file: " + image_file)
+        if (len(sub_mqtt_msgs) != sub_total_payloads) & (client.request_file_in_chunks == False):
             print("ERROR: Number of chunks expected: " + str(sub_total_payloads) + ", Received: " + str(len(sub_mqtt_msgs)))
             return
         else:
-            # print("Run through the chunks: " + str(sub_total_payloads))
-            for payload_index in range(0,sub_total_payloads):
+            if client.request_file_in_chunks == True:
+                num_chunks = 1
+            # print("Run through the chunks: " + str(num_chunks))
+            for payload_index in range(0,num_chunks):
                 # print( "Payload " + str(payload_index) + "...")
                 chunk = sub_mqtt_msgs[payload_index]
                 payload_len = len(chunk) - HEADER_SIZE
-                header = struct.unpack('<8s5H2I3H', chunk[0:HEADER_SIZE])
+                header = struct.unpack('<8s5H2I3H', bytearray(chunk[0:HEADER_SIZE]))
 
-                if header[PAYLOAD_INDEX_POS] != payload_index:
+                # print header info
+                if (DEBUG_LOG == True):
+                    data_start = header[DATA_START_POS]
+                    print("    data start:" + str(data_start))
+                    file_size = header[TOTAL_FILE_SIZE_POS]
+                    print("     file size:" + str(file_size))
+                    off = header[FILE_OFFSET_POS]
+                    print("   file offset:" + str(off))
+                    payload_size = header[PAYLOAD_SIZE_POS]
+                    print("  payload size:" + str(payload_size))
+                    payload_index = header[PAYLOAD_INDEX_POS]
+                    print(" payload index:" + str(payload_index))
+                    total_payload = header[TOTAL_PAYLOADS_POS]
+                    print("  num  payload:" + str(total_payload))
+
+                if (header[PAYLOAD_INDEX_POS] != payload_index) & (client.request_file_in_chunks == False):
                     print("ERROR: Chunks are received out of order")
                     return
                 elif header[PAYLOAD_SIZE_POS] != payload_len:
@@ -236,12 +271,15 @@ def reassemble_image(image_file):
                 else:
                     data_start = header[DATA_START_POS]
                     payload = chunk[data_start:len(chunk)]
-                    # print( "write chunk " + str(header[PAYLOAD_INDEX_POS]) + ".")
+                    # print( "write chunk " + str(header[FILE_OFFSET_POS]) + " of: " + str(header[FILE_OFFSET_POS]) + " offset: " + str(header[PAYLOAD_INDEX_POS]) + ".")
+                    out_file.seek(header[FILE_OFFSET_POS])
+                    # print(" pos after seek " + str(out_file.tell()))
                     out_file.write(payload)
 
             out_file.close()
             file_size = os.stat(image_file).st_size
-            print("Image file " + image_file + "," + str(file_size) + " done!")
+            if client.request_file_in_chunks == False:
+                print("Image file " + image_file + "," + str(file_size) + " done!")
 
 
 # -----------------------------------------------------------
@@ -266,6 +304,7 @@ def subscriber_recv_message(client, userdata, message):
         message_string = str(message.payload.decode("utf-8"))
         request,message_type,unique_topic = parse_incoming_message(message_string)
         print("\nSubscriber: Message received: '" + request + "'\n")
+        client.last_message = message_string
     except Exception as e:
         message_string = ""
         message_type = MSG_TYPE_CHUNK
@@ -285,7 +324,19 @@ def subscriber_recv_message(client, userdata, message):
         return
 
     if message_type == MSG_TYPE_UPDATE_AVAILABLE:
-        if USE_DIRECT_FLOW == False:
+        if client.request_file_in_chunks == True:
+            # ask for file in chunks
+            job_dict = json.loads(message_string)
+            job_dict["Message"] = SEND_CHUNK_REQUEST
+            job_dict["Offset"] = str(client.current_offset)
+            job_dict["Size"] = str(client.chunk_size)
+            job_string = json.dumps(job_dict)
+            # Publish the request
+            print( "Subscriber: send Request Update. >" + job_string + "<\n")
+            result,messageID = client.publish(SUBSCRIBER_PUBLISH_TOPIC, job_string, SUBSCRIBER_PUBLISH_QOS)
+            client.loop(0.1)
+
+        elif USE_DIRECT_FLOW == False:
             if message.topic == unique_topic:
                 # An update is available - ask for the download
                 job_dict = json.loads(message_string)
@@ -324,17 +375,37 @@ def subscriber_recv_message(client, userdata, message):
 
         magic_word = str(header[MAGIC_POS], 'ascii')
         if magic_word == HEADER_MAGIC:
+            send_result = False
 
-            if header[PAYLOAD_INDEX_POS] == 0: # Check if this is the first payload of an image
+            # Create the msgs list
+            # - if this is the first payload of an image
+            # - if this is a chunk request
+            if (header[PAYLOAD_INDEX_POS] == 0) | (client.request_file_in_chunks == True):
                 sub_mqtt_msgs = []
 
             sub_mqtt_msgs.append(message.payload)
 
-            if header[PAYLOAD_INDEX_POS] == (header[TOTAL_PAYLOADS_POS] - 1): # Check if this is the last payload of an image
+            if client.request_file_in_chunks == True:
+                client.received_a_chunk = 1
+                client.chunks_received += 1
+                client.file_size = header[TOTAL_FILE_SIZE_POS]
+                # we received a chunk. If this is the last chunk, we are done
+                # if not the last chunk, ask for the next one
                 sub_total_payloads = header[TOTAL_PAYLOADS_POS]
-                print( "Subscriber: saving to file: " + OTA_IMAGE_FILE )
-                reassemble_image(OTA_IMAGE_FILE)
+                index = header[PAYLOAD_INDEX_POS]
+                # print( "Subscriber: saving CHUNK " + str(index) + " of: " + str(sub_total_payloads) +  " to file: " + OTA_IMAGE_FILE )
+                reassemble_image(client, OTA_IMAGE_FILE)
+                if (index == (sub_total_payloads - 1)):
+                    print(" Received last payload!")
+                    send_result = True
 
+            elif (header[PAYLOAD_INDEX_POS] == (header[TOTAL_PAYLOADS_POS] - 1)):
+                sub_total_payloads = header[TOTAL_PAYLOADS_POS]
+                print( "Subscriber: saving " + str(sub_total_payloads) + " to file: " + OTA_IMAGE_FILE )
+                reassemble_image(client, OTA_IMAGE_FILE)
+                send_result = True
+
+            if (send_result == True):
                 # File is completely received
                 print("Sending Result\n")
                 job_file = open (JSON_MESSAGE_TEMPLATE)
@@ -347,6 +418,7 @@ def subscriber_recv_message(client, userdata, message):
                 result, messageID = client.publish(SUBSCRIBER_PUBLISH_TOPIC, job_string, SUBSCRIBER_PUBLISH_QOS)
                 client.loop(0.1)
                 client.download_complete = True
+
         else:
             print("ERROR: Expected Header Magic: " + HEADER_MAGIC + ", Received: " + header[0])
 
@@ -365,6 +437,7 @@ def subscriber_recv_message(client, userdata, message):
 def get_OTA_image():
     global terminate
     global unique_topic_name
+
     time_value = time.monotonic_ns()
     time_string = repr(time_value)
     client_id = SUBSCRIBER_MQTT_CLIENT_ID + str(random.randint(0, 1024*1024*1024))
@@ -380,6 +453,15 @@ def get_OTA_image():
     sub_client.on_message = subscriber_recv_message
     if TLS_ENABLED:
         sub_client.tls_set(ca_certs, certfile, keyfile)
+
+    if (request_file_in_chunks == True):
+        sub_client.request_file_in_chunks = True
+        sub_client.received_a_chunk=0
+        sub_client.chunks_received=0
+        sub_client.current_offset = 0
+        sub_client.chunk_size = file_in_chunks_chunk_size
+        sub_client.last_message = ""
+
     sub_client.connect(BROKER_ADDRESS, BROKER_PORT, MQTT_KEEP_ALIVE)
     while sub_client.connected_flag == False:
         sub_client.loop(0.1)
@@ -390,7 +472,7 @@ def get_OTA_image():
     # Create Unique Topic Name
     print( "Subscriber: Create unique topic to receive the OTA Image" )
     rand_string = str(random.randint(0, 1024*1024*1024))
-    unique_topic_name = "anycloud/" + KIT + "/subscriber/image" + rand_string
+    unique_topic_name = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/subscriber/image" + rand_string
 
     print("Subscriber: Waiting for message from Publisher on: " + unique_topic_name)
     sub_client.subscribe_mid = -1
@@ -418,10 +500,44 @@ def get_OTA_image():
         time.sleep(0.1)
         if terminate:
             exit(0)
+        if (sub_client.request_file_in_chunks == True) & (sub_client.received_a_chunk == 1):
+            sub_client.current_offset += sub_client.chunk_size
+            sub_client.received_a_chunk = 0
+            # if not done, request next chunk
+            # print("   ---------- Main --- curr_off: " + str(sub_client.current_offset) + " of " + str(sub_client.file_size))
+            if (sub_client.current_offset < sub_client.file_size):
+                # request next chunk
+                job_dict = json.loads(sub_client.last_message)
+                job_dict["Message"] = SEND_CHUNK_REQUEST
+                job_dict["Offset"] = str(sub_client.current_offset)
+                job_dict["Size"] = str(sub_client.chunk_size)
+                job_string = json.dumps(job_dict)
+                # Publish the request
+                if DEBUG_LOG:
+                    print( "Subscriber: send Request Update. >" + job_string + "<\n")
+                result,messageID = sub_client.publish(SUBSCRIBER_PUBLISH_TOPIC, job_string, SUBSCRIBER_PUBLISH_QOS)
+                sub_client.loop(0.1)
+
         if sub_client.download_complete:
             sub_client.disconnect()
             return
 
+# -----------------------------------------------------------
+#   subscriber_loop
+# -----------------------------------------------------------
+def subscriber_loop():
+    global terminate
+    while True:
+        get_OTA_image()
+        print("waiting 15 seconds, then starting download again")
+        i = 0
+        while ( i < 150 ):
+            time.sleep(0.1)
+            i = i + 1
+            if terminate:
+                exit(0)
+
+        return
 
 # =====================================================================
 #
@@ -435,14 +551,20 @@ def get_OTA_image():
 # =====================================================================
 
 if __name__ == "__main__":
-    print("Infineon Test MQTT Publisher.")
-    print("   Usage: 'python publisher.py [tls] [-l] [-b broker] [-k kit] [-f filepath]'")
+    print("Infineon Test MQTT Subscriber.")
+    print("   Usage: 'python subscriber.py [tls] [-l] [-b <broker>] [-k <kit>] [-f <filepath>] [-c <chunk_size>]  [-e <topic_suffix>]'")
+    print("<broker>       '[a] | [amazon] | [e] | [eclipse] | [m] | [mosquitto]'")
+    print("<kit>          '[CY8CKIT_062S2_43012] | [CY8CKIT_064B0S2_4343W] | [CY8CPROTO_062_4343W]'")
+    print("<filepath>     The location to store the OTA Image file")
+    print("<chunk_size>   The size (in decimal bytes) of the chunks to send - default=4096")
+    print("<topic_suffix> This will be added to the beginning of the topic: 'anycloud'<topic_suffix")
     print("Defaults: <non-TLS>")
     print("        : -f " + OTA_IMAGE_FILE)
     print("        : -b mosquitto ")
     print("        : -k " + KIT)
     print("        : -d (use direct flow - default is job flow)")
     print("        : -l turn on extra logging")
+    print("        : -c request chunks one at a time rather than whole file")
     last_arg = ""
     for i, arg in enumerate(sys.argv):
         # print(f"Argument {i:>4}: {arg}")
@@ -455,13 +577,18 @@ if __name__ == "__main__":
             USE_DIRECT_FLOW = True
         if last_arg == "-f":
             OTA_IMAGE_FILE = arg
+        if last_arg == "-e":
+            EXTRA_TOPIC_PREPEND = arg
         if last_arg == "-b":
-            if arg == "amazon":
+            if ((arg == "amazon") | (arg == "a")):
                 BROKER_ADDRESS = AMAZON_BROKER_ADDRESS
-            if arg == "eclipse":
+            if ((arg == "eclipse") | (arg == "e")):
                 BROKER_ADDRESS = ECLIPSE_BROKER_ADDRESS
-            if arg == "mosquitto":
+            if ((arg == "mosquitto") | (arg == "m")):
                 BROKER_ADDRESS = MOSQUITTO_BROKER_ADDRESS
+        if last_arg == "-c":
+            file_in_chunks_chunk_size = int(arg)    # need to test range?
+            request_file_in_chunks = True
         if last_arg == "-k":
             KIT = arg
         last_arg = arg
@@ -475,13 +602,22 @@ print("   Using BROKER: " + BROKER_ADDRESS)
 print("   Using    KIT: " + KIT)
 print("   Using   File: " + OTA_IMAGE_FILE)
 print("    extra debug: " + DEBUG_LOG_STRING)
+if request_file_in_chunks == True:
+    print("   Get file in chunks of size: " + str(file_in_chunks_chunk_size) )
 
-SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
+SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
 print("SUBSCRIBER_PUBLISH_TOPIC   : " + SUBSCRIBER_PUBLISH_TOPIC)
 
-PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
+PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
 print("PUBLISHER_DIRECT_REQUEST_TOPIC: " + PUBLISHER_DIRECT_REQUEST_TOPIC)
 print("\n")
+
+# delete outfile to start clean
+try:
+    os.remove(OTA_IMAGE_FILE)
+except Exception as e:
+    # don't error if file does not exist
+    print("")
 
 #
 # set TLS broker and certs based on args
@@ -503,12 +639,10 @@ if TLS_ENABLED:
         ca_certs = "amazon_ca.crt"
         certfile = "amazon_client.crt"
         keyfile  = "amazon_private_key.pem"
-    print("Connecting using TLS to '" + BROKER_ADDRESS + ":" + str(BROKER_PORT) + "'" + os.linesep)
+    print("Connecting using TLS to '" + COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
 else:
     BROKER_PORT = 1883
-    print("Unencrypted connection to '" + BROKER_ADDRESS + ":" + str(BROKER_PORT) + "'" + os.linesep)
+    print("Unencrypted connection to '" + COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
 
-while True:
-    get_OTA_image()
-    print("waiting 15 seconds, then starting download again")
-    time.sleep(15)
+subscriber_loop()
+

@@ -93,6 +93,9 @@
 #define CY_BOOT_EXTERNAL_FLASH_ERASE_VALUE      (0xff)
 #endif
 
+#ifdef CY_FLASH_MAP_EXT_DESC
+/* Nothing to be there when external FlashMap Descriptors are used */
+#else
 static struct flash_area bootloader =
 {
     .fa_id        = FLASH_AREA_BOOTLOADER,
@@ -168,7 +171,12 @@ static struct flash_area scratch =
 #endif
     .fa_size      = CY_BOOT_SCRATCH_SIZE
 };
+#endif
 
+#ifdef CY_FLASH_MAP_EXT_DESC
+/* Use external Flash Map Descriptors */
+extern struct flash_area *boot_area_descs[];
+#else
 struct flash_area *boot_area_descs[] =
 {
     &bootloader,
@@ -181,6 +189,7 @@ struct flash_area *boot_area_descs[] =
     &scratch,
     NULL
 };
+#endif
 
 /*
 * Opens the area for use. id is one of the `fa_id`s

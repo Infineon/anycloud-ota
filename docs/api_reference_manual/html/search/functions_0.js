@@ -8,5 +8,10 @@ var searchData=
   ['cy_5fota_5fget_5fstate',['cy_ota_get_state',['../group__group__ota__functions.html#gacc6737f1ddf83bc6e8918bcc16695b30',1,'cy_ota_api.h']]],
   ['cy_5fota_5fget_5fstate_5fstring',['cy_ota_get_state_string',['../group__group__ota__functions.html#gafcd8ac0ada4557076da8070d11101f95',1,'cy_ota_api.h']]],
   ['cy_5fota_5fget_5fupdate_5fnow',['cy_ota_get_update_now',['../group__group__ota__functions.html#ga749e2780daeb68e40d47ca8c90a6922c',1,'cy_ota_api.h']]],
-  ['cy_5fota_5fvalidated',['cy_ota_validated',['../group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5',1,'cy_ota_api.h']]]
+  ['cy_5fota_5fset_5flog_5flevel',['cy_ota_set_log_level',['../group__group__ota__functions.html#ga718197f84a569de2c074f3494508c952',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fstorage_5fclose',['cy_ota_storage_close',['../group__group__ota__functions.html#ga547c81a023f34c43ec7f64749dbba163',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fstorage_5fopen',['cy_ota_storage_open',['../group__group__ota__functions.html#ga825b8796ddeac75de9f46fb0542392ea',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fstorage_5fvalidated',['cy_ota_storage_validated',['../group__group__ota__functions.html#ga1a84d3c1849c666e2630417da3edf728',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fstorage_5fverify',['cy_ota_storage_verify',['../group__group__ota__functions.html#ga43cbe4ac5de285d310e7c4aadbb9c86c',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fstorage_5fwrite',['cy_ota_storage_write',['../group__group__ota__functions.html#gac2021dfbc81e6aee03e3f37761deff6c',1,'cy_ota_api.h']]]
 ];

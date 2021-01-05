@@ -28,30 +28,37 @@
 #include "cy_ota_internal.h"
 #include "cyabs_rtos.h"
 
-#include "iot_config.h"
+//#include "cy_iot_network_secured_socket.h"
+#include "cy_mqtt_api.h"
 
-#include "iot_init.h"
-#include "iot_network.h"
-
-#include "iot_mqtt.h"
-#include "iot_mqtt_types.h"
-
-#include "cy_iot_network_secured_socket.h"
 
 #include "cy_json_parser.h"
+
+#include "cy_log.h"
 
 #define IOT_PUBLISH_RETRY_LIMIT                        (10)
 #define IOT_PUBLISH_RETRY_MS                           (1000)
 #define IOT_TOPIC_FILTER_COUNT                         (1)
+
+/* Publish 1 MQTT request, publisher chunks and sends all data
+ * Enabled is current version.
+ *
+ * Comment out to have Device request each chunk separately.
+ * */
+#define CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
 
 /***********************************************************************
  *
  * defines & enums
  *
  **********************************************************************/
+typedef enum {
+    CY_OTA_MQTT_SUBSCRIBE = 0,
+    CY_OTA_MQTT_UNSUBSCRIBE,
+} cy_ota_subscribe_command_t;
+
+
 /* For debugging */
-//#define PRINT_CONNECT_INFO       1
-//#define PRINT_NETWORK_INFO      1
 //#define PRINT_MQTT_DATA         1
 //#define DEBUG_PACKET_RECEIPT_TIME_DIFF   1
 
@@ -63,10 +70,10 @@
 #define CLIENT_IDENTIFIER_MAX_LENGTH                (24)
 
 /**
- * @brief Number of decimal digits for a 16 bit number
+ * @brief Number of decimal digits for a 16 bit number (+1 for '\0')
  * Used to size the Client ID string to be able to add a unique number to it.
  */
-#define UINT16_DECIMAL_LENGTH                       (5)
+#define UINT16_DECIMAL_LENGTH                       (6)
 
 /**
  * @brief The Last Will and Testament topic name in this demo.
@@ -173,11 +180,11 @@ typedef struct cy_ota_mqtt_chunk_payload_header_s {
  * Function declarations
  *
  **********************************************************************/
-static cy_rslt_t  cy_ota_modify_subscriptions(IotMqttConnection_t mqttConnection,
-                                              IotMqttOperationType_t operation,
-                                              uint8_t numTopicFilters,
-                                              const char ** pTopicFilters,
-                                              void * pCallbackParameter);
+static cy_rslt_t  cy_ota_modify_subscriptions(cy_ota_context_t *ctx,
+                                                cy_mqtt_t mqttConnection,
+                                                int operation,
+                                                uint8_t numTopics,
+                                                const char ** pTopicFilters);
 
 /***********************************************************************
  *
@@ -185,78 +192,36 @@ static cy_rslt_t  cy_ota_modify_subscriptions(IotMqttConnection_t mqttConnection
  *
  **********************************************************************/
 
-#ifdef PRINT_CONNECT_INFO
-void _print_connect_info(IotMqttConnectInfo_t *connect)
+void _print_connect_info(cy_mqtt_connect_info_t *connection)
 {
-
-    IotLogInfo("IotMqttConnectInfo_t:");
-    IotLogInfo("   AWS mode : %d", connect->awsIotMqttMode);
-    IotLogInfo("   ID       : %.*s", connect->clientIdentifierLength, connect->pClientIdentifier);
-    IotLogInfo("   user     : %.*s", connect->userNameLength, connect->pUserName);
-    IotLogInfo("   pass     : %.*s", connect->passwordLength, connect->pPassword);
-    IotLogInfo("   clean    : %d", connect->cleanSession);
-    IotLogInfo("prev sub    : %p", connect->pPreviousSubscriptions);
-    IotLogInfo("prev sub cnt: %d", connect->previousSubscriptionCount);
-    IotLogInfo("   WILL     : %p", connect->pWillInfo);
-    if (connect->pWillInfo != NULL)
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_connect_info_t:\n");
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   ID       : %.*s\n", connection->client_id_len, connection->client_id);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   user     : %.*s\n", connection->username_len, connection->username);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   pass     : %.*s\n", connection->password_len, connection->password);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   clean    : %d\n", connection->clean_session);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   WILL     : %p\n", connection->will_info);
+    if (connection->will_info != NULL)
     {
-        IotLogInfo("          topic : %.*s", connect->pWillInfo->topicNameLength, connect->pWillInfo->pTopicName);
-        IotLogInfo("          qos   : %d", connect->pWillInfo->qos);
-        IotLogInfo("          retry : %ld", connect->pWillInfo->retryLimit);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "          topic : %.*s\n", connection->will_info->topic_len, connection->will_info->topic);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "          qos   : %d\n", connection->will_info->qos);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "         retain : %ld\n", connection->will_info->retain);
     }
-    IotLogInfo(" keep alive : %d", connect->keepAliveSeconds);
-
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "keep alive  : %p\n", connection->keep_alive_sec);
 }
-#endif
 
-#ifdef PRINT_NETWORK_INFO
-void _print_network_info(IotMqttNetworkInfo_t *network)
+void _print_broker_info(cy_mqtt_broker_info_t *broker)
 {
-    IotLogInfo("IotMqttNetworkInfo_t:");
-    IotLogInfo("   create   : %d", network->createNetworkConnection);
-    if (network->createNetworkConnection)
-    {
-        IotLogInfo("     serverInfo : %p", network->u.setup.pNetworkServerInfo);
-        if (network->u.setup.pNetworkServerInfo != NULL)
-        {
-            IotNetworkServerInfo_t pServerInfo = network->u.setup.pNetworkServerInfo;
-            (void)pServerInfo;
-            IotLogInfo("             server : %s", pServerInfo->pHostName);
-            IotLogInfo("             port   : %d", pServerInfo->port);
-        }
-        IotLogInfo("     credential : %p", network->u.setup.pNetworkCredentialInfo);
-        if (network->u.setup.pNetworkCredentialInfo !=  NULL)
-        {
-            IotNetworkCredentials_t pCredentials = network->u.setup.pNetworkCredentialInfo;
-            (void)pCredentials;
-            IotLogInfo("         AlpnProtos : %s", pCredentials->pAlpnProtos);
-            IotLogInfo("         disableSni : %d", pCredentials->disableSni);
-            IotLogInfo("  maxFragmentLength : %d", pCredentials->maxFragmentLength);
-            IotLogInfo("            pRootCa : %p", pCredentials->pRootCa);
-            IotLogInfo("         RootCaSize : %d", pCredentials->rootCaSize);
-            IotLogInfo("        pClientCert : %p", pCredentials->pClientCert);
-            IotLogInfo("     clientCertSize : %d", pCredentials->clientCertSize);
-            IotLogInfo("        pPrivateKey : %p", pCredentials->pPrivateKey);
-            IotLogInfo("     privateKeySize : %d", pCredentials->privateKeySize);
-            IotLogInfo("     UserName       : %.*s (%d)", pCredentials->userNameSize, pCredentials->pUserName, pCredentials->userNameSize);
-            IotLogInfo("     Password       : %.*s (%d)", pCredentials->passwordSize, pCredentials->pPassword, pCredentials->passwordSize);
-        }
-    }
-    else
-    {
-        IotLogInfo("     Connection : %p", network->u.pNetworkConnection);
-    }
-    IotLogInfo("   netiface : %p", network->u.pNetworkConnection);
-
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_broker_info_t:\n");
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "             server : %.*s\n", broker->hostname_len, broker->hostname);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "             port   : %d\n", broker->port);
 }
-#endif
 
 void cy_ota_mqtt_timer_callback(cy_timer_callback_arg_t arg)
 {
     cy_ota_context_t *ctx = (cy_ota_context_t *)arg;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    IotLogDebug("%s() new event:%d\n", __func__, ctx->mqtt.mqtt_timer_event);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() new event:%d\n", __func__, ctx->mqtt.mqtt_timer_event);
     /* yes, we set the ota_event as the mqtt get() function uses the same event var */
     cy_rtos_setbits_event(&ctx->ota_event, ctx->mqtt.mqtt_timer_event, 0);
 }
@@ -266,6 +231,7 @@ cy_rslt_t cy_ota_stop_mqtt_timer(cy_ota_context_t *ctx)
     CY_OTA_CONTEXT_ASSERT(ctx);
     return cy_rtos_stop_timer(&ctx->mqtt.mqtt_timer);
 }
+
 cy_rslt_t cy_ota_start_mqtt_timer(cy_ota_context_t *ctx, uint32_t secs, ota_events_t event)
 {
     cy_rslt_t result;
@@ -279,124 +245,99 @@ cy_rslt_t cy_ota_start_mqtt_timer(cy_ota_context_t *ctx, uint32_t secs, ota_even
     return result;
 }
 
+cy_rslt_t cy_ota_mqtt_create_json_request(cy_ota_context_t *ctx,
+                                        const char *message_doc,
+                                        const char *filename,
+                                        uint32_t offset,
+                                        uint32_t size)
+{
+    /* create json doc for get job */
+    cy_rslt_t   result = CY_RSLT_SUCCESS;
+
+    memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc) );
+
+#ifdef CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
+    /* Current default. Send one request for the entire file,
+     * Publisher.py will chunk and send separate chunks.
+     */
+    sprintf(ctx->mqtt.json_doc, message_doc,
+            APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic);
+#else
+    /* This code is for requesting each chunk separately. */
+    sprintf(ctx->mqtt.json_doc, message_doc,
+            APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic,
+            filename, offset, size);
+#endif
+
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() Messg: %s\n", __func__, ctx->mqtt.json_doc);
+
+    return result;
+}
+
 cy_rslt_t cy_ota_mqtt_publish_request(cy_ota_context_t *ctx, char *mqtt_topic, char *mqtt_message)
 {
-
     /*Publish for the topic */
-    IotMqttPublishInfo_t publishInfo = IOT_MQTT_PUBLISH_INFO_INITIALIZER;
-    IotMqttError_t publishStatus = IOT_MQTT_STATUS_PENDING;
-    publishInfo.pPayload = NULL;
+    cy_rslt_t   result = CY_RSLT_SUCCESS;
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    /* Set the common members of the publish info. */
-    publishInfo.qos = IOT_MQTT_QOS_1;
-    publishInfo.pTopicName = mqtt_topic;
-    publishInfo.topicNameLength = strlen(publishInfo.pTopicName);
-    publishInfo.retryMs = IOT_PUBLISH_RETRY_MS;
-    publishInfo.retryLimit = IOT_PUBLISH_RETRY_LIMIT;
+    cy_mqtt_publish_info_t  pub_msg;
 
-    publishInfo.pPayload = mqtt_message;
-    publishInfo.payloadLength = strlen(publishInfo.pPayload);
+    pub_msg.qos         = CY_MQTT_QOS1;
+    pub_msg.retain      = false;            /* TODO: ???  Whether this is a retained message. */
+    pub_msg.dup         = false;            /* TODO: ???  Whether this is a duplicate publish message. */
+    pub_msg.topic       = mqtt_topic;
+    pub_msg.topic_len   = strlen(pub_msg.topic);
+    pub_msg.payload     = mqtt_message;
+    pub_msg.payload_len = strlen(pub_msg.payload);
 
     /* Publish the message. */
-    IotLogDebug("Publish to %.*s:\n>%.*s< ", publishInfo.topicNameLength, publishInfo.pTopicName, publishInfo.payloadLength, publishInfo.pPayload);
-    publishStatus = IotMqtt_PublishSync(ctx->mqtt.mqtt_connection,
-                                        &publishInfo,
-                                        0,
-                                        0);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "Publish to %.*s:\n>%.*s<\n\n\n",
+                pub_msg.topic_len, pub_msg.topic, pub_msg.payload_len, pub_msg.payload);
 
-    if (publishStatus == IOT_MQTT_SUCCESS || publishStatus == IOT_MQTT_STATUS_PENDING )
+    result = cy_mqtt_publish( ctx->mqtt.mqtt_connection, &pub_msg );
+    if (result != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("Timed out waiting for PUBLISH to complete.");
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT PUBLISH error.\n");
         return CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
     }
     else
     {
-         IotLogDebug("PUBLISH completed successfully.");
+         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "PUBLISH completed successfully.\n");
     }
 
     return CY_RSLT_SUCCESS;
 }
 
-void cy_ota_mqtt_create_unique_topic(cy_ota_context_t *ctx)
+cy_rslt_t cy_ota_subscribe_to_unique_topic(cy_ota_context_t *ctx)
 {
-    cy_time_t                   tval;
+    char        *unique_topic[1];
+    cy_rslt_t   result = CY_RSLT_SUCCESS;
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    /* create unique topic name */
-    cy_rtos_get_time(&tval);
-    if (strlen(ctx->mqtt.unique_topic) == 0)
+    if (ctx->mqtt.unique_topic_subscribed == false)
     {
-        memset(ctx->mqtt.unique_topic, 0x00, sizeof(ctx->mqtt.unique_topic) );
-        sprintf(ctx->mqtt.unique_topic, "%s/%s/%s/%d",
-                COMPANY_TOPIC_PREPEND, CY_TARGET_BOARD_STRING, CY_OTA_MQTT_MAGIC, (uint16_t)(tval & 0x0000FFFF) );
-    }
-}
+        unique_topic[0] = ctx->mqtt.unique_topic;
 
-cy_rslt_t cy_ota_subscribe_and_publish_unique_topic(cy_ota_context_t *ctx, const char *message_doc)
-{
-    char                        *unique_topics[1];
-    cy_rslt_t                   result = CY_RSLT_SUCCESS;
-    cy_ota_callback_results_t   cb_result;
-
-    CY_OTA_CONTEXT_ASSERT(ctx);
-
-    /* create unique topic name if not done yet*/
-    cy_ota_mqtt_create_unique_topic(ctx);
-    memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc) );
-    sprintf(ctx->mqtt.json_doc, message_doc,
-            APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic);
-
-    /* callback to app */
-    cb_result = cy_ota_internal_call_cb(ctx, CY_OTA_REASON_STATE_CHANGE, ctx->curr_state);
-
-
-    IotLogDebug("%s() Topic: %s", __func__, ctx->mqtt.unique_topic);
-    IotLogDebug("%s() Messg: %s", __func__, ctx->mqtt.json_doc);
-
-    switch( cb_result )
-    {
-
-    case CY_OTA_CB_RSLT_OTA_CONTINUE:
-        unique_topics[0] = ctx->mqtt.unique_topic;
-        /* Add the topic filter subscriptions */
-        IotLogInfo("MQTT Subscribe to UNIQUE TOPIC '%s'\n",  ctx->mqtt.unique_topic);
-        result = cy_ota_modify_subscriptions(ctx->mqtt.mqtt_connection,
-                                             IOT_MQTT_SUBSCRIBE,
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() Unique Topic Subscribe %s\n", __func__, ctx->mqtt.unique_topic);
+        result = cy_ota_modify_subscriptions(ctx,
+                                             ctx->mqtt.mqtt_connection,
+                                             CY_OTA_MQTT_SUBSCRIBE,
                                              1,
-                                             (const char **)&unique_topics[0],
-                                             ctx);
-        break;
-    case CY_OTA_CB_RSLT_OTA_STOP:
-        IotLogError("%s() App returned OTA Stop for STATE_CHANGE for JOB_DOWNLOAD", __func__);
-        return CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
-    case CY_OTA_CB_RSLT_APP_SUCCESS:      /* TODO are we assuming app subscribed here ? */
-        IotLogInfo("%s() App returned APP_SUCCESS for STATE_CHANGE for JOB_DOWNLOAD", __func__);
-        return CY_RSLT_SUCCESS;
-    case CY_OTA_CB_RSLT_APP_FAILED:
-        IotLogError("%s() App returned APP_FAILED for STATE_CHANGE for JOB_DOWNLOAD", __func__);
-        return CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
-    case CY_OTA_CB_NUM_RESULTS:
-        return CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
-    }
+                                             (const char **)unique_topic);
 
-    if (result != CY_RSLT_SUCCESS)
-    {
-        IotLogWarn("%s() cy_ota_modify_subscriptions() failed\n", __func__);
-    }
-
-    if (result == CY_RSLT_SUCCESS)
-    {
-        IotLogInfo("\nPublish on %s : %s\n", SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
-        result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
         if (result != CY_RSLT_SUCCESS)
         {
-            IotLogWarn("%s() cy_ota_mqtt_publish_request() failed\n", __func__);
-            result = CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Unique Topic Subscribe failed\n", __func__);
+            result = CY_RSLT_OTA_ERROR_GENERAL;
+        }
+        else
+        {
+            ctx->mqtt.unique_topic_subscribed = true;
         }
     }
+
     return result;
 }
 
@@ -425,16 +366,16 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
     /* start with clean slate */
     memset(chunk_info, 0x00, sizeof(cy_ota_storage_write_info_t) );
 
-    IotLogDebug ("Magic: %c%c%c%c%c%c%c%c\n", header->magic[0], header->magic[1], header->magic[2], header->magic[3],
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Magic: %c%c%c%c%c%c%c%c\n", header->magic[0], header->magic[1], header->magic[2], header->magic[3],
                                             header->magic[4], header->magic[5], header->magic[6], header->magic[7]);
-    IotLogDebug ("header->offset_to_data     off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,offset_to_data), header->offset_to_data);
-    IotLogDebug ("header->ota_image_type     off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,ota_image_type), header->ota_image_type);
-    IotLogDebug ("header->version                   : %d.%d.%d\n", header->update_version_major, header->update_version_minor, header->update_version_build);
-    IotLogDebug ("header->total_size         off:%d : %ld\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,total_size), header->total_size);
-    IotLogDebug ("header->image_offset       off:%d : %ld\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,image_offset), header->image_offset);
-    IotLogDebug ("header->data_size          off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,data_size), header->data_size);
-    IotLogDebug ("header->total_num_payloads off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,total_num_payloads), header->total_num_payloads);
-    IotLogDebug ("header->this_payload_index off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,this_payload_index), header->this_payload_index);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->offset_to_data     off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,offset_to_data), header->offset_to_data);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->ota_image_type     off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,ota_image_type), header->ota_image_type);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->version                   : %d.%d.%d\n", header->update_version_major, header->update_version_minor, header->update_version_build);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->total_size         off:%d : %ld\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,total_size), header->total_size);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->image_offset       off:%d : %ld\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,image_offset), header->image_offset);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->data_size          off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,data_size), header->data_size);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->total_num_payloads off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,total_num_payloads), header->total_num_payloads);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->this_payload_index off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,this_payload_index), header->this_payload_index);
 
     /* test for magic */
     if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0) )
@@ -459,7 +400,7 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
            (APP_VERSION_MINOR == header->update_version_minor) &&
            (APP_VERSION_BUILD >= header->update_version_build) ) )
     {
-        IotLogError("Current Application version %d.%d.%d update %d.%d.%d. Fail.",
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "Current Application version %d.%d.%d update %d.%d.%d. Fail.\n",
                     APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD,
                     header->update_version_major, header->update_version_minor, header->update_version_build);
         return CY_RSLT_OTA_ERROR_INVALID_VERSION;
@@ -490,27 +431,29 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
     cy_rslt_t                 result;
     cy_ota_callback_results_t cb_result;
 
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
 
     if ( (ctx == NULL) || (chunk_info == NULL) )
     {
-        IotLogError("%s() Bad args\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Bad args\n", __func__);
         return CY_RSLT_OTA_ERROR_BADARG;
     }
 
     ctx->num_packets_received++;    /* this is so we don't have a false failure with the per packet timer */
 
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() num_packets_received: %d\n", __func__, ctx->num_packets_received);
+
     /* check for receipt of duplicate packets - do not write twice */
     if (chunk_info->packet_number >= CY_OTA_MAX_PACKETS)
     {
-        IotLogError("MQTT PACKET index %d too large. increase  CY_OTA_MAX_PACKETS (%d)\n", chunk_info->packet_number, CY_OTA_MAX_PACKETS);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "MQTT PACKET index %d too large. increase  CY_OTA_MAX_PACKETS (%d)\n", chunk_info->packet_number, CY_OTA_MAX_PACKETS);
     }
     else
     {
         ctx->mqtt.received_packets[chunk_info->packet_number]++;
         if (ctx->mqtt.received_packets[chunk_info->packet_number] > 1)
         {
-            IotLogDebug("DEBUG PACKET index %d Duplicate - not written\n", chunk_info->packet_number, CY_OTA_MAX_PACKETS);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "DEBUG PACKET index %d Duplicate - not written\n", chunk_info->packet_number, CY_OTA_MAX_PACKETS);
             return CY_RSLT_SUCCESS;
         }
     }
@@ -521,22 +464,22 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
     switch( cb_result )
     {
     case CY_OTA_CB_RSLT_OTA_CONTINUE:
-        result = cy_ota_storage_write(ctx, chunk_info);
+        result = cy_ota_write_incoming_data_block(ctx, chunk_info);
         if (result != CY_RSLT_SUCCESS)
         {
-            IotLogError("%s() Write failed\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Write failed\n", __func__);
             cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
             return result;
         }
         break;
     case CY_OTA_CB_RSLT_OTA_STOP:
-        IotLogError("%s() App returned OTA Stop for STATE_CHANGE for STORAGE_WRITE", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned OTA Stop for STATE_CHANGE for cy_ota_write_incoming_data_block()\n", __func__);
         return CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
     case CY_OTA_CB_RSLT_APP_SUCCESS:
-        IotLogInfo("%s() App returned APP_SUCCESS for STATE_CHANGE for STORAGE_WRITE", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() App returned APP_SUCCESS for STATE_CHANGE for cy_ota_write_incoming_data_block()\n", __func__);
         break;
     case CY_OTA_CB_RSLT_APP_FAILED:
-        IotLogError("%s() App returned APP_FAILED for STATE_CHANGE for STORAGE_WRITE", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned APP_FAILED for STATE_CHANGE for cy_ota_write_incoming_data_block()\n", __func__);
         return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     case CY_OTA_CB_NUM_RESULTS:
         return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
@@ -550,7 +493,7 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
     if ( (chunk_info->packet_number > 0) &&
          (chunk_info->packet_number != (ctx->last_packet_received + 1) ) )
     {
-        IotLogDebug("OUT OF ORDER last:%d current:%d\n",
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "OUT OF ORDER last:%d current:%d\n",
                     ctx->last_packet_received, chunk_info->packet_number);
     }
 
@@ -561,46 +504,11 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
     ctx->last_packet_received   = chunk_info->packet_number;
     ctx->total_packets          = chunk_info->total_packets;
 
-    IotLogDebug("Written packet %d of %d to offset:%ld  %ld of %ld\n",
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Written packet %d of %d to offset:%ld  %ld of %ld\n",
                 ctx->last_packet_received, ctx->total_packets,
                 ctx->last_offset, ctx->total_bytes_written, ctx->total_image_size);
 
-    cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_GOT_DATA, 0);
-
     return CY_RSLT_SUCCESS;
-}
-
-static void disconnectCallback(void * pCallbackContext,
-                               IotMqttCallbackParam_t * pCallbackParam )
-{
-    if ( (pCallbackContext == NULL) || (pCallbackParam == NULL) )
-    {
-        /* bad callback - no info! */
-        return;
-    }
-
-    IotLogDebug("Network disconnected..........reason: %d\n", pCallbackParam->u.disconnectReason);
-    if ( ( (pCallbackParam->u.disconnectReason == IOT_MQTT_DISCONNECT_CALLED) ||
-           (pCallbackParam->u.disconnectReason ==  IOT_MQTT_BAD_PACKET_RECEIVED) ||
-           (pCallbackParam->u.disconnectReason == IOT_MQTT_KEEP_ALIVE_TIMEOUT) ) &&
-         (pCallbackParam->mqttConnection != NULL) )
-    {
-        cy_ota_context_t *ctx = (cy_ota_context_t *)pCallbackContext;
-        CY_OTA_CONTEXT_ASSERT(ctx);
-
-        /* Only report disconnect if we are downloading */
-        if ( (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD) ||
-             (ctx->curr_state == CY_OTA_STATE_DATA_DOWNLOAD) ||
-             (ctx->curr_state == CY_OTA_STATE_RESULT_SEND) ||
-             (ctx->curr_state == CY_OTA_STATE_RESULT_RESPONSE) )
-        {
-            IotLogWarn("%s() CY_OTA_EVENT_DROPPED_US Network MQTT disconnect reason:%d state:%d %s!",
-                    __func__,  pCallbackParam->u.disconnectReason,
-                    ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
-
-            cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DROPPED_US, 0);
-        }
-    }
 }
 
 /**
@@ -614,174 +522,197 @@ static void disconnectCallback(void * pCallbackContext,
  * @param[in] pPublish Information about the incoming PUBLISH message passed by
  * the MQTT library.
  */
-static void cy_ota_MQTT_subscription_callback(void * param1,
-                                              IotMqttCallbackParam_t * const pPublish )
+
+static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, void *user_data )
 {
-    cy_rslt_t       result = CY_RSLT_SUCCESS;
-    cy_ota_context_t *ctx = (cy_ota_context_t *)param1;
+    cy_rslt_t   result = CY_RSLT_SUCCESS;
+    cy_ota_context_t *ctx = (cy_ota_context_t *)user_data;
     cy_ota_storage_write_info_t chunk_info = { 0 };
-    IotMqttPublishInfo_t  *info;
-    const char * pPayload;
+
+    if ( (mqtt_handle == NULL) || (user_data == NULL) )
+    {
+        /* bad callback - no info! */
+       cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "%s() Bad args! (%p ,, %p)\n", __func__, mqtt_handle, user_data);
+       return;
+    }
 
     CY_OTA_CONTEXT_ASSERT(ctx);
-    CY_ASSERT(pPublish != NULL);
 
-
-     /* Make sure the callback we get is when we are expecting it
-     * Do this before grabbing the Mutex !
-     */
-    if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
+    if (event.type == CY_MQTT_EVENT_TYPE_DISCONNECT)
     {
-        IotLogDebug("%() Received Job packet.\n", __func__);
-    }
-    else if (ctx->curr_state == CY_OTA_STATE_RESULT_SEND)
-    {
-        IotLogDebug("%() Received Result response.\n", __func__);
-    }
-    else if ( (ctx->curr_state != CY_OTA_STATE_DATA_DOWNLOAD) || (ctx->sub_callback_mutex_inited != 1) )
-    {
-        cy_ota_mqtt_chunk_payload_header_t *header;
-        info = &pPublish->u.message.info;
-        pPayload = pPublish->u.message.info.pPayload;
-        CY_ASSERT(pPayload != NULL);
-
-        header = (cy_ota_mqtt_chunk_payload_header_t *)pPayload;
-        if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0) )
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Network disconnected..........reason: %d\n", event.data.reason);
+        if (event.data.reason ==  CY_MQTT_DISCONN_TYPE_BROKER_DOWN)
         {
-            IotLogWarn("%s() Received packet outside of downloading on topic %.*s.\n", __func__
-                    , pPublish->u.message.info.topicNameLength, pPublish->u.message.info.pTopicName);
+            /* Only report disconnect if we are downloading */
+            if ( (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD) ||
+                 (ctx->curr_state == CY_OTA_STATE_DATA_DOWNLOAD) ||
+                 (ctx->curr_state == CY_OTA_STATE_RESULT_SEND) ||
+                 (ctx->curr_state == CY_OTA_STATE_RESULT_RESPONSE) )
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() CY_OTA_EVENT_DROPPED_US Network MQTT disconnect reason:%d state:%d %s!\n",
+                        __func__,  event.data.reason, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
+                cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DROPPED_US, 0);
+            }
         }
-
-        /* return before we get the mutex */
-        return;
     }
 
-    result = cy_rtos_get_mutex(&ctx->sub_callback_mutex, CY_OTA_WAIT_MQTT_MUTEX_MS);
-    if (result != CY_RSLT_SUCCESS)
+    if (event.type == CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE)
     {
-        /* we didn't get the mutex - something is wrong! */
-        IotLogError("%() Mutex timeout!\n", __func__);
-        return;
-    }
+        /* Make sure the callback we get is when we are expecting it
+        * Do this before grabbing the Mutex !
+        */
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "               CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE !! state:%d\n", ctx->curr_state);
+
+        if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received Job packet.\n", __func__);
+       }
+       else if (ctx->curr_state == CY_OTA_STATE_RESULT_SEND)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received Result response.\n", __func__);
+       }
+       else if ( (ctx->curr_state != CY_OTA_STATE_DATA_DOWNLOAD) || (ctx->sub_callback_mutex_inited != 1) )
+       {
+           cy_ota_mqtt_chunk_payload_header_t *header;
+           CY_ASSERT(event.data.pub_msg.received_message.payload != NULL);
+
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received DATA.\n", __func__);
+
+           header = (cy_ota_mqtt_chunk_payload_header_t *)event.data.pub_msg.received_message.payload;
+           if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0) )
+           {
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() Received packet outside of downloading on topic %.*s.\n", __func__
+                       , event.data.pub_msg.received_message.topic_len, event.data.pub_msg.received_message.topic);
+           }
+
+           /* return before we get the mutex */
+           return;
+       }
+
+       result = cy_rtos_get_mutex(&ctx->sub_callback_mutex, CY_OTA_WAIT_MQTT_MUTEX_MS);
+       if (result != CY_RSLT_SUCCESS)
+       {
+           /* we didn't get the mutex - something is wrong! */
+           cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%() Mutex timeout!\n", __func__);
+           return;
+       }
 
 #ifdef DEBUG_PACKET_RECEIPT_TIME_DIFF
-    {
-        static cy_time_t last_packet_time, curr_packet_time;
-        cy_rtos_get_time(&curr_packet_time);
-        if (last_packet_time != 0)
-        {
-            cy_time_t diff = curr_packet_time - last_packet_time;
-            IotLogInfo("Time difference from last packet rec'd: %ld", diff);
-        }
-        last_packet_time = curr_packet_time;
-    }
+       {
+           static cy_time_t last_packet_time, curr_packet_time;
+           cy_rtos_get_time(&curr_packet_time);
+           if (last_packet_time != 0)
+           {
+               cy_time_t diff = curr_packet_time - last_packet_time;
+               cy_log_msg(CYLF_OTA, CY_LOG_INFO, "Time difference from last packet rec'd: %ld\n", diff);
+           }
+           last_packet_time = curr_packet_time;
+       }
 #endif
 
-    info = &pPublish->u.message.info;
-    pPayload = pPublish->u.message.info.pPayload;
+       CY_ASSERT(event.data.pub_msg.received_message.payload != NULL);
 
-    CY_ASSERT(pPayload != NULL);
-
-    IotLogDebug("\n\n====================================\n");
-    IotLogDebug("IotMqttPublishInfo: \n");
-    IotLogDebug("               qos: %d\n", info->qos); // IOT_MQTT_QOS_0, IOT_MQTT_QOS_1 (IOT_MQTT_QOS_2 not supported)
-    IotLogDebug("            retain: %d\n", info->retain);
-    IotLogDebug("             Topic: %.*s\n", info->topicNameLength, info->pTopicName);
-    IotLogDebug("           retryMs: %ld\n", info->retryMs);
-    IotLogDebug("        retryLimit: %ld\n", info->retryLimit);
-    IotLogDebug("    payload length: %d\n", info->payloadLength);
-    IotLogDebug("           payload: %p\n", pPayload);
+       cy_mqtt_publish_info_t *pub_msg = &event.data.pub_msg.received_message;
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "\n\n");
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Peceived pub_msg:\n");
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "               qos: %d\n", pub_msg->qos);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "            retain: %d\n", pub_msg->retain);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "         duplicate: %d\n", pub_msg->dup);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "             Topic: %.*s\n", pub_msg->topic_len, pub_msg->topic);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "    payload length: %d\n", pub_msg->payload_len);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "           payload: %p\n", pub_msg->payload);
 
 #ifdef PRINT_MQTT_DATA
-    cy_ota_print_data(pPayload, 32);
+       cy_ota_print_data(pub_msg->payload, 32);
 #endif
 
-    if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
-    {
-        if ( (pPayload == NULL) || (info->payloadLength == 0) )
-        {
-            IotLogWarn("Payload from Publisher Error!");
-            result = CY_RSLT_OTA_ERROR_BADARG;
-            goto _callback_exit;
-        }
+       if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
+       {
+           if ( (pub_msg->payload == NULL) || (pub_msg->payload_len == 0) )
+           {
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "Payload from Publisher Error!\n");
+               result = CY_RSLT_OTA_ERROR_BADARG;
+               goto _callback_exit;
+           }
 
-        /* Copy the Job document. We send it back to the Broker when we send the unique topic name
-         * We parse the job document in cy_ota_agent.c
-         */
-        if (info->payloadLength > sizeof(ctx->job_doc) )
-        {
-            IotLogWarn("MQTT: Job doc too long! %d bytes! Change CY_OTA_JOB_MAX_LEN!", info->payloadLength);
-            result = CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC;
-            goto _callback_exit;
-        }
-        memset(ctx->job_doc, 0x00, sizeof(ctx->job_doc) );
-        memcpy(ctx->job_doc, pPayload, info->payloadLength);
-        result = CY_RSLT_SUCCESS;
-    }
-    if (ctx->curr_state == CY_OTA_STATE_RESULT_SEND)
-    {
-        /* TODO: STDE - Do we need to do anything? maybe just acknowledge for OTA Agent? */
-        result = CY_RSLT_SUCCESS;
-    }
-    else if (ctx->curr_state == CY_OTA_STATE_DATA_DOWNLOAD)
-    {
-        result = cy_ota_mqtt_parse_chunk( (const uint8_t *)pPayload, (uint32_t)info->payloadLength, &chunk_info);
+           /* Copy the Job document. We send it back to the Broker when we send the unique topic name
+            * We parse the job document in cy_ota_agent.c
+            */
+           if (pub_msg->payload_len > sizeof(ctx->job_doc) )
+           {
+               cy_log_msg(CYLF_OTA, CY_LOG_ERR, "MQTT: Job doc too long! %d bytes! Change CY_OTA_JOB_MAX_LEN!\n", pub_msg->payload_len);
+               result = CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC;
+               goto _callback_exit;
+           }
+           memset(ctx->job_doc, 0x00, sizeof(ctx->job_doc) );
+           memcpy(ctx->job_doc, pub_msg->payload, pub_msg->payload_len);
+           result = CY_RSLT_SUCCESS;
+       }
+       if (ctx->curr_state == CY_OTA_STATE_RESULT_SEND)
+       {
+           /* TODO: STDE - Do we need to do anything? maybe just acknowledge for OTA Agent? */
+           result = CY_RSLT_SUCCESS;
+       }
+       else if (ctx->curr_state == CY_OTA_STATE_DATA_DOWNLOAD)
+       {
+           result = cy_ota_mqtt_parse_chunk( (const uint8_t *)pub_msg->payload, (uint32_t)pub_msg->payload_len, &chunk_info);
 
-        if (result == CY_RSLT_SUCCESS)
-        {
-            IotLogDebug("Received packet %d of %d", chunk_info.packet_number, chunk_info.total_packets);
+           if (result == CY_RSLT_SUCCESS)
+           {
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Received packet %d of %d\n", chunk_info.packet_number, chunk_info.total_packets);
 
-            /* update ctx with appropriate sizes */
-            if (ctx->total_image_size == 0)
-            {
-                ctx->total_image_size = chunk_info.total_size;
-            }
+               /* update ctx with appropriate sizes */
+               if (ctx->total_image_size == 0)
+               {
+                   ctx->total_image_size = chunk_info.total_size;
+               }
 
-            /* write the data */
-            result = cy_ota_mqtt_write_chunk_to_flash(ctx, &chunk_info);
-            /* Errors handled below */
-        }
-        else
-        {
-            IotLogDebug("Packet %d had errors in header", chunk_info.packet_number);
-        }
-    }
+               /* write the data */
+               result = cy_ota_mqtt_write_chunk_to_flash(ctx, &chunk_info);
+               /* Errors handled below in _callback_exit */
+           }
+           else
+           {
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Packet %d had errors in header\n", chunk_info.packet_number);
+           }
+       }
 
 _callback_exit:
 
-    /* Handle Job and Data error conditions */
-    if (result == CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC)
-    {
-        IotLogWarn(" CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC !");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_MALFORMED_JOB_DOC, 0);
-    }
-    else if (result == CY_RSLT_OTA_ERROR_WRITE_STORAGE)
-    {
-        IotLogWarn(" CY_OTA_EVENT_STORAGE_ERROR !");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_STORAGE_ERROR, 0);
-    }
-    else if(result == CY_RSLT_OTA_ERROR_APP_RETURNED_STOP)
-    {
-        IotLogWarn(" CY_OTA_EVENT_APP_STOPPED_OTA !");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_APP_STOPPED_OTA, 0);
-    }
-    else if (result == CY_RSLT_OTA_ERROR_INVALID_VERSION)
-    {
-        IotLogWarn(" CY_OTA_EVENT_INVALID_VERSION !");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_INVALID_VERSION, 0);
-    }
-    else if (result != CY_RSLT_SUCCESS)
-    {
-        IotLogWarn(" CY_OTA_EVENT_DATA_FAIL !");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
-    }
-    else
-    {
-        IotLogDebug(" CY_OTA_EVENT_GOT_DATA!");
-        cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_GOT_DATA, 0);
+       /* Handle Job and Data error conditions */
+       if (result == CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC !\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_MALFORMED_JOB_DOC, 0);
+       }
+       else if (result == CY_RSLT_OTA_ERROR_WRITE_STORAGE)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_STORAGE_ERROR !\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_STORAGE_ERROR, 0);
+       }
+       else if(result == CY_RSLT_OTA_ERROR_APP_RETURNED_STOP)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_APP_STOPPED_OTA !\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_APP_STOPPED_OTA, 0);
+       }
+       else if (result == CY_RSLT_OTA_ERROR_INVALID_VERSION)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_INVALID_VERSION !\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_INVALID_VERSION, 0);
+       }
+       else if (result != CY_RSLT_SUCCESS)
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_DATA_FAIL !\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
+       }
+       else
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_GOT_DATA!\n");
+           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_GOT_DATA, 0);
+       }
+       cy_rtos_set_mutex(&ctx->sub_callback_mutex);
     }
 
-    cy_rtos_set_mutex(&ctx->sub_callback_mutex);
 }
 
 /*-----------------------------------------------------------*/
@@ -806,235 +737,149 @@ _callback_exit:
 static cy_rslt_t cy_ota_establish_MQTT_connection(cy_ota_context_t *ctx,
                                                  bool awsIotMqttMode,
                                                  char * pIdentifier,
-                                                 void * pNetworkServerInfo,
-                                                 void * pNetworkCredentialInfo,
-                                                 const IotNetworkInterface_t * pNetworkInterface,
-                                                 IotMqttConnection_t * pMqttConnection )
+                                                 cy_awsport_ssl_credentials_t *security,
+                                                 cy_mqtt_t * pMqttConnection )
 {
-    cy_time_t tval;
-    int       string_len;
-    IotMqttError_t connectStatus = IOT_MQTT_STATUS_PENDING;
-    IotMqttNetworkInfo_t networkInfo = IOT_MQTT_NETWORK_INFO_INITIALIZER;
-    IotMqttConnectInfo_t connectInfo = IOT_MQTT_CONNECT_INFO_INITIALIZER;
-    IotMqttPublishInfo_t willInfo = IOT_MQTT_PUBLISH_INFO_INITIALIZER;
-    char temp_identifier[CLIENT_IDENTIFIER_MAX_LENGTH ] = { 0 };
-    char pClientIdentifierBuffer[ CLIENT_IDENTIFIER_MAX_LENGTH ] = { 0 };
+    cy_rslt_t               result;
+    uint8_t                 *buffer;
+    uint16_t                buff_len;
+    cy_mqtt_publish_info_t  will_info;
+    cy_mqtt_connect_info_t  connect_info;
+    cy_mqtt_broker_info_t   broker_info;
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    /* Set the members of the network info not set by the initializer. This
-     * struct provides information on the Connection layer to the MQTT connection. */
-    networkInfo.createNetworkConnection = true;
-    networkInfo.u.setup.pNetworkServerInfo = pNetworkServerInfo;
-    networkInfo.u.setup.pNetworkCredentialInfo = pNetworkCredentialInfo;
-    networkInfo.pNetworkInterface = pNetworkInterface;
-    networkInfo.disconnectCallback.function = disconnectCallback;
-    networkInfo.disconnectCallback.pCallbackContext = (void *)ctx;
+    /* TODO: allocate / point to a buffer (part of the ota context) */
+    buffer = ctx->chunk_buffer;
+    buff_len = sizeof(ctx->chunk_buffer);
 
-    #if (IOT_MQTT_ENABLE_SERIALIZER_OVERRIDES == 1) && defined(IOT_DEMO_MQTT_SERIALIZER)
-        networkInfo.pMqttSerializer = IOT_DEMO_MQTT_SERIALIZER;
-    #endif
+    /* will info */
+    memset(&will_info, 0x00, sizeof(will_info));
+    will_info.qos           = CY_MQTT_QOS1;
+    will_info.topic         = WILL_TOPIC_NAME;
+    will_info.topic_len     = WILL_TOPIC_NAME_LENGTH;
+    will_info.payload       = WILL_MESSAGE;
+    will_info.payload_len   = WILL_MESSAGE_LENGTH;
 
-    /* Set the members of the connection info not set by the initializer. */
-    connectInfo.awsIotMqttMode = awsIotMqttMode;
-    connectInfo.cleanSession = (ctx->network_params.mqtt.session_type == CY_OTA_MQTT_SESSION_CLEAN) ? true : false;
-    connectInfo.keepAliveSeconds = CY_OTA_MQTT_KEEP_ALIVE_SECONDS;
-    connectInfo.pWillInfo = &willInfo;
+    /* set up broker info */
+    memset(&broker_info, 0x00, sizeof(cy_mqtt_broker_info_t) );
+    broker_info.hostname       = ctx->curr_server->host_name;
+    broker_info.hostname_len   = strlen(broker_info.hostname);
+    broker_info.port           = ctx->curr_server->port;           /** Server port in host-order. */
 
-    /* Set the members of the Last Will and Testament (LWT) message info. The
-     * MQTT server will publish the LWT message if this client disconnects
-     * unexpectedly. */
-    willInfo.pTopicName = WILL_TOPIC_NAME;
-    willInfo.topicNameLength = WILL_TOPIC_NAME_LENGTH;
-    willInfo.pPayload = WILL_MESSAGE;
-    willInfo.payloadLength = WILL_MESSAGE_LENGTH;
-
-    /* Use the parameter client identifier if provided. Otherwise, generate a
-     * unique client identifier. */
-    cy_rtos_get_time(&tval);
-    memset(temp_identifier, 0x00, sizeof(temp_identifier) );
-
-    IotLogDebug("%s()incoming pIdentifier:%p %.*s", __func__,
-            pIdentifier, (pIdentifier != NULL) ? strlen(pIdentifier) : 0, pIdentifier);
-
-    if ( (pIdentifier == NULL) || (pIdentifier[ 0 ] == '\0') )
+    /* set up connect info */
+    memset(&connect_info, 0x00, sizeof(cy_mqtt_connect_info_t) );
+    connect_info.client_id      = pIdentifier;
+    connect_info.client_id_len  = (uint16_t ) strlen(pIdentifier);
+    if (security != NULL)
     {
-        strncpy(temp_identifier, CY_OTA_MQTT_CLIENT_ID_PREFIX, CLIENT_IDENTIFIER_MAX_LENGTH - UINT16_DECIMAL_LENGTH);
+        connect_info.username       = security->username;
+        connect_info.username_len   = security->username_size;
+        connect_info.password       = security->password;
+        connect_info.password_len   = security->password_size;
     }
-    else
-    {
-        strncpy(temp_identifier, pIdentifier, CLIENT_IDENTIFIER_MAX_LENGTH - UINT16_DECIMAL_LENGTH);
-    }
+    connect_info.clean_session =  (ctx->network_params.mqtt.session_type == CY_OTA_MQTT_SESSION_CLEAN) ? true : false;
+    connect_info.keep_alive_sec = CY_OTA_MQTT_KEEP_ALIVE_SECONDS;
+    connect_info.will_info = &will_info;
 
-    /* Every active MQTT connection must have a unique client identifier. The demos
-     * generate this unique client identifier by appending a timestamp to a common
-     * prefix. */
-    string_len = snprintf(pClientIdentifierBuffer,
-                          CLIENT_IDENTIFIER_MAX_LENGTH,
-                          "%s%d", temp_identifier, (uint16_t)(tval & 0x0000FFFF) );
+    /* Print info for log_level DEBUG */
+    _print_connect_info(&connect_info);
+    _print_broker_info(&broker_info);
 
-    /* Check for errors from snprintf. */
-    if (string_len >=  CLIENT_IDENTIFIER_MAX_LENGTH)
+    result = cy_mqtt_create( buffer, buff_len,
+                             security,
+                             &broker_info,
+                             cy_ota_mqtt_callback,
+                             (void *)ctx,                   /* User data for callback */
+                             &ctx->mqtt.mqtt_connection );
+    if (result != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("Failed to generate unique MQTT client identifier. Using partial");
-        string_len = snprintf(pClientIdentifierBuffer,
-                              CLIENT_IDENTIFIER_MAX_LENGTH,
-                              "Unique%d", (uint16_t)(tval & 0xFFFF) );
-        if (string_len >=  CLIENT_IDENTIFIER_MAX_LENGTH)
-        {
-            IotLogError("Failed to generate unique MQTT client identifier. Fail");
-            return CY_RSLT_OTA_ERROR_GET_JOB;
-        }
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_create() failed result:0x%lx\n", result);
+        return CY_RSLT_OTA_ERROR_GENERAL;
     }
 
-    /* Set the client identifier buffer and length. */
-    connectInfo.pClientIdentifier = pClientIdentifierBuffer;
-    connectInfo.clientIdentifierLength = (uint16_t ) strlen(pClientIdentifierBuffer);
-    if (networkInfo.u.setup.pNetworkCredentialInfo != NULL)
+    result = cy_mqtt_connect(ctx->mqtt.mqtt_connection,
+                             &connect_info);
+    if (result != CY_RSLT_SUCCESS)
     {
-        connectInfo.pUserName = networkInfo.u.setup.pNetworkCredentialInfo->pUserName;
-        connectInfo.userNameLength = networkInfo.u.setup.pNetworkCredentialInfo->userNameSize;
-        connectInfo.pPassword = networkInfo.u.setup.pNetworkCredentialInfo->pPassword;
-        connectInfo.passwordLength = networkInfo.u.setup.pNetworkCredentialInfo->passwordSize;
-    }
-#ifdef PRINT_CONNECT_INFO
-    _print_connect_info(&connectInfo);
-#endif
-#ifdef PRINT_NETWORK_INFO
-    _print_network_info(&networkInfo);
-#endif
-
-    /* Establish the MQTT connection. */
-    IotLogInfo("MQTT unique client identifier is %.*s (length %hu).\n",
-                connectInfo.clientIdentifierLength,
-                connectInfo.pClientIdentifier,
-                connectInfo.clientIdentifierLength);
-
-    connectStatus = IotMqtt_Connect(&networkInfo,
-                                    &connectInfo,
-                                    IOT_MQTT_RESPONSE_WAIT_MS,
-                                    pMqttConnection);
-
-    if (connectStatus != IOT_MQTT_SUCCESS )
-    {
-        IotLogError("MQTT CONNECT returned error %s.\n", IotMqtt_strerror(connectStatus) );
-
-        return CY_RSLT_OTA_ERROR_GET_JOB;
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_connect() failed result:0x%lx\n", result);
+        cy_mqtt_delete(ctx->mqtt.mqtt_connection);
+        return CY_RSLT_OTA_ERROR_GENERAL;
     }
 
-    return CY_RSLT_SUCCESS;
+    return result;
 }
-
 /*-----------------------------------------------------------*/
 
 /**
  * @brief Add or remove subscriptions by either subscribing or unsubscribing.
  *
  * @param[in] mqttConnection The MQTT connection to use for subscriptions.
- * @param[in] operation Either #IOT_MQTT_SUBSCRIBE or #IOT_MQTT_UNSUBSCRIBE.
+ * @param[in] operation Either #0 (subscribe) or #1 Unsubscribe.
  * @param[in] pTopicFilters Array of topic filters for subscriptions.
- * @param[in] pCallbackParameter The parameter to pass to the subscription
- * callback.
  *
  * @return CY_RSLT_SUCCESS
  *         CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE
  *
  */
-static cy_rslt_t cy_ota_modify_subscriptions(IotMqttConnection_t mqttConnection,
-                                             IotMqttOperationType_t operation,
-                                             uint8_t numTopicFilters,
-                                             const char ** pTopicFilters,
-                                             void * pCallbackParameter)
+static cy_rslt_t cy_ota_modify_subscriptions(cy_ota_context_t *ctx,
+                                             cy_mqtt_t mqttConnection,
+                                             int operation,
+                                             uint8_t numTopics,
+                                             const char ** pTopicFilters)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
     int32_t i = 0;
-    IotMqttError_t subscriptionStatus = IOT_MQTT_STATUS_PENDING;
-    IotMqttSubscription_t pSubscriptions[ CY_OTA_MQTT_MAX_TOPICS ] = { IOT_MQTT_SUBSCRIPTION_INITIALIZER };
 
-    /* Set the members of the subscription list. */
-    IotLogInfo("%s() numTopicFilters: %d\n", __func__, numTopicFilters);
-    for(i = 0; i < numTopicFilters; i++ )
+    cy_mqtt_subscribe_info_t sub_msgs[ CY_OTA_MQTT_MAX_TOPICS ];
+
+    if ( (numTopics > 0) && (pTopicFilters != NULL) && (*pTopicFilters != NULL) )
     {
-        IotLogInfo("%s() index: %ld: filter: %s\n", __func__, i, pTopicFilters[ i ]);
-        pSubscriptions[ i ].qos = IOT_MQTT_QOS_1;
-        pSubscriptions[ i ].pTopicFilter = pTopicFilters[ i ];
-        pSubscriptions[ i ].topicFilterLength = strlen(pTopicFilters[ i ]);
-        pSubscriptions[ i ].callback.pCallbackContext = pCallbackParameter;
-        pSubscriptions[ i ].callback.function = cy_ota_MQTT_subscription_callback;
-    }
-
-    /* Modify subscriptions by either subscribing or unsubscribing. */
-    if (operation == IOT_MQTT_SUBSCRIBE )
-    {
-        IotLogDebug("%s() mqttConnection: %p \n", __func__, mqttConnection);
-        subscriptionStatus = IotMqtt_TimedSubscribe(mqttConnection,
-                                                    pSubscriptions,
-                                                    numTopicFilters,
-                                                    0,
-                                                    IOT_MQTT_RESPONSE_WAIT_MS);
-
-        /* Check the status of SUBSCRIBE. */
-        switch(subscriptionStatus)
+        /* Set the members of the subscription list. */
+        for(i = 0; i < numTopics; i++ )
         {
-            case IOT_MQTT_SUCCESS:
-                IotLogDebug("\nAll topic filter subscriptions accepted.......\n");
-                result = CY_RSLT_SUCCESS;
-                break;
+            sub_msgs[ i ].qos       = CY_MQTT_QOS1;
+            sub_msgs[ i ].topic     = pTopicFilters[ i ];
+            sub_msgs[ i ].topic_len = strlen(pTopicFilters[ i ]);
+        }
 
-            case IOT_MQTT_SERVER_REFUSED:
-                /* Check which subscriptions were rejected before exiting */
-                for(i = 0; i < numTopicFilters; i++ )
-                {
-                    if (IotMqtt_IsSubscribed(mqttConnection,
-                                             pSubscriptions[ i ].pTopicFilter,
-                                             pSubscriptions[ i ].topicFilterLength,
-                                             NULL) == true )
-                    {
-                        IotLogWarn("Topic filter %.*s was accepted.",
-                                   pSubscriptions[ i ].topicFilterLength,
-                                   pSubscriptions[ i ].pTopicFilter);
-                    }
-                    else
-                    {
-                        IotLogWarn("Topic filter %.*s was rejected.",
-                                    pSubscriptions[ i ].topicFilterLength,
-                                    pSubscriptions[ i ].pTopicFilter);
-                    }
-                }
-                result = CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE;
-                break;
+        /* Modify subscriptions by either subscribing or unsubscribing. */
+        if (operation == CY_OTA_MQTT_SUBSCRIBE)
+        {
+            result = cy_mqtt_subscribe( ctx->mqtt.mqtt_connection,
+                                                    sub_msgs,
+                                                    numTopics );
 
-            default:
-                result = CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE;
-                break;
+            /* Check the status of SUBSCRIBE. */
+            if (result != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Subscribe failed result:0x%lx\n", result);
+            }
+        }
+        else
+        {
+            result = cy_mqtt_unsubscribe( ctx->mqtt.mqtt_connection,
+                                                    sub_msgs,
+                                                    numTopics );
+
+            /* Check the status of SUBSCRIBE. */
+            if (result != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "UN-Subscribe failed\n");
+            }
+        }
+
+        if (operation == CY_OTA_MQTT_SUBSCRIBE)
+        {
+            for(i = 0; i < numTopics; i++ )
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "   MQTT Topic: %s\n", pTopicFilters[ i ]);
+            }
         }
     }
-    else if (operation == IOT_MQTT_UNSUBSCRIBE )
-    {
-        subscriptionStatus = IotMqtt_TimedUnsubscribe(mqttConnection,
-                                                      pSubscriptions,
-                                                      numTopicFilters,
-                                                      0,
-                                                      IOT_MQTT_RESPONSE_WAIT_MS);
-
-        /* Check the status of UNSUBSCRIBE. */
-        if (subscriptionStatus != IOT_MQTT_SUCCESS )
-        {
-            result = CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE;
-        }
-    }
-    else
-    {
-        /* Only SUBSCRIBE and UNSUBSCRIBE are valid for modifying subscriptions. */
-        IotLogError("MQTT operation %s is not valid for modifying subscriptions.",
-                     IotMqtt_OperationType(operation) );
-
-        result = CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE;
-    }
-
-    IotLogDebug("%s() returning: 0x%x\n", __func__, result);
     return result;
 }
+
 
 /**
  * @brief Validate network parameters
@@ -1048,21 +893,21 @@ static cy_rslt_t cy_ota_modify_subscriptions(IotMqttConnection_t mqttConnection,
  */
 cy_rslt_t cy_ota_mqtt_validate_network_params(cy_ota_network_params_t *network_params)
 {
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
     if (network_params == NULL)
     {
         return CY_RSLT_OTA_ERROR_BADARG;
     }
 
     if ( (network_params->mqtt.pIdentifier == NULL) ||
-         (network_params->network_interface == NULL) ||
-         (network_params->mqtt.broker.pHostName == NULL) )
+         (network_params->mqtt.broker.host_name == NULL) ||
+         (network_params->mqtt.broker.port == 0) )
     {
-        IotLogError("%s() BAD ARGS\n", __func__);
-        IotLogError("    Identifier:%s Broker:%s net iface:%p \n",
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() BAD ARGS\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "    Identifier:%s    Broker:%s : %d \n",
                     network_params->mqtt.pIdentifier,
-                    network_params->mqtt.broker.pHostName,
-                    network_params->network_interface);
+                    network_params->mqtt.broker.host_name,
+                    network_params->mqtt.broker.port);
         return CY_RSLT_OTA_ERROR_BADARG;
     }
 
@@ -1082,75 +927,94 @@ cy_rslt_t cy_ota_mqtt_validate_network_params(cy_ota_network_params_t *network_p
  */
 cy_rslt_t cy_ota_mqtt_connect(cy_ota_context_t *ctx)
 {
+    cy_time_t                   tval;
     cy_rslt_t                   result;
-    cy_ota_server_info_t        server;
-    IotNetworkCredentials_t     credentials;
+    cy_awsport_server_info_t    server;
+    cy_awsport_ssl_credentials_t *security;
+    char pClientIdentifierBuffer[ CLIENT_IDENTIFIER_MAX_LENGTH + 1 ];
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    credentials = ctx->network_params.mqtt.credentials;
+    security = &ctx->network_params.mqtt.credentials;
 
-    if (ctx->mqtt.connection_from_app == true)
-    {
-        IotLogInfo("%s() App provided connection.\n", __func__);
-        return CY_RSLT_SUCCESS;
-    }
-
-    if (ctx->mqtt.connection_established == true)
-    {
-        IotLogError("%s() Already connected.\n", __func__);
-        return CY_RSLT_OTA_ERROR_GENERAL;
-    }
-
-
-    /* Handle of the MQTT connection used in this library. */
-    ctx->mqtt.mqtt_connection = IOT_MQTT_CONNECTION_INITIALIZER;
-
-    server.pHostName = ctx->curr_server->pHostName;
+    server.host_name = ctx->curr_server->host_name;
     server.port = ctx->curr_server->port;
+
     /* If application changed job_doc we need to use the parsed info */
     if ( (ctx->curr_state == CY_OTA_STATE_DATA_CONNECT) &&
          (ctx->network_params.use_get_job_flow == CY_OTA_JOB_FLOW)  &&
          (ctx->parsed_job.parse_result == CY_RSLT_OTA_CHANGING_SERVER) )
     {
-        server.pHostName = ctx->parsed_job.broker_server.pHostName;
+        server.host_name = ctx->parsed_job.broker_server.host_name;
         server.port = ctx->parsed_job.broker_server.port;
         if (ctx->callback_data.credentials != NULL)
         {
-            credentials = ctx->callback_data.credentials;
+            security = ctx->callback_data.credentials;
         }
     }
 
     if (ctx->curr_server->port == CY_OTA_MQTT_BROKER_PORT)
     {
-        credentials = NULL;
+        security = NULL;
     }
 
+    /* Use the parameter client identifier if provided. Otherwise, generate a
+     * unique client identifier. */
+    cy_rtos_get_time(&tval);
+    memset(pClientIdentifierBuffer, 0x00, sizeof(pClientIdentifierBuffer) );
+
+    if ( (ctx->network_params.mqtt.pIdentifier == NULL) || (strlen(ctx->network_params.mqtt.pIdentifier) == 0 ) )
+    {
+        strncpy(pClientIdentifierBuffer, CY_OTA_MQTT_CLIENT_ID_PREFIX, CLIENT_IDENTIFIER_MAX_LENGTH - UINT16_DECIMAL_LENGTH);
+    }
+    else
+    {
+        strncpy(pClientIdentifierBuffer, ctx->network_params.mqtt.pIdentifier, CLIENT_IDENTIFIER_MAX_LENGTH - UINT16_DECIMAL_LENGTH);
+    }
+
+    /* Every active MQTT connection must have a unique client identifier. We
+     * generate this unique client identifier by appending a timestamp to a common
+     * prefix. */
+    snprintf(&pClientIdentifierBuffer[strlen(pClientIdentifierBuffer)],
+                          UINT16_DECIMAL_LENGTH, "%d", (uint16_t)(tval & 0x0000FFFF) );
+
     /* Establish a new MQTT connection. called function has a timeout */
-    IotLogInfo("\nEstablishing MQTT Connection for %s :: %s:%d...credentials:%p\n",
-                ctx->network_params.mqtt.pIdentifier,
-                server.pHostName,
-                server.port,
-                credentials);
     result = cy_ota_establish_MQTT_connection(ctx,
                                               ctx->network_params.mqtt.awsIotMqttMode,
-                                              (char *)ctx->network_params.mqtt.pIdentifier,
-                                              &server,
-                                              credentials,
-                                              ctx->network_params.network_interface,
+                                              pClientIdentifierBuffer,
+                                              security,
                                               &ctx->mqtt.mqtt_connection);
 
     if (result != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("MQTT Connection failed\n");
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "MQTT Connection %s:%d failed\n",
+                               server.host_name, server.port);
         result = CY_RSLT_OTA_ERROR_MQTT_INIT;
     }
     else
     {
         /* Mark the MQTT connection as established. */
         ctx->mqtt.connection_established = true;
-    }
 
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "MQTT %p Connect SUCCESS ID: '%s' broker: %s:%d TLS:%s\n",
+                        ctx->mqtt.mqtt_connection,
+                       pClientIdentifierBuffer,
+                       server.host_name,
+                       server.port,
+                       (security == NULL) ? "No" : "Yes");
+
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT Subscribe topics from Application.\n");
+        result = cy_ota_modify_subscriptions(ctx,
+                                             ctx->mqtt.mqtt_connection,
+                                             CY_OTA_MQTT_SUBSCRIBE,
+                                             ctx->network_params.mqtt.numTopicFilters,
+                                             ctx->network_params.mqtt.pTopicFilters);
+        if (result != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "MQTT subscribe failed\n");
+            cy_ota_mqtt_disconnect(ctx);
+        }
+    }
     return result;
 }
 
@@ -1172,19 +1036,19 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
 {
     uint32_t    waitfor_clear;
     cy_rslt_t   result = CY_RSLT_SUCCESS;
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s()\n", __func__);
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
     if (ctx->mqtt.connection_established != true)
     {
-        IotLogWarn("%s() connection not established\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() connection not established\n", __func__);
         return CY_RSLT_OTA_ERROR_GET_JOB;
     }
 
     if (cy_rtos_init_mutex(&ctx->sub_callback_mutex) != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("%s() sub_callback_mutex init failed\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() sub_callback_mutex init failed\n", __func__);
         return CY_RSLT_OTA_ERROR_GET_JOB;
     }
     ctx->sub_callback_mutex_inited = 1;
@@ -1194,29 +1058,32 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
     result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor_clear, 1, 0, 1);
     if (waitfor_clear != 0)
     {
-        IotLogDebug("%s() Clearing waitfor: 0x%lx", __func__, waitfor_clear);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() Clearing waitfor: 0x%lx\n", __func__, waitfor_clear);
     }
-
-    IotLogDebug("\nMQTT Subscribe for Job Messages..............\n");
-    /* Add the topic filter */
-    result = cy_ota_modify_subscriptions(ctx->mqtt.mqtt_connection,
-                                         IOT_MQTT_SUBSCRIBE,
-                                         ctx->network_params.mqtt.numTopicFilters,
-                                         ctx->network_params.mqtt.pTopicFilters,
-                                         ctx);
-
-    if (result != CY_RSLT_SUCCESS)
-    {
-        IotLogWarn("%s() cy_ota_modify_subscriptions() failed\n", __func__);
-        goto cleanup_and_exit;
-    }
-    ctx->mqtt.subscribed = true;
 
     /* Ask if there is an update available */
-    result = cy_ota_subscribe_and_publish_unique_topic(ctx, CY_OTA_SUBSCRIBE_UPDATES_AVAIL);
+    result = cy_ota_subscribe_to_unique_topic(ctx);
     if (result != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("%s() subscribe/publish () failed result:0x%lx\n", __func__, result);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() subscribe unique () failed result:0x%lx\n", __func__, result);
+        goto cleanup_and_exit;
+    }
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT Subscribe unique completed\n");
+
+    /* Ask if there is an update available */
+    result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_SUBSCRIBE_UPDATES_AVAIL, " ", 0, -1);
+    if (result != CY_RSLT_SUCCESS)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() cy_ota_mqtt_create_json_request() failed\n", __func__);
+        result = CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
+        goto cleanup_and_exit;
+    }
+
+    result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
+    if (result != CY_RSLT_SUCCESS)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() cy_ota_mqtt_publish_request() failed\n", __func__);
+        result = CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
         goto cleanup_and_exit;
     }
 
@@ -1227,7 +1094,7 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
         /* get event */
         waitfor = CY_OTA_EVENT_MQTT_EVENTS;
         result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor, 1, 0, CY_OTA_WAIT_MQTT_EVENTS_MS);
-        IotLogDebug("%s() MQTT cy_rtos_waitbits_event: 0x%lx result:0x%lx\n", __func__, waitfor, result);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT cy_rtos_waitbits_event: 0x%lx result:0x%lx\n", __func__, waitfor, result);
 
         /* We only want to act on events we are waiting on.
          * For timeouts, just loop around.
@@ -1249,7 +1116,7 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
             /* This was generated by a timer in cy_ota_agent.c
              * Pass along to Agent thread.
              */
-            IotLogDebug("MQTT: JOB Download Timeout return:0x%lx", CY_RSLT_OTA_NO_UPDATE_AVAILABLE);
+            cy_log_msg(CYLF_OTA, CY_LOG_INFO, "MQTT: JOB Download Timeout return:0x%lx\n", CY_RSLT_OTA_NO_UPDATE_AVAILABLE);
             result = CY_RSLT_OTA_NO_UPDATE_AVAILABLE;
             break;
         }
@@ -1259,35 +1126,35 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
             /* If we get malformed (short) job doc, look into using
              * DATA_DONE instead of GOT_DATA
              */
-            IotLogDebug("MQTT: JOB Download Got Data");
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "MQTT: JOB Download Got Data\n");
             result = CY_RSLT_SUCCESS;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_MALFORMED_JOB_DOC)
         {
-            IotLogDebug("%s() MQTT CY_OTA_EVENT_MALFORMED_JOB_DOC\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT CY_OTA_EVENT_MALFORMED_JOB_DOC\n", __func__);
             result = CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_INVALID_VERSION)
         {
-            IotLogDebug("%s() MQTT CY_OTA_EVENT_INVALID_VERSION\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT CY_OTA_EVENT_INVALID_VERSION\n", __func__);
             result = CY_RSLT_OTA_ERROR_INVALID_VERSION;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_DATA_FAIL)
         {
-            IotLogDebug("%s() MQTT CY_OTA_EVENT_DATA_FAIL\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT CY_OTA_EVENT_DATA_FAIL\n", __func__);
             result = CY_RSLT_OTA_ERROR_GET_JOB;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_DROPPED_US)
         {
-            IotLogDebug("%s() MQTT CY_OTA_EVENT_DROPPED_US state:%d %s\n", __func__, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT CY_OTA_EVENT_DROPPED_US state:%d %s\n", __func__, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
             result = CY_RSLT_OTA_ERROR_SERVER_DROPPED;
             break;
         }
@@ -1322,19 +1189,19 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
     cy_rslt_t                   result = CY_RSLT_SUCCESS;
     cy_ota_callback_results_t   cb_result;
 
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
 
     CY_OTA_CONTEXT_ASSERT(ctx);
 
     if (ctx->mqtt.connection_established != true)
     {
-        IotLogWarn("%s() connection not established\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() connection not established\n", __func__);
         return CY_RSLT_OTA_ERROR_GET_DATA;
     }
 
     if (cy_rtos_init_mutex(&ctx->sub_callback_mutex) != CY_RSLT_SUCCESS)
     {
-        IotLogWarn("%s() sub_callback_mutex init failed\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() sub_callback_mutex init failed\n", __func__);
         return CY_RSLT_OTA_ERROR_GET_DATA;
     }
     ctx->sub_callback_mutex_inited = 1;
@@ -1344,76 +1211,79 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
     result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor_clear, 1, 0, 1);
     if (waitfor_clear != 0)
     {
-        IotLogDebug("%s() Clearing waitfor: 0x%lx", __func__, waitfor_clear);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() Clearing waitfor: 0x%lx\n", __func__, waitfor_clear);
     }
 
-    /* send request */
-    memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc));
-    if (ctx->mqtt.use_unique_topic == 1)
+        /* we might have gotten the Job from HTTP, always subscribe to unique topic */
+    result = cy_ota_subscribe_to_unique_topic(ctx);
+    if (result != CY_RSLT_SUCCESS)
     {
-        /* we might have gotten the Job from HTTP, always create unique */
-        result = cy_ota_subscribe_and_publish_unique_topic(ctx, CY_OTA_DOWNLOAD_REQUEST);
-        if (result != CY_RSLT_SUCCESS)
-        {
-            IotLogWarn("%s() subscribe/publish () failed result:0x%lx\n", __func__, result);
-            goto cleanup_and_exit;
-        }
-        ctx->mqtt.subscribed = true;
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() subscribe/publish () failed result:0x%lx\n", __func__, result);
+        goto cleanup_and_exit;
+    }
+
+    /* Create json doc for the request */
+    memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc));
+    if (ctx->network_params.use_get_job_flow != 0)
+    {
+#ifdef CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
+        /* Current default. Send one request for the entire file,
+         * Publisher.py will chunk and send separate chunks.
+         */
+        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_REQUEST, "", 0, 0);
+#else
+        /* This code is for requesting each chunk separately. */
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT Subscribe for CHUNK download DATA Messages..............\n");
+        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_CHUNK_REQUEST,
+                                                            ctx->parsed_job.file, 0, CY_OTA_CHUNK_SIZE);
+#endif
     }
     else
     {
         /* Create the direct request */
-        sprintf(ctx->mqtt.json_doc, CY_OTA_DOWNLOAD_DIRECT_REQUEST,
-                APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD);
+        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_DIRECT_REQUEST, "", 0, 0);
 
-        IotLogDebug("\nMQTT Subscribe for Direct download DATA Messages..............\n");
-        /* Add the topic filter subscriptions  */
-        result = cy_ota_modify_subscriptions(ctx->mqtt.mqtt_connection,
-                                             IOT_MQTT_SUBSCRIBE,
-                                             ctx->network_params.mqtt.numTopicFilters,
-                                             ctx->network_params.mqtt.pTopicFilters,
-                                             ctx);
-        if (result != CY_RSLT_SUCCESS)
-        {
-            IotLogWarn("%s() cy_ota_modify_subscriptions() failed\n", __func__);
-            goto cleanup_and_exit;
-        }
-        ctx->mqtt.subscribed = true;
+    }
 
-        IotLogDebug("%d : %s() CALLING CB STATE_CHANGE %s stop_OTA_session:%d ", __LINE__, __func__,
+    if (result != CY_RSLT_SUCCESS)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() cy_ota_mqtt_create_json_request() failed\n", __func__);
+        result = CY_RSLT_OTA_ERROR_MQTT_PUBLISH;
+    }
+
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%d : %s() CALLING CB STATE_CHANGE %s stop_OTA_session:%d\n", __LINE__, __func__,
                 cy_ota_get_state_string(ctx->curr_state), ctx->stop_OTA_session);
 
-        cb_result = cy_ota_internal_call_cb(ctx, CY_OTA_REASON_STATE_CHANGE, ctx->curr_state);
-        switch( cb_result )
+    cb_result = cy_ota_internal_call_cb(ctx, CY_OTA_REASON_STATE_CHANGE, ctx->curr_state);
+    switch( cb_result )
+    {
+    case CY_OTA_CB_RSLT_OTA_CONTINUE:
+        result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
+        if (result != CY_RSLT_SUCCESS)
         {
-        case CY_OTA_CB_RSLT_OTA_CONTINUE:
-            result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
-            if (result != CY_RSLT_SUCCESS)
-            {
-                IotLogWarn("%s() cy_ota_mqtt_publish_request() for Data failed\n", __func__);
-                goto cleanup_and_exit;
-            }
-            break;
-
-        case CY_OTA_CB_RSLT_OTA_STOP:
-            IotLogError("%s() App returned OTA Stop for STATE_CHANGE for DATA_DOWNLOAD", __func__);
-            result = CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
-            goto cleanup_and_exit;
-
-        case CY_OTA_CB_RSLT_APP_SUCCESS:
-            IotLogInfo("%s() App returned APP_SUCCESS for STATE_CHANGE for DATA_DOWNLOAD", __func__);
-            result = CY_RSLT_SUCCESS;
-            goto cleanup_and_exit;
-
-        case CY_OTA_CB_RSLT_APP_FAILED:
-            IotLogError("%s() App returned APP_FAILURE for STATE_CHANGE for DATA_DOWNLOAD", __func__);
-            result = CY_RSLT_OTA_ERROR_GET_DATA;
-            goto cleanup_and_exit;
-
-        case CY_OTA_CB_NUM_RESULTS:
-            result = CY_RSLT_OTA_ERROR_GET_DATA;
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() cy_ota_mqtt_publish_request() for Data failed\n", __func__);
             goto cleanup_and_exit;
         }
+        break;
+
+    case CY_OTA_CB_RSLT_OTA_STOP:
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned OTA Stop for STATE_CHANGE for DATA_DOWNLOAD\n", __func__);
+        result = CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
+        goto cleanup_and_exit;
+
+    case CY_OTA_CB_RSLT_APP_SUCCESS:
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() App returned APP_SUCCESS for STATE_CHANGE for DATA_DOWNLOAD\n", __func__);
+        result = CY_RSLT_SUCCESS;
+        goto cleanup_and_exit;
+
+    case CY_OTA_CB_RSLT_APP_FAILED:
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned APP_FAILURE for STATE_CHANGE for DATA_DOWNLOAD\n", __func__);
+        result = CY_RSLT_OTA_ERROR_GET_DATA;
+        goto cleanup_and_exit;
+
+    case CY_OTA_CB_NUM_RESULTS:
+        result = CY_RSLT_OTA_ERROR_GET_DATA;
+        goto cleanup_and_exit;
     }
 
     /* Create download interval timer */
@@ -1422,7 +1292,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
    if (result != CY_RSLT_SUCCESS)
    {
        /* Event create failed */
-       IotLogWarn("%s() Timer Create Failed!\n", __func__);
+       cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Timer Create Failed!\n", __func__);
        result = CY_RSLT_OTA_ERROR_GET_DATA;
        goto cleanup_and_exit;
    }
@@ -1430,7 +1300,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
    if (ctx->packet_timeout_sec > 0 )
    {
        /* Start the download interval timer */
-       IotLogDebug("%s() MQTT DATA START PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT DATA START PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
        cy_ota_start_mqtt_timer(ctx, ctx->packet_timeout_sec, CY_OTA_EVENT_PACKET_TIMEOUT);
    }
 
@@ -1444,7 +1314,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
         /* get event */
         waitfor = CY_OTA_EVENT_MQTT_EVENTS;
         result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor, 1, 0, CY_OTA_WAIT_MQTT_EVENTS_MS);
-        IotLogDebug("%s() MQTT cy_rtos_waitbits_event: 0x%lx type:%d mod:0x%lx code:%d\n", __func__, waitfor, CY_RSLT_GET_TYPE(result), CY_RSLT_GET_MODULE(result), CY_RSLT_GET_CODE(result) );
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT cy_rtos_waitbits_event: 0x%lx type:%d mod:0x%lx code:%d\n", __func__, waitfor, CY_RSLT_GET_TYPE(result), CY_RSLT_GET_MODULE(result), CY_RSLT_GET_CODE(result) );
 
         /* We only want to act on events we are waiting on.
          * For timeouts, just loop around.
@@ -1467,20 +1337,21 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
             /* This was generated by a timer in cy_ota_agent.c
              * Pass along to Agent thread.
              */
-            IotLogDebug("MQTT: Download Timeout ");
+            cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "MQTT: Download Timeout\n");
             result = CY_RSLT_OTA_NO_UPDATE_AVAILABLE;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_STORAGE_ERROR)
         {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Storage write error\n", __func__);
             result = CY_RSLT_OTA_ERROR_WRITE_STORAGE;
             break;
         }
 
         if (waitfor & CY_OTA_EVENT_APP_STOPPED_OTA)
         {
-            IotLogDebug("%s() App told us to stop \n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() App told us to stop\n", __func__);
             result = CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
             break;
         }
@@ -1490,7 +1361,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
             if (ctx->packet_timeout_sec > 0 )
             {
                 /* got some data - restart the download interval timer */
-                IotLogDebug("%s() RESTART PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
+                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() RESTART PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
                 cy_ota_start_mqtt_timer(ctx, ctx->packet_timeout_sec, CY_OTA_EVENT_PACKET_TIMEOUT);
             }
 
@@ -1499,9 +1370,35 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
                 /* stop timer asap so we don't get a timeout */
                 cy_ota_stop_mqtt_timer(ctx);
 
-                IotLogDebug("Done writing all data! %ld of %ld\n", ctx->total_bytes_written, ctx->total_image_size);
+                cy_log_msg(CYLF_OTA, CY_LOG_INFO, "Done writing all data! %ld of %ld\n", ctx->total_bytes_written, ctx->total_image_size);
                 cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_DONE, 0);
             }
+
+#ifndef CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
+            /* This code is only used if we are going to ask the MQTT broker
+             * separately for each chunk of data.
+             *
+             * Request next chunk */
+            int32_t chunk_size = (int32_t)CY_OTA_CHUNK_SIZE;
+            if (chunk_size > (ctx->total_image_size - ctx->total_bytes_written) )
+            {
+                chunk_size = -1;    /* get the rest of the data */
+            }
+            result = cy_ota_mqtt_create_json_request( ctx, CY_OTA_DOWNLOAD_CHUNK_REQUEST,
+                    ctx->parsed_job.file, ctx->total_bytes_written, chunk_size);
+            if (result != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() cy_ota_mqtt_create_json_request() for Data failed\n", __func__);
+                goto cleanup_and_exit;
+            }
+
+            result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
+            if (result != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() cy_ota_mqtt_publish_request() for Data failed\n", __func__);
+                goto cleanup_and_exit;
+            }
+#endif
             continue;
         }
 
@@ -1515,20 +1412,20 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
                 /* If we received packets since the last time we were here, just continue.
                  * This thread may be held off for a while, and we don't want a false failure.
                  */
-                IotLogDebug("%s() RESTART PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
+                cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "%s() RESTART PACKET TIMER %ld secs\n", __func__, ctx->packet_timeout_sec);
                 cy_ota_start_mqtt_timer(ctx, ctx->packet_timeout_sec, CY_OTA_EVENT_PACKET_TIMEOUT);
 
                 /* update our variable */
                 ctx->last_num_packets_received = ctx->num_packets_received;
                 continue;
             }
-            IotLogWarn("OTA Timeout waiting for a packet (%d seconds), fail\n", ctx->packet_timeout_sec);
+            cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "OTA Timeout waiting for a packet (%d seconds), fail\n", ctx->packet_timeout_sec);
             cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
         }
 
         if (waitfor & CY_OTA_EVENT_DATA_DONE)
         {
-            IotLogDebug("Got all the data !");
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "Got all the data !\n");
             result = CY_RSLT_SUCCESS;
             break;
         }
@@ -1547,23 +1444,23 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
 
         if (waitfor & CY_OTA_EVENT_DROPPED_US)
         {
-            IotLogDebug("%s() MQTT CY_OTA_EVENT_DROPPED_US state:%d %s\n", __func__, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() MQTT Broker disconnected state:%d %s\n", __func__, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
             result = CY_RSLT_OTA_ERROR_SERVER_DROPPED;
             break;
         }
     }   /* While 1 */
 
-    IotLogDebug("%s() MQTT DONE result: 0x%lx\n", __func__, result);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() MQTT DONE result: 0x%lx\n", __func__, result);
 
     for (i = 0;i < ctx->total_packets; i++)
     {
         if (ctx->mqtt.received_packets[i] == 0 )
         {
-            IotLogDebug("PACKET %d missing!\n", i);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "PACKET %d missing!\n", i);
         }
         else if (ctx->mqtt.received_packets[i] > 1 )
         {
-            IotLogDebug("PACKET %d Duplicate!\n", i);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "PACKET %d Duplicate!\n", i);
         }
     }
 
@@ -1592,31 +1489,33 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
  */
 cy_rslt_t cy_ota_mqtt_disconnect(cy_ota_context_t *ctx)
 {
-    char    *unique_topics[1];
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    if (ctx->mqtt.subscribed == true)
+    if (ctx->mqtt.connection_established == true)
     {
-        IotLogDebug("\nMQTT UnSubscribe for Job and Data Messages..............\n");
-        /* Remove the topic filters subscriptions */
-        cy_ota_modify_subscriptions(ctx->mqtt.mqtt_connection,
-                                    IOT_MQTT_UNSUBSCRIBE,
-                                    ctx->network_params.mqtt.numTopicFilters,
-                                    ctx->network_params.mqtt.pTopicFilters,
-                                    ctx);
+	/* Remove the topic filters subscriptions */
+		cy_ota_modify_subscriptions(ctx,
+									ctx->mqtt.mqtt_connection,
+									CY_OTA_MQTT_UNSUBSCRIBE,
+									ctx->network_params.mqtt.numTopicFilters,
+									ctx->network_params.mqtt.pTopicFilters);
 
-        /* unsubscribe from unique topic (if we used one) */
-        if (strlen(ctx->mqtt.unique_topic) > 0)
-        {
-            unique_topics[0] = ctx->mqtt.unique_topic;
-            cy_ota_modify_subscriptions(ctx->mqtt.mqtt_connection,
-                                        IOT_MQTT_UNSUBSCRIBE,
-                                        1,
-                                        (const char **)&unique_topics[0],
-                                        ctx);
-        }
-        ctx->mqtt.subscribed = false;
+		/* unsubscribe from unique topic (if we used one) */
+		if (ctx->mqtt.unique_topic_subscribed == true)
+		{
+			if (strlen(ctx->mqtt.unique_topic) > 0)
+			{
+			    char        *unique_topic[1];
+		        unique_topic[0] = ctx->mqtt.unique_topic;
+				cy_ota_modify_subscriptions(ctx,
+											ctx->mqtt.mqtt_connection,
+											CY_OTA_MQTT_UNSUBSCRIBE,
+											1,
+											(const char **)unique_topic);
+			}
+			ctx->mqtt.unique_topic_subscribed = false;
+		}
     }
 
     if (ctx->mqtt.connection_from_app == false)
@@ -1625,10 +1524,12 @@ cy_rslt_t cy_ota_mqtt_disconnect(cy_ota_context_t *ctx)
         if (ctx->mqtt.connection_established == true)
         {
             ctx->mqtt.connection_established = false;
-            IotMqtt_Disconnect(ctx->mqtt.mqtt_connection, 0);
+            cy_mqtt_disconnect( ctx->mqtt.mqtt_connection );
+            cy_mqtt_delete( ctx->mqtt.mqtt_connection );
             ctx->mqtt.mqtt_connection = NULL;
         }
     }
+
     return CY_RSLT_SUCCESS;
 }
 
@@ -1641,7 +1542,7 @@ cy_rslt_t cy_ota_mqtt_report_result(cy_ota_context_t *ctx, cy_rslt_t last_error)
             ( (last_error == CY_RSLT_SUCCESS) ? CY_OTA_RESULT_SUCCESS : CY_OTA_RESULT_FAILURE),
             ctx->mqtt.unique_topic);
 
-    IotLogDebug("%d : %s() CALLING CB STATE_CHANGE %s stop_OTA_session:%d ", __LINE__, __func__,
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%d : %s() CALLING CB STATE_CHANGE %s stop_OTA_session:%d\n", __LINE__, __func__,
             cy_ota_get_state_string(ctx->curr_state), ctx->stop_OTA_session);
 
     cb_result = cy_ota_internal_call_cb(ctx, CY_OTA_REASON_STATE_CHANGE, ctx->curr_state);
@@ -1651,14 +1552,14 @@ cy_rslt_t cy_ota_mqtt_report_result(cy_ota_context_t *ctx, cy_rslt_t last_error)
         result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
         break;
     case CY_OTA_CB_RSLT_OTA_STOP:
-        IotLogError("%s() App returned OTA Stop for STATE_CHANGE for SEND_RESULT", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned OTA Stop for STATE_CHANGE for SEND_RESULT\n", __func__);
         result = CY_RSLT_OTA_ERROR_APP_RETURNED_STOP;
         break;
     case CY_OTA_CB_RSLT_APP_SUCCESS:
-        IotLogInfo("%s() App returned APP_SUCCESS for STATE_CHANGE for SEND_RESULT", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() App returned APP_SUCCESS for STATE_CHANGE for SEND_RESULT\n", __func__);
         break;
     case CY_OTA_CB_RSLT_APP_FAILED:
-        IotLogError("%s() App returned APP_FAILED for STATE_CHANGE for SEND_RESULT", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() App returned APP_FAILED for STATE_CHANGE for SEND_RESULT\n", __func__);
         result = CY_RSLT_OTA_ERROR_SENDING_RESULT;
         break;
     case CY_OTA_CB_NUM_RESULTS:

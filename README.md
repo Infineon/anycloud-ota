@@ -1,71 +1,105 @@
-﻿# Over-the-Air update middleware library
+﻿# Over-the-Air (OTA) Update Middleware Library
 
-This library provides support for OTA updating using WiFi of the application code running on a PSoC® 6 MCU with CYW4343W or CYW43012 connectivity device.
+This library provides support for OTA update of the application code running on a PSoC® 6 MCU with CYW4343W or CYW43012 connectivity device, using Wi-Fi.
 
-There are two "update flows" that the user can designate.
+## Update Flows
 
-- Get OTA Image directly
-  - This is the only flow that was available in the initial public release. It is still supported in this release. Be aware there are some API changes that require modification of the network parameters.
+There are two "update flows" that you can designate.
 
-  - This is the simplest means of getting an OTA Image. The Device needs to know the location of the OTA Image.
+### 1. Get the OTA Update Image Directly
 
-    - For an MQTT broker, the Device will subscribe to a known topic and wait for the OTA Image download.
-    - For an HTTP server, the Device will use "GET" to download the OTA Image
+This is the only flow that was available in the initial public release. It is still supported in this release. Note that there are some API changes that require modification of the network parameters.
+
+This is the simplest means of getting an OTA update image.
+
+For an MQTT broker, the Publisher will subscribe to a known topic on a designated MQTT broker and wait for a message. The device will subscribe to a unique topic, publish a request on the known topic with a document that includes the unique topic name, and wait for the OTA update image download.
+
+For an HTTP server, the device will use `GET` to download the OTA update image.
 
 
-- Get Job document, and use the information within the Job document to locate the OTA Image
-  - This is a new flow added in release 2.0.0. The API changes in the network parameters were required to have both MQTT and HTTP credentials present when calling cy_ota_agent_start(). There is one additional parameter "use_job_flow" which designates that the OTA Agent use this new flow. The default is 0 (do not use Job flow).
-  - For MQTT this means that the Publisher will subscribe to a known topic on a designated MQTT broker and wait for a message. A Device will connect to the MQTT Broker and publish an "Update Availability" message to the Publisher.  The Publisher will send a Job document, which has information about what update is available and where it is located. The Device will then connect to the MQTT/HTTP location and download the OTA Image.
-  - For HTTP this means that the HTTP Server will contain the Job document, provided in the network parameters when calling cy_ota_gent_start() (default: "ota_upgrade.json"). The Device gets the Job document, and decides if the update is needed.
+### 2. Get the Job document, and Locate the OTA Update Image
 
-The Device then stores the update in the Secondary Slot (slot 1) in the FLASH.
+This in the new flow added in release v2.0.0. Here, the information within the Job document is used to locate the OTA update image. API changes in the network parameters are required to have both MQTT and HTTP credentials present when calling `cy_ota_agent_start()`. The additional parameter `use_job_flow` designates that the OTA Agent use this new flow. The default is 0 (do not use Job flow).
 
-Upon reboot, MCUBoot will verify the update in the Secondary Slot (slot 1) and copy it to the Primary Slot (slot 0), and runs the new application.
+For MQTT, this means that the Publisher will subscribe to a known topic on a designated MQTT broker and wait for a message. A device will connect to the MQTT Broker and publish an "Update Availability" message to the Publisher. The Publisher will send a Job document, which has information about the update that is available and its location (the location can be an MQTT Broker or an HTTP server). The device will then connect to the MQTT/HTTP location and download the OTA update image.
+
+For HTTP, this means that the HTTP server will contain the Job document. The device will use the HTTP `GET` request to get the document from the known location, which has information about the update that is available, and its location (the location can be an MQTT Broker or an HTTP server). The device will then connect to the MQTT/HTTP location and download the OTA update image.
+
+The device then stores the update in the secondary slot (Slot 1) in the flash.
+
+When rebooted, MCUboot will verify the update in the secondary slot (Slot 1) and copy or swap it to the primary slot (Slot 0), and run the new application.
 
 The ModusToolbox OTA code examples import this library automatically.
 
-## Features and functionality
+## Features and Functionality
 
-This library utilizes MQTT or HTTP and TLS to securely connect to an MQTT Broker / HTTP Server and download an update for the users application.
+This library utilizes MQTT or HTTP and TLS to securely connect to an MQTT Broker/HTTP server and download an update for the user application.
 
-Other features:
+### Other Features
 
-- Configuration to adjust multiple timing values to customize how often to check for updates, and other parameters for the MQTT Broker / HTP Server connection. Copy configs/ota_config.h to the directory where your application Makefile is, and adjust as needed.
-- The OTA Agent runs in a separate background thread, only connecting to MQTT Broker / HTTP Server based on the timing configuration.
-- Parameters for MQTT Broker / HTTP Server, credentials, etc. are passed into cy_ota_agent_start().
-- Provides a callback mechanism to report stages of connect, download percentage, and errors.
+- Provides configuration options to adjust multiple timing values to customize how often to check for updates, and other parameters for the MQTT Broker/HTTP Server connection. Copy the configurations or the *cy_ota_config.h* file to the directory where your application Makefile is, and adjust as needed.
 
-Once the application starts the OTA agent, the OTA agent will contact the MQTT Broker / HTTP Server at the defined intervals to see if there is an update available. If an update is available, it will be downloaded. If the "reset_after_complete" flag was set in the agent parameters, the OTA agent will automatically reset the device. If not set, on the next manual reset, MCUBoot will perform the update.
+- The OTA Agent runs in a separate background thread, only connecting to MQTT Broker/HTTP server based on the timing configuration.
 
-### New Feature In v2.0.0:
+- Parameters such as for MQTT Broker/HTTP server and credentials are passed into `cy_ota_agent_start()`.
+
+- Provides a callback mechanism to report stages of connect, download percentage, and errors. The application can override the default OTA Agent behavior, or stop the current download during the callback.
+
+Once the application starts the OTA agent, the OTA agent will contact the MQTT Broker/HTTP server at the defined intervals to check whether an update is available. If available, the update it will be downloaded. If the `reset_after_complete` flag was set in the agent parameters, the OTA Agent will automatically reset the device. If not set, on the next manual reset, MCUboot will perform the update.
+
+## New Features in v3.0.0
+
+### SWAP/REVERT Support with MCUboot v1.7.0-cypress
+
+The updated version of MCUboot supports a SWAP mode (default). Rather than copy the new OTA application from the secondary slot to the primary slot, the two applications are swapped. That is, the downloaded application that was stored in the secondary slot is moved to the primary slot; the image in the primary slot (original application) is moved to the secondary slot. This allows for a REVERT to the previous version if there is an issue with the newly downloaded application. This provides a restoration of a "last known good" application.
+
+If SWAP and REVERT is not desired, you can build mcuboot with COPY so that the OTA application is copied from the secondary slot to the primary slot, which leaves no "last known good" application. This process is much quicker than SWAP.
+
+### Enhanced Callback Functionality
+
+The OTA Agent calls back to the application with status updates on the OTA download session. The callback now has the ability to change some aspects of the OTA process, and can stop the OTA session if required.
+
+### HTTP OTA Update Image Transfer
+
+The OTA Agent now requests a "range" for each `GET` request when transferring the OTA update image over HTTP, rather than a single `GET` request for the whole file.
+
+## New Features in v2.0.0
 
 ### Job Document
 
-We have added a message exchange between the Device and the Publisher. The JSON formatted "Job document" contains information where the OTA Image is located. This allows for Job document to reside in one place, and the OTA Image to reside in another place.
+This release adds a message exchange between the device and the Publisher. The JSON-formatted "Job document" contains information where the OTA update image is located. This allows for the Job document to reside in one place, while the OTA update image can reside in another.
 
-For MQTT transport, this allows a Publisher python script to be subscribed to a known topic (ex: "anycloud-CY8CPROTO_062_4343W/notify_publisher") to listen for a Device request. This allows for an asynchronous update sequence.
+For MQTT transport, this allows a Publisher Python script to be subscribed to a known topic (for example, `anycloud-CY8CPROTO_062_4343W/notify_publisher`) to listen for a device request. This allows for an asynchronous update sequence.
 
-For HTTP transport, the Device will GET the job document (ex:"ota_update.json") which contains the same information as if it was served from an MQTT Broker.
+For HTTP transport, the device will `GET` the Job document (for example:*ota_update.json*) which contains the same information as if it was served from an MQTT Broker.
 
-#### Example Update Sequence Using MQTT
+## Example Update Sequence Using MQTT
 
-- The Publisher python script (libs/anycloud-ota/scripts/publisher.py) subscribes to a known topic (ex: "anycloud/CY8CPROTO_062_4343W/publish_notify") on the specified MQTT Broker.
-- The Device publishes the message "Update Availability" to the known topic. The message includes specifics about the Device (manufacturer, product, serial number, application version, etc.), and a "Unique Topic Name" for the Publisher to send messages to the Device.
-- The Publisher receives the "Update Availability" message and sends the appropriate Job document on the "Unique Topic Name". The Publisher can make a decision if there is an appropriate update available for the Device. The Publisher sends an "Update Available" (or "No Update Available") message, which repeats Device specific info and includes the location of the OTA Image file for the Device to download.
-- Device receives the job document and connects to the Broker/Server given in the Job document to obtain the OTA Image.
-  - If the OTA Image is located on an MQTT Broker, the Device connects and sends a "Request Update" message to the Publisher, which includes the Device info again. The Publisher then splits the OTA Image into 4k chunks, adds a header to each chunk, and sends it to the Device on the "Unique Topic Name".
-  - If the OTA Image is accessible on an HTTP Server, the Device will connect to the HTTP Server and download the OTA Image using GET.
+1. The Publisher Python script (*libs/anycloud-ota/scripts/publisher.py*) subscribes to a known topic (for example: *anycloud/CY8CPROTO_062_4343W/publish_notify*) on the specified MQTT Broker.
 
-#### Example Update Sequence Using HTTP
+2. The device publishes the message "Update Availability" to the known topic. The message includes information about the device (manufacturer, product, serial number, application version, etc.), and a "Unique Topic Name" for the Publisher to send messages to the device.
 
-- Device connects to the HTTP server and uses "GET" to obtain the Job document (ex: "ota_update.json").
-- Device decides if the OTA Image version is newer than the currently executing application, and the board name is the same, etc.
-  - If the OTA Image is accessible through an MQTT Broker, the Device creates and subscribes to a unique topic name and sends a "Request Download" message with the "Unique Topic Name" to the Publisher on "anycloud-CY8CPROTO_062_4343W/notify_publisher". The Publisher then splits to the OTA Image into chunks and publishes them on the unique topic.
-  - If the OTA Image is accessible on an HTTP Server, the Device will connect to the HTTP Server and download the OTA Image using GET.
+3. The Publisher receives the "Update Availability" message and publishes the appropriate Job document on the "Unique Topic Name". The Publisher can make a decision if there is an appropriate update available for the device. The Publisher sends an "Update Available" (or "No Update Available") message, which repeats the device-specific information.
 
-#### The Job Document
+4. The device receives the Job document and connects to the Broker/server given in the Job document to obtain the OTA update image.
 
-The job document is a JSON formatted file that contains fields used to communicate between the Publisher script and the OTA Agent running on the Device.
+5. If the OTA update image is located on an MQTT Broker, the device connects and sends a "Request Update" message to the Publisher, which includes the device information again. The Publisher then splits the OTA update image into 4-kB chunks, adds a header to each chunk, and sends it to the device on the "Unique Topic Name".
+
+6. If the OTA update image is located on an HTTP server, the device will connect to the HTTP server and download the OTA update image using an HTTP `GET` request, for a range of data sequentially until all data is transferred.
+
+### Example Update Sequence Using HTTP
+
+1. The device connects to the HTTP server and uses the HTTP `GET` request to obtain the Job document (for example: *ota_update.json*).
+
+2. The device determines whether the OTA update image version is newer than the currently executing application, and the board name is the same, etc.
+
+   - If the OTA update image is accessible through an MQTT Broker, the device creates and subscribes to a unique topic name and sends a "Request Download" message with the "Unique Topic Name" to the Publisher on the known topic `anycloud-CY8CPROTO_062_4343W/notify_publisher`. The Publisher then splits the OTA update image into chunks and publishes them on the unique topic.
+
+   - If the OTA update image is accessible on an HTTP Server, the device connects to the HTTP Server and downloads the OTA update image using an HTTP `GET` request, asking for a range of data sequentially until all data is transferred.
+
+### The Job Document
+
+The Job document is a JSON-formatted file that contains fields used to communicate between the Publisher script and the OTA Agent running on the device.
 
 ```
 Manufacturer:	Manufacturer Name.
@@ -75,15 +109,14 @@ SerialNumber:   The Devices unique Serial Number
 Version:		Application version Major.Minor.Build (ex: "12.15.0")
 Board:			Name of board used for the product. (ex: "CY8CPROTO_062_4343W")
 Connection:		The type of Connection to access the OTA Image. ("MQTT", "HTTP", "HTTPS")
-Port:			Port number for accessing the OTA Image. (ex: MQTT:1883, HTTP:80)
+Port:			Port number for accessing the OTA Image. (ex: `MQTT:1883`, HTTP:80`)
 ```
 
 For MQTT Transport Type:
 
 ```
-Broker:			 MQTT Broker to access the OTA Image (ex: "mqtt.my_broker.com")
-UniqueTopicName: The "replace" value is just a placeholder. It is replaced with
-                 the Unique Topic Name for the OTA data transfer.
+Broker:			 MQTT Broker to access the OTA update image (for example: `mqtt.my_broker.com`)
+UniqueTopicName: The "replace" value is just a placeholder. It is replaced with the Unique Topic Name for the OTA data transfer.
 ```
 
 For HTTP Transport Type:
@@ -91,9 +124,11 @@ For HTTP Transport Type:
 ```
 Server:			Server URL (ex: "http://ota_images.my_server.com")
 File:			Name of the OTA Image file (ex: "<product>_<board>_v5.6.0.bin")
+Offset:			Offset in bytes for the start of data to transfer.
+Size:			The size of the chunk of data to send, in bytes.
 ```
 
-Example job document for an OTA Image that is available on an MQTT Broker:
+The following is an example Job document for an OTA update image that is available on an MQTT Broker:
 
 ```
 {
@@ -108,10 +143,7 @@ Example job document for an OTA Image that is available on an MQTT Broker:
   "Port":"1883"
 }
 ```
-
-
-
-Example job document for an OTA Image that is available on an HTTP Server:
+The following is an example Job document for an OTA update image that is available on an HTTP server:
 
 ```
 {
@@ -128,52 +160,56 @@ Example job document for an OTA Image that is available on an HTTP Server:
 }
 ```
 
-#### Setting Up The Supplied Publisher Python script
+## Setting Up the Supplied Publisher Python Script
 
-There are a number of configurable values  in the libs/anycloud-ota/scripts/publisher.py script. The values are described in the publisher.py script. There are many items that need to match the Application values. Please be careful when changing the values, and see the example application you are using for any special needs.
+The *libs/anycloud-ota/scripts/publisher.py* script contains several configurable values. Ensure that the parameters in the script match the application values. In addition, check the example application you are using for any special needs.
 
-##### Running Publisher Python Script
+### Running the Publisher Python Script
 
 ```
 cd libs/anycloud-ota/scripts
 python publisher.py [tls] [-l] [-f <filepath>] [-b <broker>] [-k <kit>]
+                    [-e <topic_suffix]
 ```
 
-Usage: 'python publisher.py [tls] [-f filepath]'
+Usage:
 
-- tls - add this argument to run publisher with TLS (secure sockets). You must also supply appropriate certificates and keys
+- `tls` - Add this argument to run the Publisher with TLS (secure sockets). You must also supply the appropriate certificates and keys.
 
-- -l - output more logging information to debug connection issues.
+- `-l` - Output more logging information to debug connection issues.
 
-- -f filepath - use this argument to designate the name of the downloaded file.
+- `-f <filepath>` -Use this argument to designate the name of the downloaded file.
 
-- -b broker - use this argument to override the default broker.  Note that you will need to add certificates for TLS usage. The files need to reside in the same directory as subscriber.py.
+- `-b <broker>` - Use this argument to override the default broker.  Note that you will need to add the certificates for TLS usage. The files must reside in the same directory as the *subscriber.py* script.
 
-  - amazon
+  - `amazon`
 
-    - You need to change the AMAZON_BROKER_ADDRESS endpoint.
+    - Change the `AMAZON_BROKER_ADDRESS` endpoint in the *publisher.py* script.
 
          ```
          AMAZON_BROKER_ADDRESS = "<endpoint>.iot.us-west-1.amazonaws.com"
          ```
 
-    - Add these certificate files:
+    - Add the following certificate files:
 
-              ca_certs = "amazon_ca.crt"
-              certfile = "amazon_client.crt"
-              keyfile  = "amazon_private_key.pem"
+      ```
+      ca_certs = "amazon_ca.crt"
+      certfile = "amazon_client.crt"
+      keyfile  = "amazon_private_key.pem"
+      ```
 
-  - eclipse
+  - `eclipse` ( broker: `mqtt.eclipseprojects.io`)
 
-    - Add these certificate files:
+    - Add the following certificate files:
 
-              ca_certs = "eclipse_ca.crt"
-              certfile = "eclipse_client.crt"
-              keyfile  = "eclipse_client.pem"
+      ```
+      ca_certs = "eclipse_ca.crt"
+      certfile = "eclipse_client.crt"
+      keyfile  = "eclipse_client.pem"
+      ```
+  - `mosquitto` (broker: `test.mosquitto.org`)
 
-  - mosquitto
-
-    - Add these certificate files:
+    - Add the following certificate files:
 
       ```
       ca_certs = "mosquitto.org.crt"
@@ -181,54 +217,62 @@ Usage: 'python publisher.py [tls] [-f filepath]'
       keyfile  = "mosquitto_client.key"
       ```
 
-- -k kit - use this argument to override the default kit (CY8CPROTO_062_4343W).
+- `-k <kit>` - Use this argument to override the default kit (CY8CPROTO_062_4343W).
 
-  - The kit name is used as part of the topic name, and matches the KIT that the application was built with.
+  The kit name is used as part of the topic name; it must match the kit you are using.
 
-#### Use Of The Supplied Subscriber Python Script
+- `-e <topic_suffix>` - Add this to the first part of the topic path names.
 
-The script subscriber.py is provided as a verification script that acts the same as a Device. It can be used to verify that the publisher is working as expected. Be sure that the BROKER_ADDRESS matches the publisher.py.
+  This must also be mirrored in the application for the topic name. This allows for multiple devices being tested to simultaneously connect to different instances of the  Publisher running on different systems so that they do not interfere with each other.
 
-##### Running Subscriber Python Script
+### Subscriber Python Script
+
+The *subscriber.py* script is provided as a verification script that acts the same as a device. It can be used to verify that the Publisher is working as expected. Ensure that the `BROKER_ADDRESS` matches the Broker used in *publisher.py*.
+
+#### Running the Subscriber Python Script
 
 ```
 cd libs/anycloud-ota/scripts
-python subscriber.py [tls] [-l] [-b broker] [-k kit] [-f filepath]
+python subscriber.py [tls] [-l] [-b broker] [-k kit] [-f filepath] [-c <chunk_size>]
+                     [-e <topic_suffix]
 ```
 
-Usage: 'python subscriber.py [tls] [-f filepath]'
+Usage:
 
-- tls - add this argument to run publisher with TLS (secure sockets). You must also supply appropriate certificates and keys.
+- `tls` - Add this argument to run the Publisher with TLS (secure sockets). You must also supply appropriate certificates and keys.
 
-- -l - output more logging information to debug connection issues.
+- `-l` - Output more logging information to debug connection issues.
 
-- -b broker - use this argument to override the default broker.  Note that you will need to add certificates for TLS usage. The files need to reside in the same directory as publisher.py.
+- `-b <broker>` - Use this argument to override the default Broker. Note that you will need to add certificates for TLS usage. The files need to reside in the same directory as *publisher.py*.
 
-  - amazon
+  - `amazon`
 
-    - You need to change the AMAZON_BROKER_ADDRESS endpoint.
+    - Change the `AMAZON_BROKER_ADDRESS` endpoint in the *subscriber.py* script.
 
       ```
       AMAZON_BROKER_ADDRESS = "<endpoint>.iot.us-west-1.amazonaws.com"
       ```
 
-    - Add these certificate files:
+    - Add the following certificate files:
 
-          ca_certs = "amazon_ca.crt"
-          certfile = "amazon_client.crt"
-          keyfile  = "amazon_private_key.pem"
+      ```
+      ca_certs = "amazon_ca.crt"
+      certfile = "amazon_client.crt"
+      keyfile  = "amazon_private_key.pem"
+      ```
 
-  - eclipse
+  - `eclipse`  (Broker: `mqtt.eclipseprojects.io`)
 
-    - Add these certificate files:
+    - Add the following certificate files:
+      ```
+      ca_certs = "eclipse_ca.crt"
+      certfile = "eclipse_client.crt"
+      keyfile  = "eclipse_client.pem"
+      ```
 
-          ca_certs = "eclipse_ca.crt"
-          certfile = "eclipse_client.crt"
-          keyfile  = "eclipse_client.pem"
+  - `mosquitto`  (Broker: `test.mosquitto.org`)
 
-  - mosquitto
-
-    - Add these certificate files:
+    - Add the following certificate files:
 
       ```
       ca_certs = "mosquitto.org.crt"
@@ -236,44 +280,96 @@ Usage: 'python subscriber.py [tls] [-f filepath]'
       keyfile  = "mosquitto_client.key"
       ```
 
-- -k kit - use this argument to override the default kit (CY8CPROTO_062_4343W).
+- `-k kit` - Use this argument to override the default kit (CY8CPROTO_062_4343W).
 
-  - The kit name is used as part of the topic name, and matches the KIT that the application was built with.
+  The kit name is used as part of the topic name; it must match the kit that the application was built with.
 
-- -f filepath - use this argument to designate the output file for the download.
+- `-f filepath` - Use this argument to designate the output file for download.
+
+- `-c <chunk_size>` - The size in bytes of the chunk to request (used for testing).
+
+- `-e <topic_suffix>` - Add this to the first part of the topic path names.
+
+  This must also be mirrored in the application for the topic name. This allows for multiple devices being tested to simultaneously connect to different instances of the Publisher running on different systems so that they do not interfere with each other.
+
+## Migrating from OTA 2.x to OTA 3.x
+
+The OTA 3.x release has new structure defines because of the changes in mqtt and http-client libraries.
+
+Changes:
+
+- `cy_ota_server_info_t`  - deprecated
+  - New structure is `cy_awsport_server_info_t`, which has the same fields as the previous struct.
+- `IotNetworkCredentials_t`  - deprecated
+  - New structure is `cy_awsport_ssl_credentials_t`
+- New fields in `cy_ota_cb_struct_t`
+  - `cy_http_client_t` and `cy_mqtt_t`
+- New field in cy_ota_agent_params_t
+  - `do_not_send_result`
+
+New field in `cy_ota_agent_params_t` :
+
+- `do_not_send_result` - For Job Flow updates, the default is for a Result JSON is sent to the initial connection (Published to MQTT broker or "POST" to HTTP/HTTPS server). To disable this functionality, set this field to "1".
 
 ## Migrating from OTA 1.X to OTA 2.X
 
-There are a few items that need to be changed when migrating from v1.X to v2.X:
+You need to change the following when migrating from v1.x to v2.x:
 
-- OTA 2.X no longer uses mcuboot as a library.
-  - Verify that "mcuboot.lib" does not appear in the "deps" folder for your project.
-  - delete the "libs/mcuboot" folder
-- The structure used when calling cy_ota_agent_start () is the same but some content has changed.
-  - cy_ota_network_params_t
-    - We now accept connection and credentials for both MQTT and HTTP connections so that if a job document redirects from MQTT to HTTP, the OTA Agent will have the TLS credentials for both servers.
-    - Deprecated :
-      - transport - This directed the OTA Agent which transport (MQTT or HTTP) was to be used for the entire OTA transfer.
-      - u - This was a union of the MQTT and HTTP server and credential information. As we now accept both, the union was dissolved.
-      - server - This has been moved to the individual MQTT and HTTP information structures.
-      - credentials - This has been moved to the individual MQTT and HTTP information structures.
+- OTA 2.x no longer uses MCUboot as a library.
+  - Verify that *mcuboot.lib* does not appear in the *deps* folder for your project. If present, delete the file.
+
+  - Delete the *libs/mcuboot* folder.
+
+- The structure used when calling `cy_ota_agent_start()` is the same, but some content has changed:
+
+  - `cy_ota_network_params_t`
+
+    Connection and credentials are accepted for both MQTT and HTTP connections so that if a Job document redirects from MQTT to HTTP, the OTA Agent will have the TLS credentials for both servers.
+
+    - The following are deprecated:
+
+      - `transport` - This directed the OTA Agent to use the  a transport type (MQTT or HTTP) for the entire OTA transfer.
+
+      - `u` - This was a union of the MQTT and HTTP server and credential information. Because both are accepted now, the union was dissolved.
+
+      - `server` - This has been moved to the individual MQTT and HTTP information structures.
+
+      - `credentials` - This has been moved to the individual MQTT and HTTP information structures.
+
     - New:
-      - initial_connection - This directs the OTA Agent as to the first transport to use when getting the Job document. The Job document may re-direct to a different type of transport for downloading the data.
-      - mqtt and http - These are now separated and provide information about the connections.
-      - use_get_job_flow - This allows the application to decide if a Direct download is required or if the new Job Document Flow is preferred.
-- The Application Callback has been expanded to provide more information to the application and allow for the application to modify some of the fields of the information.
-  - The new structure contains the similar "reason" for the callback, and more. Please see the documentation for more in-depth inormation.
 
-## Requirements
+      - `initial_connection` - This directs the OTA Agent to use a transport type as the first transport to get the Job document. The Job document may redirect to a different type of transport for downloading the data.
 
-- [ModusToolbox™ IDE](https://www.cypress.com/products/modustoolbox-software-environment) v2.1
-- [MCUBoot](https://juullabs-oss.github.io/mcuboot/)
+      - `mqtt` and `http` - These are now separated and provide information about the connections.
+
+      - `use_get_job_flow` - This allows the application to determine whether a Direct download is required or the new Job Document Flow is preferred.
+
+- The application callback has been expanded to provide more information to the application and allow for the application to modify some of the fields of the information.
+
+  The new structure contains the similar "reason" for the callback, and more. See the documentation.
+
+## Minimum Requirements
+
+- [ModusToolbox® software](https://www.cypress.com/products/modustoolbox-software-environment) v2.2
+
+- [MCUboot](https://juullabs-oss.github.io/mcuboot/) v1.7.0
+
 - Programming Language: C
-- [Python 3.7 or higher](https://www.python.org/downloads//) (for signing and Publisher script)
-  - Run pip to install the modules.
+
+- [Python 3.7 or higher](https://www.python.org/downloads//) (for signing and the Publisher script).
+
+  Run *pip* to install the modules.
+
+  ```
+  pip install -r <repo root>/libs/anycloud-ota/source/mcuboot/scripts/requirements.txt
+  ```
+
+### Note on Using Windows 10
+
+When using ModusToolbox, you will need to install the pip requirements above the Python installation in the ModusToolbox installation.
 
 ```
-pip install -r <repo root>/vendors/cypress/MTB/port_support/ota/scripts/requirements.txt
+<ModusToolbox>/tools_2.2/python/python -m pip install -r <repo root>/libs/anycloud-ota/source/mcuboot/scripts/requirements.txt
 ```
 
 ## Supported Toolchains
@@ -288,244 +384,383 @@ pip install -r <repo root>/vendors/cypress/MTB/port_support/ota/scripts/requirem
 ## Supported Kits
 
 - [PSoC 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
+
 - [PSoC 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
 
-Only kits with 2M of Internal FLASH and External FLASH are supported at this time. The kit-specific things that need to be changed:
+- [PSoC® 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
 
-- FLASH locations and sizes for Bootloader, Primary Slot (slot 0) and Secondary Slot (slot 1).
-  - See further information in the Prepare MCUBoot section below.
+Only kits with 2M of internal flash and external flash are supported at this time. You will need to change the flash locations and sizes for the bootloader, primary slot (Slot 0) and secondary slot (Slot 1). See the Prepare MCUboot section below.
 
 ## Hardware Setup
 
 This example uses the board's default configuration. See the kit user guide to ensure the board is configured correctly.
 
-**Note**: Before using this code example, make sure that the board is upgraded to KitProg3. The tool and instructions are available in the [Firmware Loader](https://github.com/cypresssemiconductorco/Firmware-loader) GitHub repository. If you do not upgrade, you will see an error like "unable to find CMSIS-DAP device" or "KitProg firmware is out of date".
+**Note:** Before using this code example, make sure that the board is upgraded to KitProg3. The tool and instructions are available in the [Firmware Loader](https://github.com/cypresssemiconductorco/Firmware-loader) GitHub repository. If you do not upgrade, you will see an error like "unable to find CMSIS-DAP device" or "KitProg firmware is out of date".
 
 ## Software Setup
 
-- Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
-- Python Interpreter. The supplied publisher.py is tested with [Python 3.8.1](https://www.python.org/downloads/release/python-381/).
+1. Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
+
+2. Python Interpreter. The supplied *publisher.py* script is tested with [Python 3.8.1](https://www.python.org/downloads/release/python-381/).
 
 ## Enabling Debug Output
 
-- In libs/anycloud-ota/include/cy_ota_api.h, define LIBRARY_LOG_LEVEL to one of these defines, in order, from no debug output to maximum debug output.
-  - IOT_LOG_NONE
-  - IOT_LOG_ERROR
-  - IOT_LOG_WARN
-  - IOT_LOG_INFO
-  - IOT_LOG_DEBUG
+### OTA-v3.x
 
-## Clone MCUBoot
+Starting with OTA v2.2.0, the *cy_log* facility is used to enable more levels of logging. To use the logging features, you need to call the initialization function. After that, you can adjust the level of logging for various "facilities".
 
-We need to first build and program the bootloader app *MCUBootApp* that is available in the MCUBoot GitHub repo, before programming this OTA app. The bootloader app is run by CM0+ while this OTA app is run by CM4. Clone the MCUBoot repository onto your local machine, **outside of your application directory.**
+At the minimum, you can initialize the logging system by including the header file, and calling the initialization function with a logging level. The other arguments are for callbacks to allow the application to handle the actual output (this enables you to log to an alternate destination), and provide a time stamp. See the *cy_log.h* file for the log levels. For OTA logging, use the `CYLF_OTA` facility.
 
-1. git clone https://github.com/JuulLabs-OSS/mcuboot.git
+```
+#include "cy_log.h"
 
-2. Open a CLI terminal and navigate to the cloned mcuboot folder: `cd mcuboot`
+   cy_log_init(CY_LOG_WARNING, NULL, NULL);
+```
 
-3. Change the branch to get the Cypress version: `git checkout v1.6.1-cypress`
+### Pre OTA-v2.0.1
 
-4. We need to pull in mcuboot sub-modules to build mcuboot: `git submodule update --init --recursive`
+In *libs/anycloud-ota/include/cy_ota_api.h*, define `LIBRARY_LOG_LEVEL` to one of these defines, in the following order, from no debug output to maximum debug output.
 
-5. Install the required python packages mentioned in *mcuboot\scripts\requirements.txt*.
+  - `IOT_LOG_NONE`
+  - `IOT_LOG_ERROR`
+  - `IOT_LOG_WARN`
+  - `IOT_LOG_INFO`
+  - `IOT_LOG_DEBUG`
 
-   i. cd `mcuboot/scripts`
+## Clone MCUboot
 
-   ii. `pip install -r requirements.txt`
+You need to first build and program the bootloader app *MCUBootApp* that is available in the MCUboot GitHub repo before programming this OTA app. The bootloader app is run by the CM0+ CPU while this OTA app is run by CM4. Clone the MCUboot repository onto your local machine, **outside of your application directory.**
 
-## Configure MCUBootApp
-
-#### Adjust MCUBootApp RAM start in linker script
-
-The default RAM location needs to be modified for use with OTA.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.ld*
-
-   Change line 66 from:
-
+1. Run the following command:
    ```
-   ram               (rwx)   : ORIGIN = 0x08020000, LENGTH = 0x20000
+   git clone https://github.com/JuulLabs-OSS/mcuboot.git
+   ```
+2. Open a CLI terminal and navigate to the cloned *mcuboot* folder:
+   ```
+   cd mcuboot
    ```
 
-   To:
-
+3. Change the branch to get the Cypress version:
    ```
-   ram               (rwx)   : ORIGIN = 0x08000000, LENGTH = 0x20000
+   git checkout v1.7.0-cypress
    ```
 
+4. Pull in MCUboot sub-modules to build mcuboot:
+   ```
+   git submodule update --init --recursive
+   ```
 
+5. Install the required Python packages mentioned in *mcuboot/scripts/requirements.txt*:
+   ```
+   cd mcuboot/scripts
 
-#### Adjust MCUBootApp FLASH locations.
+   pip install -r requirements.txt
+   ```
 
-It is important for both MCUBoot and the application to have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader refer to the [MCUBoot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
+## MCUBootApp Using the SWAP Functionality
 
-#### Internal Flash for Secondary Slot
+Starting with MCUboot v1.7.0, "SWAP" support has been added. When copying the downloaded application to the primary slot (execution location), MCUboot will swap (exchange) the two applications rather than copy over the resident application. This allows mcuboot to revert to the application version before the download.
 
-These values are used when the Secondary Slot is located in **internal** flash. Since internal flash is 2 MB, we need to have the bootloader and the Primary and Secondary slots fit. The Primary and Secondary slots are always the same size.
+MCUBootApp also starts the watchdog timer. If the watchdog timer completes without being cleared, the system will automatically reboot and revert the application to the previous app; this is because the new application failed in some way.
 
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk*
+## Configure MCUBootApp v1.7.0-cypress
 
-   Change at line 31:
+### Decide on COPY vs. SWAP
+
+MCUBoot can support OTA in two ways: by copying the new application over the current application, or by swapping the new application with the current applciation.
+
+#### Copy
+
+MCUBoot copies over the downloaded (new) application in the Secondary slot over the current application in the Primary slot. This is a faster update method, but does not allow for reverting to the previous version if there is a problem.
+
+To use COPY, set this flag in boot/cypress/MCUBootApp/MCUBootApp.mk:
+
+Line 32:
+
+```
+USE_OVERWRITE ?= 1
+```
+
+#### SWAP
+
+MCUBoot swaps the applications in the Primary and Secondary slots. This allows for reverting the change to the previous version (last known good). This operation takes longer than the copy option.
+
+To use SWAP, clear this flag  in boot/cypress/MCUBootApp/MCUBootApp.mk:
+
+Line 32:
+
+```
+USE_OVERWRITE ?= 0
+```
+
+### Adjust MCUBootApp FLASH locations
+
+Both MCUboot and the application must have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader, see the [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
+
+### Internal Flash for Secondary Slot
+
+These values are used when the secondary slot is located in the *internal* flash. Because the internal flash is 2 MB, you must have the bootloader and the primary and secondary slots match. The primary and secondary slots are always the same size.
+
+1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* to change line 31:
 
    ```
    USE_EXTERNAL_FLASH ?= 0
    ```
 
-   Replace line 55 with:
+2. Add the following at line 70:
+
+   ```
+   MAX_IMG_SECTORS = 2000
+   DEFINES_APP += -DCY_BOOT_SCRATCH_SIZE=0x4000
+   DEFINES_APP += -DCY_BOOT_PRIMARY_1_SIZE=0x000EE000
+   DEFINES_APP += -DCY_BOOT_SECONDARY_1_SIZE=0x000EE000
+   ```
+
+3. Place the following before the current line:
+
+   ```
+   DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=$(MAX_IMG_SECTORS)
+   ```
+
+### External Flash for the Secondary Slot
+
+These values are used when the secondary slot is located in the *external* flash. This allows for a larger primary slot and therefore, a larger application size. The primary and secondary slots are always the same size.
+
+1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* to change line 31:
+
+   ```
+   USE_EXTERNAL_FLASH ?= 1
+   ```
+2. Add the following at line 70:
+
+   ```
+   DEFINES_APP += -DCY_BOOT_SCRATCH_SIZE=0x4000
+   DEFINES_APP += -DCY_BOOT_PRIMARY_1_SIZE=0x001C0000
+   DEFINES_APP += -DCY_BOOT_SECONDARY_1_SIZE=0x001C0000
+   ```
+
+
+### Change MCUboot to Ignore Primary Slot verify
+
+**Notes:**
+
+1. The primary slot is where the application is run from.
+
+2. The OTA download stores the new application in the secondary slot.
+
+3. MCUboot verifies the signature in the secondary slot before copying it to the primary slot.
+
+4. Signature verify takes some time. Removing the verify before running from the primary slot allows for a faster boot up of your application. Note that MCUboot checks the signature on the secondary slot before copying the application.
+
+Adjust the signing type for MCUboot because the default has changed from previous versions. If you do not make this change, the OTA will complete the download, reboot, but MCUboot will not find the *magic_number* and fail to copy the secondary slot to the primary slot.
+
+Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h* as follows:
+
+1. On lines 38 and 39, comment out these two lines:
+
+   ```
+   /* Uncomment for ECDSA signatures using curve P-256. */
+   //#define MCUBOOT_SIGN_EC256
+   //#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable
+   ```
+
+2. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h* on line 78:
+
+   ```
+   //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
+   ```
+
+## Configure MCUBootApp 1.6.0-cypress
+
+### Adjust MCUBootApp RAM Start in the Linker Script
+
+Change the default RAM location for use with OTA.
+
+Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.ld*.    Change line 66 as follows:
+
+From:
+
+```
+ram               (rwx)   : ORIGIN = 0x08020000, LENGTH = 0x20000
+```
+
+To:
+
+```
+ram               (rwx)   : ORIGIN = 0x08000000, LENGTH = 0x20800
+```
+
+### Adjust MCUBootApp Flash Locations
+
+Both MCUboot and the application must have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader, see the [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
+
+### Internal Flash for the Secondary Slot
+
+These values are used when the secondary slot is located in the *internal* flash. Because the internal flash is 2 MB, you need to ensure that the bootloader and the primary and secondary slots match. The primary and secondary slots are always the same size.
+
+1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* at line 31:
+
+   ```
+   USE_EXTERNAL_FLASH ?= 0
+   ```
+
+2. Replace line 55 with the following:
 
    ```
    DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=2000
    ```
 
-   Add at line 56:
+3. Add the following at line 56:
 
    ```
    DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x0EE000
    DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x0EE000
    ```
 
+### External Flash for the Secondary Slot
 
+These values are used when the secondary slot is located in the *external* flash. This allows for a larger primary slot and therefore, a larger application size. The primary and secondary slots are always the same size.
 
-#### External Flash for Secondary Slot
-
-These values are used when the Secondary Slot is located in **external** flash. This allows for a larger Primary Slot and hence, a larger application size. The Primary and Secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk*
-
-   Change at line 31:
+1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* at line 31:
 
    ```
    USE_EXTERNAL_FLASH ?= 1
    ```
 
-   Replace line 55 with:
+2. Replace line 55 with the following:
 
    ```
    DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=3584
    ```
 
-   Add at line 56:
+3. Add the following at line 56:
 
    ```
    DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x01c0000
-   DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x01c00=00
+   DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x01c0000
    ```
 
+### Change MCUboot to Ignore Primary Slot Verify
 
+**Notes:**
 
-### Change MCUBoot to ignore Primary Slot verify.
+1. The primary slot is where the application is run from.
 
-​	Notes:
+2. The OTA download stores the new application in the secondary slot.
 
-- The Primary Slot is where the application is run from.
-- The OTA download stores the new application in Secondary Slot.
-- MCUBoot verifies the signature in the Secondary Slot before copying to Primary slot.
-- Signature verify takes some time. Removing the verify before running from the Primary Slot allows for a faster boot up of your application. Note that MCUBoot checks the signature on the Secondary Slot before copying the application.
+3. MCUboot verifies the signature in the secondary slot before copying it to the primary slot.
 
-1. Adjust signing type for MCUBoot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUBoot will not find the magic_number and fail to copy Secondary slot to Primary slot.
+4. Signature verify takes some time. Removing the verify before running from the primary slot allows for a faster boot up of your application. Note that MCUboot checks the signature on the secondary slot before copying the application.
 
-   1. Edit mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h
+Adjust signing type for MCUboot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUboot will not find the magic_number and fail to copy the secondary slot to the primary slot.
 
-      On lines 38 & 39 comment out these two lines:
+1. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h*. On lines 38 and 39, comment out these two lines:
 
-      ```
-      /* Uncomment for ECDSA signatures using curve P-256. */
-      //#define MCUBOOT_SIGN_EC256
-      //#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable
-      ```
+   ```
+   /* Uncomment for ECDSA signatures using curve P-256. */
+   //#define MCUBOOT_SIGN_EC256
+   //#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable
+   ```
 
-      Edit mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h:
+2. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h*. Add the following on line 78:
 
-      On line 78:
+   ```
+   //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
+   ```
 
-      ```
-      //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
-      ```
+## Building MCUBootApp
 
+1. Ensure that the toolchain path is set for the compiler. Verify that the path is correct for your installed version of ModusToolbox.
 
+   - Check the path for ModusToolbox v2.1.x:
 
-#### Building MCUBootApp
+     ```
+     export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.1/gcc-7.2.1
+     ```
 
+   - Check the path for ModusToolbox v2.2.x:
+     ```
+     export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.2/gcc
+     ```
 
-Ensure that the toolchain path is set for the compiler. Check that the path is correct for your installed version of ModusToolbox.
+2. Build the application:
 
-This is for Modustoolbox v2.1.x:
+   ```
+   cd mcuboot/boot/cypress
+   ```
+   ```​
+   make app APP_NAME=MCUBootApp PLATFORM=PSOC_062_2M     BUILDCFG=Release
+   ```
 
-​		`export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.1/gcc-7.2.1`
+3. Use Cypress Programmer to program MCUboot. Ensure that you close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUboot application *.elf* file is *mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Release/MCUBootApp.elf*.
 
-This is for Modustoolbox v2.2.x:
-
-​		`export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.2/gcc`
-
-Build the Application
-
-​		`cd mcuboot/boot/cypress`
-
-​		`make app APP_NAME=MCUBootApp TARGET=CY8CPROTO-062-4343W`
-
-Use Cypress Programmer to program MCUBoot. Remember to close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUBoot application .elf file is here:
-
-​		`mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Debug/MCUBootApp.elf`
-
-#### Program MCUBootApp
+### Program MCUBootApp
 
 1. Connect the board to your PC using the provided USB cable through the USB connector.
+
 2. Program the board using the instructions in your Customer Example Application notes.
 
-## Prepare for Building your OTA Application
+## Prepare for Building Your OTA Application
 
-### Prepare for Building your Application
+Copy *libs/anycloud-ota/configs/cy_ota_config.h* to your application's top-level directory, and adjust for your application needs.
 
-Copy libs/anycloud-ota/configs/cy_ota_config.h to your application's top level directory, and adjust for your application needs.
+   ```
+   cp libs/anycloud-ota/configs/cy_ota_config.h <application dir>
+   ```
 
-Consult the README.md file for configuration of the Example Application and other information.
+Consult the README.md file for configuration of the example application and other information.
 
-The Makefile uses this compile variable to determine which FLASH to use:
+The Makefile uses this compile variable to determine which flash to use:
 
 `OTA_USE_EXTERNAL_FLASH=1`
 
-The default for the build is to use external. The build system will use the values described above for the slot sizes automatically.
+The default for the build is to use the external flash. The build system will use the values described above for the slot sizes automatically.
 
-To use internal FLASH only, set the Makefile variable to zero:
+To use the internal flash only, set the Makefile variable to zero:
 
 `OTA_USE_EXTERNAL_FLASH=0`
 
 ## Flash Partitioning
 
-OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the Secondary Slot.  MCUboot will do the actual update from the Secondary Slot to the Primary Slot on the next reboot of the device. In order for the OTA software and MCUBoot to have the same information on where the two Slots are in FLASH, we need to tell MCUBoot where the Slots are located.
+OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the "secondary slot".  MCUboot will do the actual update from the secondary slot to the primary slot on the next reboot of the device. For the OTA software and MCUboot to have the same information on where the two slots are in flash, you need to tell MCUboot where the slots are located.
 
-Secondary slot can be placed on either Internal or external flash. The start address when internal flash is used is an offset from the starting address of the internal flash 0x10000000.
+The secondary slot can be placed on either internal or external flash. The start address when internal flash is used is an offset from the starting address of the internal flash 0x10000000.
 
 Internal flash:
 
-Primary Slot      (Slot 0): start: 0x018000, size: 0xEE000
+Primary Slot (Slot 0): start: 0x018000, size: 0xEE000
 
 Secondary Slot (Slot 1): start: 0x106000, size: 0xEE000
 
 External flash:
 
-Primary Slot      (Slot 0): start: 0x018000, size: 0x01c0000
+Primary Slot (Slot 0): start: 0x018000, size: 0x01c0000
 
 Secondary Slot (Slot 1): start: 0x18000000, size: 0x01c0000
 
 ## Limitations
-1. If not using a Job document with MQTT, and the Device is not subscribed to the topic on the MQTT Broker when the Publisher sends the update, it will miss the update.
 
-   ***The solution is to use a Job document, which has information about where the OTA Image is located.***
+1. If not using a Job document with MQTT, and the device is not subscribed to the topic on the MQTT Broker when the Publisher sends the update, it will miss the update.
 
-2. Internal and External FLASH is supported. Using Internal FLASH can only be used with platforms that have 2M of internal FLASH.
+  As the workaround, use a Job document, which has information about where the OTA update image is located.
 
-3. Be sure to have a reliable network connection before starting an OTA update. If your Network connection is poor, OTA update may fail due to lost packets or lost connection.
+2. Internal and external flash is supported. You can use the internal flash can only with platforms that have 2M of internal flash. The size of the application is greatly limited if using internal flash only.
 
-4. Be sure to have a fully charged device before starting an OTA update. If you device's battery is low, OTA may fail.
+3. Ensure that you have a reliable network connection before starting an OTA update. If your network connection is poor, OTA update may fail due to lost packets or a lost connection.
+
+4. Ensure that you have a fully charged device before starting an OTA update. If you device's battery is low, OTA may fail.
 
 ## Additional Information
 
 - [OTA RELEASE.md]()
+
 - [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/api_reference_manual/html/index.html)
+
 - [Cypress OTA Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt )
+
 - [ModusToolbox Software Environment, Quick Start Guide, Documentation, and Videos](https://www.cypress.com/products/modustoolbox-software-environment)
--  [MCUBoot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation
+
+-  [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation
 
 Cypress also provides a wealth of data at www.cypress.com to help you select the right device, and quickly and effectively integrate it into your design.
 
@@ -535,6 +770,8 @@ For PSoC 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://
 
 | Document Version | Description of Change              |
 | ---------------- | ---------------------------------- |
+| 1.4.0            | Updated for OTA v3.0.0             |
+| 1.3.0            | Updated for new logging            |
 | 1.2.0            | Updated for version 2.0.0 features |
 | 1.1.0            | Updated for HTTP support           |
 | 1.0.1            | Documentation updates              |

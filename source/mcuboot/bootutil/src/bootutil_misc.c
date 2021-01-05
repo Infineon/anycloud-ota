@@ -193,7 +193,7 @@ boot_read_swap_state(const struct flash_area *fap,
     state->swap_type = BOOT_GET_SWAP_TYPE(swap_info);
     state->image_num = BOOT_GET_IMAGE_NUM(swap_info);
 
-    if (rc == 1 || state->swap_type > BOOT_SWAP_TYPE_REVERT) {
+    if (rc == 1) {
         state->swap_type = BOOT_SWAP_TYPE_NONE;
         state->image_num = 0;
     }
@@ -391,6 +391,90 @@ boot_swap_type_multi(int image_index)
     return BOOT_SWAP_TYPE_NONE;
 }
 
+/*
+ * This function is not used by the bootloader itself, but its required API
+ * by external tooling like mcumgr.
+ */
+int
+boot_swap_type(void)
+{
+    return boot_swap_type_multi(0);
+}
+
+/**
+ * Marks the image in the secondary slot as pending.  On the next reboot,
+ * the system will perform a one-time boot of the the secondary slot image.
+ *
+ * @param image             0 = Secondary_Slot_1, 1 = Secondary_Slot_2
+ * @param permanent         Whether the image should be used permanently or
+ *                              only tested once:
+ *                                  0=run image once, then confirm or revert.
+ *                                  1=run image forever.
+ *
+ * @return                  0 on success; nonzero on failure.
+ */
+int
+boot_set_image_pending(int image, int permanent)
+{
+    const struct flash_area *fap;
+    struct boot_swap_state state_secondary_slot;
+    uint8_t swap_type;
+    int rc;
+
+    rc = boot_read_swap_state_by_id(FLASH_AREA_IMAGE_SECONDARY(image),
+                                    &state_secondary_slot);
+    if (rc != 0) {
+        return rc;
+    }
+
+    switch (state_secondary_slot.magic) {
+    case BOOT_MAGIC_GOOD:
+        /* Swap already scheduled. */
+        return 0;
+
+    case BOOT_MAGIC_UNSET:
+        rc = flash_area_open(FLASH_AREA_IMAGE_SECONDARY(image), &fap);
+        if (rc != 0) {
+            rc = BOOT_EFLASH;
+        } else {
+            rc = boot_write_magic(fap);
+        }
+
+        if (rc == 0 && permanent) {
+            rc = boot_write_image_ok(fap);
+        }
+
+        if (rc == 0) {
+            if (permanent) {
+                swap_type = BOOT_SWAP_TYPE_PERM;
+            } else {
+                swap_type = BOOT_SWAP_TYPE_TEST;
+            }
+            rc = boot_write_swap_info(fap, swap_type, 0);
+        }
+
+        flash_area_close(fap);
+        return rc;
+
+    case BOOT_MAGIC_BAD:
+        /* The image slot is corrupt.  There is no way to recover, so erase the
+         * slot to allow future upgrades.
+         */
+        rc = flash_area_open(FLASH_AREA_IMAGE_SECONDARY(image), &fap);
+        if (rc != 0) {
+            return BOOT_EFLASH;
+        }
+
+        flash_area_erase(fap, 0, fap->fa_size);
+        flash_area_close(fap);
+        return BOOT_EBADIMAGE;
+
+    default:
+        assert(0);
+        return BOOT_EBADIMAGE;
+    }
+}
+
 /**
  * Marks the image in the secondary slot as pending.  On the next reboot,
  * the system will perform a one-time boot of the the secondary slot image.
@@ -405,72 +489,7 @@ boot_swap_type_multi(int image_index)
 int
 boot_set_pending(int permanent)
 {
-    const struct flash_area *fap;
-    struct boot_swap_state state_secondary_slot;
-    uint8_t swap_type;
-    int rc;
-
-    rc = boot_read_swap_state_by_id(FLASH_AREA_IMAGE_SECONDARY(0),
-                                    &state_secondary_slot);
-    if (rc != 0) {
-        return rc;
-    }
-
-    switch (state_secondary_slot.magic) {
-    case BOOT_MAGIC_GOOD:
-        /* Swap already scheduled. */
-        return 0;
-
-    case BOOT_MAGIC_UNSET:
-        rc = flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap);
-        if (rc != 0) {
-            rc = BOOT_EFLASH;
-        } else {
-            rc = boot_write_magic(fap);
-        }
-
-#ifdef CY_BOOT_USE_EXTERNAL_FLASH
-        /*
-         * Writing trailer flags doesn't work properly for internal flash. That's OK
-         * because writing the magic does work and that's enough to trigger the
-         * update for MCUBoot1.6.
-         */
-
-        if (rc == 0 && permanent) {
-            rc = boot_write_image_ok(fap);
-        }
-
-        if (rc == 0) {
-            if (permanent) {
-                swap_type = BOOT_SWAP_TYPE_PERM;
-            } else {
-                swap_type = BOOT_SWAP_TYPE_TEST;
-            }
-            rc = boot_write_swap_info(fap, swap_type, 0);
-        }
-#else
-        (void)swap_type;
-#endif
-        flash_area_close(fap);
-        return rc;
-
-    case BOOT_MAGIC_BAD:
-        /* The image slot is corrupt.  There is no way to recover, so erase the
-         * slot to allow future upgrades.
-         */
-        rc = flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap);
-        if (rc != 0) {
-            return BOOT_EFLASH;
-        }
-
-        flash_area_erase(fap, 0, fap->fa_size);
-        flash_area_close(fap);
-        return BOOT_EBADIMAGE;
-
-    default:
-        assert(0);
-        return BOOT_EBADIMAGE;
-    }
+    return boot_set_image_pending(0, permanent);
 }
 
 /**

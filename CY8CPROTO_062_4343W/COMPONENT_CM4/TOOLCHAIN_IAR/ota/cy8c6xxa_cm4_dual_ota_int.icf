@@ -53,8 +53,8 @@ define symbol __ICFEDIT_intvec_start__ = 0x00000000;
  * where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.icf'.
  */
 /* RAM */
-define symbol __ICFEDIT_region_IRAM1_start__ = 0x08020000;
-define symbol __ICFEDIT_region_IRAM1_end__   = 0x080FF800;
+define symbol __ICFEDIT_region_IRAM1_start__ = 0x08020800;
+define symbol __ICFEDIT_region_IRAM1_end__   = 0x080DF000;
 /* Flash */
 define symbol __ICFEDIT_region_IROM1_start__ = 0x10000000;
 define symbol __ICFEDIT_region_IROM1_end__   = 0x10200000;
@@ -145,9 +145,10 @@ define block HEAP       with expanding size, alignment = 8, minimum size = __ICF
 define block HSTACK {block HEAP, block PROC_STACK, last block CSTACK};
 
 /* [stde] Additions for OTA using MCUBoot -- will get from passed in Makefile:
-    --config_def MCUBOOT_BOOTLOADER_SIZE=0x00012000
+    --config_def MCUBOOT_BOOTLOADER_SIZE=0x00018000
     --config_def MCUBOOT_HEADER_SIZE=0x00000400
-    --config_def CY_BOOT_PRIMARY_1_SIZE=0x000EE000
+    --config_def CY_BOOT_PRIMARY_1_SIZE=0x000EE000 (Internal FLASH)
+    --config_def CY_BOOT_PRIMARY_1_SIZE=0x0010C000 (External FLASH)
 */
 
 define symbol FLASH_START = 0x10000000 + MCUBOOT_BOOTLOADER_SIZE + MCUBOOT_HEADER_SIZE;

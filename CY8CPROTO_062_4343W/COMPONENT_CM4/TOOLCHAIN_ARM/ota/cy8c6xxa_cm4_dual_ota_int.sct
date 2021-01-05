@@ -52,7 +52,8 @@
 ; MCUBOOT_HEADER_SIZE = 0x400;
 
 ; CY_BOOT_PRIMARY_1_SIZE Slot 1 size passed in as argument to ld.exe
-; CY_BOOT_PRIMARY_1_SIZE = 0xEE000
+; CY_BOOT_PRIMARY_1_SIZE = 0x0EE000 (Internal FLASH)
+; CY_BOOT_PRIMARY_1_SIZE = 0x10C000 (External FLASH)
 
 ; The following defines control RAM and flash memory allocation for the CM4 core.
 ; You can change the memory allocation by editing RAM and Flash defines.
@@ -61,8 +62,8 @@
 ; Your changes must be aligned with the corresponding defines for CM0+ core in 'xx_cm0plus.scat',
 ; where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.scat'.
 ; RAM
-#define RAM_START               0x08020000
-#define RAM_SIZE                0x000DF800
+#define RAM_START               0x08020800
+#define RAM_SIZE                0x000DF000
 ; Flash
 #define FLASH_START             (0x10000000 + MCUBOOT_BOOTLOADER_SIZE + MCUBOOT_HEADER_SIZE)
 #define FLASH_SIZE              (CY_BOOT_PRIMARY_1_SIZE - MCUBOOT_HEADER_SIZE) ; Our code must fit into a single slot - header

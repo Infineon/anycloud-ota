@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['network_5finterface',['network_interface',['../structcy__ota__network__params__t.html#abf5643e6336accb1b9bb7e5b219f3553',1,'cy_ota_network_params_t']]],
-  ['numtopicfilters',['numTopicFilters',['../structcy__ota__mqtt__params__t.html#ac806ee0d85cccc193de4b7b9be601477',1,'cy_ota_mqtt_params_t']]]
+  ['json_5fdoc',['json_doc',['../structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa',1,'cy_ota_cb_struct_t']]]
 ];

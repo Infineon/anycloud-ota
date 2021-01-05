@@ -102,23 +102,65 @@ $(document).ready(function(){initNavTree('structcy__ota__http__params__t.html','
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
-<div class="textblock"><p>OTA HTTP specific connection parameters. </p>
+<div class="textblock"><p>OTA HTTP-specific connection parameters. </p>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:a7ebf7f42bb7e54aaf2014403752cccbc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7ebf7f42bb7e54aaf2014403752cccbc"></a>
-<a class="el" href="structcy__ota__server__info__t.html">cy_ota_server_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a7ebf7f42bb7e54aaf2014403752cccbc">server</a></td></tr>
-<tr class="memdesc:a7ebf7f42bb7e54aaf2014403752cccbc"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP Server to get Job or OTA Image set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine use of job document. <br /></td></tr>
-<tr class="separator:a7ebf7f42bb7e54aaf2014403752cccbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e685fc8622e19d7a9cd87dc4b159656"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e685fc8622e19d7a9cd87dc4b159656"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a1e685fc8622e19d7a9cd87dc4b159656">file</a></td></tr>
-<tr class="memdesc:a1e685fc8622e19d7a9cd87dc4b159656"><td class="mdescLeft">&#160;</td><td class="mdescRight">filename for Job or OTA Image set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine OTA update flow. <br /></td></tr>
+<tr class="memitem:a45626624140f47a3b1ec6972d54f86b8"><td class="memItemLeft" align="right" valign="top">cy_awsport_server_info_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a45626624140f47a3b1ec6972d54f86b8">server</a></td></tr>
+<tr class="memdesc:a45626624140f47a3b1ec6972d54f86b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP server to get the Job or OTA image.  <a href="#a45626624140f47a3b1ec6972d54f86b8">More...</a><br /></td></tr>
+<tr class="separator:a45626624140f47a3b1ec6972d54f86b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e685fc8622e19d7a9cd87dc4b159656"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a1e685fc8622e19d7a9cd87dc4b159656">file</a></td></tr>
+<tr class="memdesc:a1e685fc8622e19d7a9cd87dc4b159656"><td class="mdescLeft">&#160;</td><td class="mdescRight">File name for the Job or OTA image.  <a href="#a1e685fc8622e19d7a9cd87dc4b159656">More...</a><br /></td></tr>
 <tr class="separator:a1e685fc8622e19d7a9cd87dc4b159656"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28c66a28e7ee156a5d21882ce13e6080"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28c66a28e7ee156a5d21882ce13e6080"></a>
-IotNetworkCredentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a28c66a28e7ee156a5d21882ce13e6080">credentials</a></td></tr>
-<tr class="memdesc:a28c66a28e7ee156a5d21882ce13e6080"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS) <br /></td></tr>
-<tr class="separator:a28c66a28e7ee156a5d21882ce13e6080"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="memItemLeft" align="right" valign="top">cy_awsport_ssl_credentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#afefcfe7b24dfcf382ceef3fdb6e5b59f">credentials</a></td></tr>
+<tr class="memdesc:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS).  <a href="#afefcfe7b24dfcf382ceef3fdb6e5b59f">More...</a><br /></td></tr>
+<tr class="separator:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="a45626624140f47a3b1ec6972d54f86b8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_awsport_server_info_t cy_ota_http_params_t::server</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>HTTP server to get the Job or OTA image. </p>
+<p>Set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine the use of the Job document. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1e685fc8622e19d7a9cd87dc4b159656"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* cy_ota_http_params_t::file</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>File name for the Job or OTA image. </p>
+<p>Set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine the OTA update flow. </p>
+
+</div>
+</div>
+<a class="anchor" id="afefcfe7b24dfcf382ceef3fdb6e5b59f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_awsport_ssl_credentials_t cy_ota_http_params_t::credentials</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setting credentials uses TLS (NULL == non-TLS). </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

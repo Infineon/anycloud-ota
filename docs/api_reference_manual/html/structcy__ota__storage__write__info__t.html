@@ -102,35 +102,115 @@ $(document).ready(function(){initNavTree('structcy__ota__storage__write__info__t
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
-<div class="textblock"><p>Struct to hold information on where to write data Information on where to store the down loaded chunk of OTA image. </p>
+<div class="textblock"><p>Struct to hold information on where to write the data. </p>
+<p>Information on where to store the downloaded chunk of the OTA image. </p>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:a23215e611d8933d75fc52e902d3f4502"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23215e611d8933d75fc52e902d3f4502"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a23215e611d8933d75fc52e902d3f4502">total_size</a></td></tr>
-<tr class="memdesc:a23215e611d8933d75fc52e902d3f4502"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pass total size to storage module; 0 = disregard. <br /></td></tr>
+<tr class="memitem:a23215e611d8933d75fc52e902d3f4502"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a23215e611d8933d75fc52e902d3f4502">total_size</a></td></tr>
+<tr class="memdesc:a23215e611d8933d75fc52e902d3f4502"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pass the total size to the storage module; 0 = disregard.  <a href="#a23215e611d8933d75fc52e902d3f4502">More...</a><br /></td></tr>
 <tr class="separator:a23215e611d8933d75fc52e902d3f4502"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0405b3806c0de934f5f5f55ac693c184"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0405b3806c0de934f5f5f55ac693c184"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a0405b3806c0de934f5f5f55ac693c184">offset</a></td></tr>
-<tr class="memdesc:a0405b3806c0de934f5f5f55ac693c184"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset into file/area where data belongs. <br /></td></tr>
+<tr class="memitem:a0405b3806c0de934f5f5f55ac693c184"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a0405b3806c0de934f5f5f55ac693c184">offset</a></td></tr>
+<tr class="memdesc:a0405b3806c0de934f5f5f55ac693c184"><td class="mdescLeft">&#160;</td><td class="mdescRight">Offset into file/area where the data belongs.  <a href="#a0405b3806c0de934f5f5f55ac693c184">More...</a><br /></td></tr>
 <tr class="separator:a0405b3806c0de934f5f5f55ac693c184"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af66dba2bcbb117c85bcf20fa0357c525"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af66dba2bcbb117c85bcf20fa0357c525"></a>
-uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#af66dba2bcbb117c85bcf20fa0357c525">buffer</a></td></tr>
-<tr class="memdesc:af66dba2bcbb117c85bcf20fa0357c525"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to buffer with chunk of data. <br /></td></tr>
+<tr class="memitem:af66dba2bcbb117c85bcf20fa0357c525"><td class="memItemLeft" align="right" valign="top">uint8_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#af66dba2bcbb117c85bcf20fa0357c525">buffer</a></td></tr>
+<tr class="memdesc:af66dba2bcbb117c85bcf20fa0357c525"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to the buffer with the chunk of data.  <a href="#af66dba2bcbb117c85bcf20fa0357c525">More...</a><br /></td></tr>
 <tr class="separator:af66dba2bcbb117c85bcf20fa0357c525"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20c92fe4a9bba891efd3319efbd05060"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20c92fe4a9bba891efd3319efbd05060"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a20c92fe4a9bba891efd3319efbd05060">size</a></td></tr>
-<tr class="memdesc:a20c92fe4a9bba891efd3319efbd05060"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of data in buffer. <br /></td></tr>
+<tr class="memitem:a20c92fe4a9bba891efd3319efbd05060"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a20c92fe4a9bba891efd3319efbd05060">size</a></td></tr>
+<tr class="memdesc:a20c92fe4a9bba891efd3319efbd05060"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of the data in the buffer.  <a href="#a20c92fe4a9bba891efd3319efbd05060">More...</a><br /></td></tr>
 <tr class="separator:a20c92fe4a9bba891efd3319efbd05060"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abe05546ecff7e5985d268248c0ebb3e5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abe05546ecff7e5985d268248c0ebb3e5"></a>
-uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#abe05546ecff7e5985d268248c0ebb3e5">packet_number</a></td></tr>
-<tr class="memdesc:abe05546ecff7e5985d268248c0ebb3e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT: The packet number of this chunk. <br /></td></tr>
+<tr class="memitem:abe05546ecff7e5985d268248c0ebb3e5"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#abe05546ecff7e5985d268248c0ebb3e5">packet_number</a></td></tr>
+<tr class="memdesc:abe05546ecff7e5985d268248c0ebb3e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT: The packet number of this chunk.  <a href="#abe05546ecff7e5985d268248c0ebb3e5">More...</a><br /></td></tr>
 <tr class="separator:abe05546ecff7e5985d268248c0ebb3e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d5cf26f262a52569a71a8948df60b56"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d5cf26f262a52569a71a8948df60b56"></a>
-uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a3d5cf26f262a52569a71a8948df60b56">total_packets</a></td></tr>
-<tr class="memdesc:a3d5cf26f262a52569a71a8948df60b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT: Total packets (chunks) in OTA Image. <br /></td></tr>
+<tr class="memitem:a3d5cf26f262a52569a71a8948df60b56"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__storage__write__info__t.html#a3d5cf26f262a52569a71a8948df60b56">total_packets</a></td></tr>
+<tr class="memdesc:a3d5cf26f262a52569a71a8948df60b56"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT: Total packets (chunks) in the OTA image.  <a href="#a3d5cf26f262a52569a71a8948df60b56">More...</a><br /></td></tr>
 <tr class="separator:a3d5cf26f262a52569a71a8948df60b56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="a23215e611d8933d75fc52e902d3f4502"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_storage_write_info_t::total_size</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pass the total size to the storage module; 0 = disregard. </p>
+
+</div>
+</div>
+<a class="anchor" id="a0405b3806c0de934f5f5f55ac693c184"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_storage_write_info_t::offset</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Offset into file/area where the data belongs. </p>
+
+</div>
+</div>
+<a class="anchor" id="af66dba2bcbb117c85bcf20fa0357c525"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t* cy_ota_storage_write_info_t::buffer</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pointer to the buffer with the chunk of data. </p>
+
+</div>
+</div>
+<a class="anchor" id="a20c92fe4a9bba891efd3319efbd05060"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_storage_write_info_t::size</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Size of the data in the buffer. </p>
+
+</div>
+</div>
+<a class="anchor" id="abe05546ecff7e5985d268248c0ebb3e5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t cy_ota_storage_write_info_t::packet_number</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>MQTT: The packet number of this chunk. </p>
+
+</div>
+</div>
+<a class="anchor" id="a3d5cf26f262a52569a71a8948df60b56"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t cy_ota_storage_write_info_t::total_packets</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>MQTT: Total packets (chunks) in the OTA image. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

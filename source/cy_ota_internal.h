@@ -25,19 +25,12 @@ extern "C" {
 
 #include "cyabs_rtos.h"
 
-#include "iot_mqtt.h"
-#include "iot_mqtt_types.h"
+#include "cy_log.h"
 
 /* This is so that Eclipse doesn't complain about the Logging messages */
 #ifndef NULL
-#define NULL    0
+#define NULL    (void*)0x00
 #endif
-
-// change to IOT_LOG_DEBUG for lots of output
-#define LIBRARY_LOG_LEVEL   IOT_LOG_INFO
-#define LIBRARY_LOG_NAME    "OTA"
-
-#include "iot_logging_setup.h"
 
 /***********************************************************************
  *
@@ -140,7 +133,7 @@ typedef enum
                                 CY_OTA_EVENT_DROPPED_US )
 
 /* Inner HTTP event loop - time to wait for events */
-#define CY_OTA_WAIT_HTTP_EVENTS_MS      (CY_RTOS_NEVER_TIMEOUT)
+#define CY_OTA_WAIT_HTTP_EVENTS_MS      (1)
 
 /* Time to wait for a free Queue entry to pass buffer to MQTT event loop */
 #define CY_OTA_WAIT_HTTP_MUTEX_MS       (SECS_TO_MILLISECS(20) )
@@ -211,8 +204,9 @@ typedef struct cy_ota_job_parsed_info_s {
         char                    board[CY_OTA_JOB_BOARD_LEN];                /**< Board (ex: "CYC8PROTO_062_4343W")  */
         cy_ota_connection_t     connect_type;                               /**< Connection type                    */
         char                    new_host_name[CY_OTA_JOB_URL_BROKER_LEN];   /**< New Host Name                      */
-        cy_ota_server_info_t    broker_server;                              /**< Broker or Server holding OTA Image */
+        cy_awsport_server_info_t    broker_server;                          /**< Broker or Server holding OTA Image */
         char                    file[CY_OTA_HTTP_FILENAME_SIZE];            /**< File on Server (HTTP)              */
+        uint32_t                file_size;                                  /**< size of file to download           */
         char                    topic[CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE];  /**< Unique Topic                       */
 } cy_ota_job_parsed_info_t;
 
@@ -224,9 +218,8 @@ typedef struct cy_ota_mqtt_context_s {
 
     bool                connection_from_app;            /**< true if MQTT connection passed in from App */
     bool                connection_established;          /**< true if MQTT connection established        */
-    bool                subscribed;                     /**< true if any MQTT subscriptions accepted    */
 
-    IotMqttConnection_t mqtt_connection;                 /**< MQTT connection information                */
+    cy_mqtt_t           mqtt_connection;                 /**< MQTT connection information                */
 
 
     cy_timer_t          mqtt_timer;                     /**< For detecting early end of download        */
@@ -236,6 +229,8 @@ typedef struct cy_ota_mqtt_context_s {
 
     uint8_t             use_unique_topic;               /**< if == 1, create and use unique topic!      */
     char                unique_topic[CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE]; /**< Topic for receiving OTA data */
+    bool                unique_topic_subscribed;        /**< true if UNIQUE MQTT subscription accepted    */
+
     char                json_doc[CY_OTA_MQTT_MESSAGE_BUFF_SIZE];           /**< Message to request OTA data */
 } cy_ota_mqtt_context_t;
 
@@ -244,14 +239,14 @@ typedef struct cy_ota_mqtt_context_s {
  */
 typedef struct cy_ota_http_context_s {
     bool                connection_from_app;            /**< true if HTTP connection passed in from App */
+    bool                connection_established;         /**< true if HTTP connection established        */
 
-    IotNetworkConnection_t  connection;                 /**< HTTP connection instance                   */
+    cy_http_client_t        connection;                 /**< HTTP connection instance                   */
 
     cy_timer_t              http_timer;                 /**< For detecting early end of download        */
     ota_events_t            http_timer_event;           /**< Event to trigger when timer goes off       */
 
 
-    uint8_t                 data_buffer[CY_OTA_HTTP_SIZE_OF_RECV_BUFFER];   /**< Used to get HTTP Job and Data          */
     char                    json_doc[CY_OTA_MQTT_MESSAGE_BUFF_SIZE];        /**< Message to request OTA data            */
     char                    file[CY_OTA_HTTP_FILENAME_SIZE];                /**< Filename for OTA data                  */
 
@@ -307,18 +302,21 @@ typedef struct cy_ota_context_s {
     uint8_t                     app_connected;              /**< Keep track of the App making the connection                    */
     uint8_t                     device_connected;           /**< Keep track of if the Device is connected (OTA Agent or APP)    */
     cy_ota_connection_t         curr_connect_type;          /**< Connection Type (may change after parsing Job)                 */
-    cy_ota_server_info_t        *curr_server;               /**< current server information (may change after parsing Job)      */
+    cy_awsport_server_info_t    *curr_server;               /**< current server information (may change after parsing Job)      */
 
     cy_ota_mqtt_context_t       mqtt;                       /**< MQTT specific context data                                     */
     cy_ota_http_context_t       http;                       /**< HTTP specific context data                                     */
 
-    char                        job_doc[CY_OTA_MQTT_MESSAGE_BUFF_SIZE];     /**< Message to parse                               */
+    uint8_t                     data_buffer[CY_OTA_HTTP_SIZE_OF_RECV_BUFFER];   /**< Used to get Job and Data                   */
+    char                        job_doc[CY_OTA_MQTT_MESSAGE_BUFF_SIZE];         /**< Message to parse                               */
     cy_ota_job_parsed_info_t    parsed_job;                 /**< Parsed Job JSON info                                           */
+
+    uint8_t                     chunk_buffer[CY_OTA_CHUNK_SIZE + 512];    /**< Store Chunked data here */
 
     cy_ota_cb_struct_t          callback_data;              /**< For passing data to callback function                          */
 
     cy_ota_storage_write_info_t *storage;                   /**< pointer to a chunk of data to write                            */
-
+    uint8_t                     storage_open;               /**< 1 = storage is open                                            */
 } cy_ota_context_t;
 
 /***********************************************************************
@@ -326,7 +324,7 @@ typedef struct cy_ota_context_s {
  * Variables
  *
  **********************************************************************/
-
+extern CY_LOG_LEVEL_T ota_logging_level;
 /***********************************************************************
  *
  * Functions
@@ -447,70 +445,16 @@ cy_rslt_t cy_ota_mqtt_report_result(cy_ota_context_t *ctx, cy_rslt_t last_error)
  */
 void cy_ota_mqtt_create_unique_topic(cy_ota_context_t *ctx);
 
-/***********************************************************************
- *
- * OTA Storage abstraction
- *
- * in cy_ota_storage.c
- *
- **********************************************************************/
-
 /**
- * @brief Open Storage area for download
+ * @brief Determine if tar or non-tar and call correct write function
  *
- * NOTE: Typically, this erases Secondary Slot
- *
- * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
- *
- * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_OTA_ERROR_GENERAL
- */
-cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx);
-
-/**
- * @brief Open Storage area for download
- *
- * @param[in]   ctx         - pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in]   ctx_ptr     - pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   chunk_info  - pointer to chunk information
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_GENERAL
  */
-cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_t *chunk_info);
-
-/**
- * @brief Close Storage area for download
- *
- * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
- *
- * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_OTA_ERROR_GENERAL
- */
-cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx);
-
-/**
- * @brief Verify download signature on whole OTA Image
- *
- * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
- *
- * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_OTA_ERROR_GENERAL
- */
-cy_rslt_t cy_ota_storage_verify(cy_ota_context_t *ctx);
-
-/**
- * @brief App has validated the new OTA Image
- *
- * This call needs to be after reboot and MCUBoot has copied the new Application
- *      to the Primary Slot.
- *
- * @param   N/A
- *
- * @return  CY_RSLT_SUCCESS
- *          CY_RSLT_OTA_ERROR_GENERAL
- */
-cy_rslt_t cy_ota_storage_validated(void);
-
+cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info);
 
 /**********************************************************************
  *

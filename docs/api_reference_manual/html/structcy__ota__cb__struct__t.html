@@ -102,76 +102,259 @@ $(document).ready(function(){initNavTree('structcy__ota__cb__struct__t.html','')
 </div><!--header-->
 <div class="contents">
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
-<div class="textblock"><p>Structure passed to callback. </p>
-<p>This holds read/write data for the Application to adjust various things in the callback. The callback is not in an interrupt context, but try to keep it quick! After your function returns, this structure is not available. </p>
+<div class="textblock"><p>Structure passed to the callback. </p>
+<p>This holds read/write data for the application to adjust various things in the callback. The callback is not in an interrupt context, but try to keep it quick! After your function returns, this structure is not available. </p>
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:ae28ffd179023e8902cbd3e88785540ad"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae28ffd179023e8902cbd3e88785540ad"></a>
-<a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ae28ffd179023e8902cbd3e88785540ad">reason</a></td></tr>
-<tr class="memdesc:ae28ffd179023e8902cbd3e88785540ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">reason for the callback <br /></td></tr>
+<tr class="memitem:ae28ffd179023e8902cbd3e88785540ad"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ae28ffd179023e8902cbd3e88785540ad">reason</a></td></tr>
+<tr class="memdesc:ae28ffd179023e8902cbd3e88785540ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reason for the callback.  <a href="#ae28ffd179023e8902cbd3e88785540ad">More...</a><br /></td></tr>
 <tr class="separator:ae28ffd179023e8902cbd3e88785540ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa47e10a9fe4712558dded6625a3c484"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa47e10a9fe4712558dded6625a3c484"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#afa47e10a9fe4712558dded6625a3c484">cb_arg</a></td></tr>
-<tr class="memdesc:afa47e10a9fe4712558dded6625a3c484"><td class="mdescLeft">&#160;</td><td class="mdescRight">Argument passed in when registering the callback. <br /></td></tr>
+<tr class="memitem:afa47e10a9fe4712558dded6625a3c484"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#afa47e10a9fe4712558dded6625a3c484">cb_arg</a></td></tr>
+<tr class="memdesc:afa47e10a9fe4712558dded6625a3c484"><td class="mdescLeft">&#160;</td><td class="mdescRight">Argument passed when registering the callback.  <a href="#afa47e10a9fe4712558dded6625a3c484">More...</a><br /></td></tr>
 <tr class="separator:afa47e10a9fe4712558dded6625a3c484"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48361e091a9b49cc103b9b37d7328784"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a48361e091a9b49cc103b9b37d7328784"></a>
-<a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a></td></tr>
-<tr class="memdesc:a48361e091a9b49cc103b9b37d7328784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current OTA Agent state. <br /></td></tr>
+<tr class="memitem:a48361e091a9b49cc103b9b37d7328784"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a48361e091a9b49cc103b9b37d7328784">state</a></td></tr>
+<tr class="memdesc:a48361e091a9b49cc103b9b37d7328784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current OTA Agent state.  <a href="#a48361e091a9b49cc103b9b37d7328784">More...</a><br /></td></tr>
 <tr class="separator:a48361e091a9b49cc103b9b37d7328784"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc8a4e04f407ca0bbf0dc35e7e42f0c1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acc8a4e04f407ca0bbf0dc35e7e42f0c1"></a>
-cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#acc8a4e04f407ca0bbf0dc35e7e42f0c1">error</a></td></tr>
-<tr class="memdesc:acc8a4e04f407ca0bbf0dc35e7e42f0c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current OTA Agent error status. <br /></td></tr>
+<tr class="memitem:acc8a4e04f407ca0bbf0dc35e7e42f0c1"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#acc8a4e04f407ca0bbf0dc35e7e42f0c1">error</a></td></tr>
+<tr class="memdesc:acc8a4e04f407ca0bbf0dc35e7e42f0c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Current OTA Agent error status.  <a href="#acc8a4e04f407ca0bbf0dc35e7e42f0c1">More...</a><br /></td></tr>
 <tr class="separator:acc8a4e04f407ca0bbf0dc35e7e42f0c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aafd5022e59a7d19d6a103f9217710644"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aafd5022e59a7d19d6a103f9217710644"></a>
-<a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#aafd5022e59a7d19d6a103f9217710644">storage</a></td></tr>
-<tr class="memdesc:aafd5022e59a7d19d6a103f9217710644"><td class="mdescLeft">&#160;</td><td class="mdescRight">pointer to a chunk of data to write <br /></td></tr>
+<tr class="memitem:aafd5022e59a7d19d6a103f9217710644"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#aafd5022e59a7d19d6a103f9217710644">storage</a></td></tr>
+<tr class="memdesc:aafd5022e59a7d19d6a103f9217710644"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pointer to a chunk of data to write.  <a href="#aafd5022e59a7d19d6a103f9217710644">More...</a><br /></td></tr>
 <tr class="separator:aafd5022e59a7d19d6a103f9217710644"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad29859423d69a8e0815a833a70284bdb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad29859423d69a8e0815a833a70284bdb"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ad29859423d69a8e0815a833a70284bdb">total_size</a></td></tr>
-<tr class="memdesc:ad29859423d69a8e0815a833a70284bdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total # bytes to be downloaded. <br /></td></tr>
+<tr class="memitem:ad29859423d69a8e0815a833a70284bdb"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ad29859423d69a8e0815a833a70284bdb">total_size</a></td></tr>
+<tr class="memdesc:ad29859423d69a8e0815a833a70284bdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total # bytes to be downloaded.  <a href="#ad29859423d69a8e0815a833a70284bdb">More...</a><br /></td></tr>
 <tr class="separator:ad29859423d69a8e0815a833a70284bdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab43108a89dadf59dcad71d4b4c75411d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab43108a89dadf59dcad71d4b4c75411d"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ab43108a89dadf59dcad71d4b4c75411d">bytes_written</a></td></tr>
-<tr class="memdesc:ab43108a89dadf59dcad71d4b4c75411d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total # bytes downloaded. <br /></td></tr>
+<tr class="memitem:ab43108a89dadf59dcad71d4b4c75411d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ab43108a89dadf59dcad71d4b4c75411d">bytes_written</a></td></tr>
+<tr class="memdesc:ab43108a89dadf59dcad71d4b4c75411d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total # bytes downloaded.  <a href="#ab43108a89dadf59dcad71d4b4c75411d">More...</a><br /></td></tr>
 <tr class="separator:ab43108a89dadf59dcad71d4b4c75411d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d802b856542ce6b7e59e2559026307d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d802b856542ce6b7e59e2559026307d"></a>
-uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a1d802b856542ce6b7e59e2559026307d">percentage</a></td></tr>
-<tr class="memdesc:a1d802b856542ce6b7e59e2559026307d"><td class="mdescLeft">&#160;</td><td class="mdescRight">% bytes downloaded <br /></td></tr>
+<tr class="memitem:a1d802b856542ce6b7e59e2559026307d"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a1d802b856542ce6b7e59e2559026307d">percentage</a></td></tr>
+<tr class="memdesc:a1d802b856542ce6b7e59e2559026307d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Percentage of bytes downloaded.  <a href="#a1d802b856542ce6b7e59e2559026307d">More...</a><br /></td></tr>
 <tr class="separator:a1d802b856542ce6b7e59e2559026307d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabc069ca938caaeda44300df68d31903"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aabc069ca938caaeda44300df68d31903"></a>
-<a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a></td></tr>
-<tr class="memdesc:aabc069ca938caaeda44300df68d31903"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connection Type <a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>. <br /></td></tr>
+<tr class="memitem:aabc069ca938caaeda44300df68d31903"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903">connection_type</a></td></tr>
+<tr class="memdesc:aabc069ca938caaeda44300df68d31903"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connection type <a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>.  <a href="#aabc069ca938caaeda44300df68d31903">More...</a><br /></td></tr>
 <tr class="separator:aabc069ca938caaeda44300df68d31903"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c9a21c445dda18f419957d7612ea497"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c9a21c445dda18f419957d7612ea497"></a>
-<a class="el" href="structcy__ota__server__info__t.html">cy_ota_server_info_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a0c9a21c445dda18f419957d7612ea497">broker_server</a></td></tr>
-<tr class="memdesc:a0c9a21c445dda18f419957d7612ea497"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT Broker (or HTTP server) for connection. <br /></td></tr>
-<tr class="separator:a0c9a21c445dda18f419957d7612ea497"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7ab0d6499d9051e229c9c51df88d4580"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7ab0d6499d9051e229c9c51df88d4580"></a>
-IotNetworkCredentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a7ab0d6499d9051e229c9c51df88d4580">credentials</a></td></tr>
-<tr class="memdesc:a7ab0d6499d9051e229c9c51df88d4580"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS) <br /></td></tr>
-<tr class="separator:a7ab0d6499d9051e229c9c51df88d4580"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acec41a1dbcc593957f4ae47b3bcba5f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acec41a1dbcc593957f4ae47b3bcba5f5"></a>
-IotNetworkConnection_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#acec41a1dbcc593957f4ae47b3bcba5f5">http_connection</a></td></tr>
-<tr class="memdesc:acec41a1dbcc593957f4ae47b3bcba5f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">For Passing HTTP connection instance. <br /></td></tr>
-<tr class="separator:acec41a1dbcc593957f4ae47b3bcba5f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28a3f0ac910477bfea4b8f799e91f095"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28a3f0ac910477bfea4b8f799e91f095"></a>
-IotMqttConnection_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a28a3f0ac910477bfea4b8f799e91f095">mqtt_connection</a></td></tr>
-<tr class="memdesc:a28a3f0ac910477bfea4b8f799e91f095"><td class="mdescLeft">&#160;</td><td class="mdescRight">For Passing MQTT connection instance. <br /></td></tr>
-<tr class="separator:a28a3f0ac910477bfea4b8f799e91f095"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71bfd9cf787fc18dfd42b54950103a25"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a71bfd9cf787fc18dfd42b54950103a25"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a71bfd9cf787fc18dfd42b54950103a25">file</a> [<a class="el" href="group__group__ota__typedefs.html#gabf98602574aa1fdfb627d3c59f62b2ac">CY_OTA_MQTT_FILENAME_BUFF_SIZE</a>]</td></tr>
-<tr class="memdesc:a71bfd9cf787fc18dfd42b54950103a25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Filename to request OTA data. <br /></td></tr>
+<tr class="memitem:ac0bd6583f60af5fe056173f89ee5e0e6"><td class="memItemLeft" align="right" valign="top">cy_awsport_server_info_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ac0bd6583f60af5fe056173f89ee5e0e6">broker_server</a></td></tr>
+<tr class="memdesc:ac0bd6583f60af5fe056173f89ee5e0e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">MQTT Broker (or HTTP server) for connection.  <a href="#ac0bd6583f60af5fe056173f89ee5e0e6">More...</a><br /></td></tr>
+<tr class="separator:ac0bd6583f60af5fe056173f89ee5e0e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5eb663dbca52197e49b911f2f5e05af9"><td class="memItemLeft" align="right" valign="top">cy_awsport_ssl_credentials_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a5eb663dbca52197e49b911f2f5e05af9">credentials</a></td></tr>
+<tr class="memdesc:a5eb663dbca52197e49b911f2f5e05af9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS).  <a href="#a5eb663dbca52197e49b911f2f5e05af9">More...</a><br /></td></tr>
+<tr class="separator:a5eb663dbca52197e49b911f2f5e05af9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa77c36705ebc2de5ebfc6e05e6249981"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa77c36705ebc2de5ebfc6e05e6249981"></a>
+cy_http_client_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#aa77c36705ebc2de5ebfc6e05e6249981">http_connection</a></td></tr>
+<tr class="memdesc:aa77c36705ebc2de5ebfc6e05e6249981"><td class="mdescLeft">&#160;</td><td class="mdescRight">For Passing HTTP connection instance. <br /></td></tr>
+<tr class="separator:aa77c36705ebc2de5ebfc6e05e6249981"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a794d86b08cc8bcf1a3e509433795eac8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a794d86b08cc8bcf1a3e509433795eac8"></a>
+cy_mqtt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a794d86b08cc8bcf1a3e509433795eac8">mqtt_connection</a></td></tr>
+<tr class="memdesc:a794d86b08cc8bcf1a3e509433795eac8"><td class="mdescLeft">&#160;</td><td class="mdescRight">For Passing MQTT connection instance. <br /></td></tr>
+<tr class="separator:a794d86b08cc8bcf1a3e509433795eac8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71bfd9cf787fc18dfd42b54950103a25"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a71bfd9cf787fc18dfd42b54950103a25">file</a> [<a class="el" href="group__group__ota__typedefs.html#gabf98602574aa1fdfb627d3c59f62b2ac">CY_OTA_MQTT_FILENAME_BUFF_SIZE</a>]</td></tr>
+<tr class="memdesc:a71bfd9cf787fc18dfd42b54950103a25"><td class="mdescLeft">&#160;</td><td class="mdescRight">File name to request OTA data.  <a href="#a71bfd9cf787fc18dfd42b54950103a25">More...</a><br /></td></tr>
 <tr class="separator:a71bfd9cf787fc18dfd42b54950103a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab3b3a87b636c188c6549c614a50ba4e3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab3b3a87b636c188c6549c614a50ba4e3"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3">unique_topic</a> [<a class="el" href="group__group__ota__typedefs.html#ga3cd431c05dec3136ee112edb90cce01f">CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE</a>]</td></tr>
-<tr class="memdesc:ab3b3a87b636c188c6549c614a50ba4e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Topic for receiving OTA data. <br /></td></tr>
+<tr class="memitem:ab3b3a87b636c188c6549c614a50ba4e3"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3">unique_topic</a> [<a class="el" href="group__group__ota__typedefs.html#ga3cd431c05dec3136ee112edb90cce01f">CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE</a>]</td></tr>
+<tr class="memdesc:ab3b3a87b636c188c6549c614a50ba4e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Topic for receiving the OTA data.  <a href="#ab3b3a87b636c188c6549c614a50ba4e3">More...</a><br /></td></tr>
 <tr class="separator:ab3b3a87b636c188c6549c614a50ba4e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2b43a418b275e5ef22173df42f4b9efa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2b43a418b275e5ef22173df42f4b9efa"></a>
-char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a> [<a class="el" href="group__group__ota__typedefs.html#gaa987668674cd65e8d062f79c1486ec35">CY_OTA_MQTT_MESSAGE_BUFF_SIZE</a>]</td></tr>
-<tr class="memdesc:a2b43a418b275e5ef22173df42f4b9efa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Message to request OTA data. <br /></td></tr>
+<tr class="memitem:a2b43a418b275e5ef22173df42f4b9efa"><td class="memItemLeft" align="right" valign="top">char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__cb__struct__t.html#a2b43a418b275e5ef22173df42f4b9efa">json_doc</a> [<a class="el" href="group__group__ota__typedefs.html#gaa987668674cd65e8d062f79c1486ec35">CY_OTA_MQTT_MESSAGE_BUFF_SIZE</a>]</td></tr>
+<tr class="memdesc:a2b43a418b275e5ef22173df42f4b9efa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Message to request the OTA data.  <a href="#a2b43a418b275e5ef22173df42f4b9efa">More...</a><br /></td></tr>
 <tr class="separator:a2b43a418b275e5ef22173df42f4b9efa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="ae28ffd179023e8902cbd3e88785540ad"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__group__ota__typedefs.html#gad852fa8cdb0431df709ccf12bb37cd60">cy_ota_cb_reason_t</a> cy_ota_cb_struct_t::reason</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reason for the callback. </p>
+
+</div>
+</div>
+<a class="anchor" id="afa47e10a9fe4712558dded6625a3c484"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* cy_ota_cb_struct_t::cb_arg</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Argument passed when registering the callback. </p>
+
+</div>
+</div>
+<a class="anchor" id="a48361e091a9b49cc103b9b37d7328784"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__group__ota__typedefs.html#gab1539ebc23219f1ca64318286e9d375f">cy_ota_agent_state_t</a> cy_ota_cb_struct_t::state</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Current OTA Agent state. </p>
+
+</div>
+</div>
+<a class="anchor" id="acc8a4e04f407ca0bbf0dc35e7e42f0c1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_cb_struct_t::error</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Current OTA Agent error status. </p>
+
+</div>
+</div>
+<a class="anchor" id="aafd5022e59a7d19d6a103f9217710644"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a>* cy_ota_cb_struct_t::storage</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pointer to a chunk of data to write. </p>
+
+</div>
+</div>
+<a class="anchor" id="ad29859423d69a8e0815a833a70284bdb"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_cb_struct_t::total_size</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Total # bytes to be downloaded. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab43108a89dadf59dcad71d4b4c75411d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_cb_struct_t::bytes_written</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Total # bytes downloaded. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1d802b856542ce6b7e59e2559026307d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32_t cy_ota_cb_struct_t::percentage</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Percentage of bytes downloaded. </p>
+
+</div>
+</div>
+<a class="anchor" id="aabc069ca938caaeda44300df68d31903"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a> cy_ota_cb_struct_t::connection_type</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connection type <a class="el" href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">cy_ota_connection_t</a>. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac0bd6583f60af5fe056173f89ee5e0e6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_awsport_server_info_t cy_ota_cb_struct_t::broker_server</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>MQTT Broker (or HTTP server) for connection. </p>
+
+</div>
+</div>
+<a class="anchor" id="a5eb663dbca52197e49b911f2f5e05af9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_awsport_ssl_credentials_t* cy_ota_cb_struct_t::credentials</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Setting credentials uses TLS (NULL == non-TLS). </p>
+
+</div>
+</div>
+<a class="anchor" id="a71bfd9cf787fc18dfd42b54950103a25"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char cy_ota_cb_struct_t::file[<a class="el" href="group__group__ota__typedefs.html#gabf98602574aa1fdfb627d3c59f62b2ac">CY_OTA_MQTT_FILENAME_BUFF_SIZE</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>File name to request OTA data. </p>
+
+</div>
+</div>
+<a class="anchor" id="ab3b3a87b636c188c6549c614a50ba4e3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char cy_ota_cb_struct_t::unique_topic[<a class="el" href="group__group__ota__typedefs.html#ga3cd431c05dec3136ee112edb90cce01f">CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Topic for receiving the OTA data. </p>
+
+</div>
+</div>
+<a class="anchor" id="a2b43a418b275e5ef22173df42f4b9efa"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char cy_ota_cb_struct_t::json_doc[<a class="el" href="group__group__ota__typedefs.html#gaa987668674cd65e8d062f79c1486ec35">CY_OTA_MQTT_MESSAGE_BUFF_SIZE</a>]</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Message to request the OTA data. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

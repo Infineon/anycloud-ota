@@ -107,23 +107,94 @@ $(document).ready(function(){initNavTree('structcy__ota__agent__params__t.html',
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:adf754cf9aaa07e786e366dc2204d6429"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adf754cf9aaa07e786e366dc2204d6429"></a>
-uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#adf754cf9aaa07e786e366dc2204d6429">reboot_upon_completion</a></td></tr>
-<tr class="memdesc:adf754cf9aaa07e786e366dc2204d6429"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 = Automatically reboot upon download completion and verify <br /></td></tr>
+<tr class="memitem:adf754cf9aaa07e786e366dc2204d6429"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#adf754cf9aaa07e786e366dc2204d6429">reboot_upon_completion</a></td></tr>
+<tr class="memdesc:adf754cf9aaa07e786e366dc2204d6429"><td class="mdescLeft">&#160;</td><td class="mdescRight">1 = Automatically reboot upon download completion and verify.  <a href="#adf754cf9aaa07e786e366dc2204d6429">More...</a><br /></td></tr>
 <tr class="separator:adf754cf9aaa07e786e366dc2204d6429"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4474305852ba2b1f29e8b0d15ca671c5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4474305852ba2b1f29e8b0d15ca671c5"></a>
-uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a4474305852ba2b1f29e8b0d15ca671c5">validate_after_reboot</a></td></tr>
-<tr class="memdesc:a4474305852ba2b1f29e8b0d15ca671c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = OTA will set mcuboot to permanent before reboot 1 = Application must call <a class="el" href="group__group__ota__functions.html#gaedc8ac983fc4781d0a4ca3e5dc113ec5" title="Application calls to validate the OTA Image. ">cy_ota_validated()</a> after reboot <br /></td></tr>
+<tr class="memitem:a4474305852ba2b1f29e8b0d15ca671c5"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a4474305852ba2b1f29e8b0d15ca671c5">validate_after_reboot</a></td></tr>
+<tr class="memdesc:a4474305852ba2b1f29e8b0d15ca671c5"><td class="mdescLeft">&#160;</td><td class="mdescRight">0 = OTA will set MCUboot to permanent before reboot.  <a href="#a4474305852ba2b1f29e8b0d15ca671c5">More...</a><br /></td></tr>
 <tr class="separator:a4474305852ba2b1f29e8b0d15ca671c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f3b68d908f64e031aca84d871554850"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2f3b68d908f64e031aca84d871554850"></a>
-<a class="el" href="group__group__ota__callback.html#gada4cd31993f1831e886a4beac9039220">cy_ota_callback_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a2f3b68d908f64e031aca84d871554850">cb_func</a></td></tr>
-<tr class="memdesc:a2f3b68d908f64e031aca84d871554850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notification callback function. <br /></td></tr>
+<tr class="memitem:a05406d6107cc20e7cf9cde995ad3b33d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a05406d6107cc20e7cf9cde995ad3b33d">do_not_send_result</a></td></tr>
+<tr class="memdesc:a05406d6107cc20e7cf9cde995ad3b33d"><td class="mdescLeft">&#160;</td><td class="mdescRight">If true, do not send the result status.  <a href="#a05406d6107cc20e7cf9cde995ad3b33d">More...</a><br /></td></tr>
+<tr class="separator:a05406d6107cc20e7cf9cde995ad3b33d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f3b68d908f64e031aca84d871554850"><td class="memItemLeft" align="right" valign="top"><a class="el" href="group__group__ota__callback.html#gada4cd31993f1831e886a4beac9039220">cy_ota_callback_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a2f3b68d908f64e031aca84d871554850">cb_func</a></td></tr>
+<tr class="memdesc:a2f3b68d908f64e031aca84d871554850"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notification callback function.  <a href="#a2f3b68d908f64e031aca84d871554850">More...</a><br /></td></tr>
 <tr class="separator:a2f3b68d908f64e031aca84d871554850"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8734130b240a3c0121a412c1a92afffa"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8734130b240a3c0121a412c1a92afffa"></a>
-void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a8734130b240a3c0121a412c1a92afffa">cb_arg</a></td></tr>
-<tr class="memdesc:a8734130b240a3c0121a412c1a92afffa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque arg passed to Notification callback function. <br /></td></tr>
+<tr class="memitem:a8734130b240a3c0121a412c1a92afffa"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__agent__params__t.html#a8734130b240a3c0121a412c1a92afffa">cb_arg</a></td></tr>
+<tr class="memdesc:a8734130b240a3c0121a412c1a92afffa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Opaque argument passed to the notification callback function.  <a href="#a8734130b240a3c0121a412c1a92afffa">More...</a><br /></td></tr>
 <tr class="separator:a8734130b240a3c0121a412c1a92afffa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Field Documentation</h2>
+<a class="anchor" id="adf754cf9aaa07e786e366dc2204d6429"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t cy_ota_agent_params_t::reboot_upon_completion</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>1 = Automatically reboot upon download completion and verify. </p>
+
+</div>
+</div>
+<a class="anchor" id="a4474305852ba2b1f29e8b0d15ca671c5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t cy_ota_agent_params_t::validate_after_reboot</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>0 = OTA will set MCUboot to permanent before reboot. </p>
+<p>1 = Application must call cy_ota_validated() after reboot. </p>
+
+</div>
+</div>
+<a class="anchor" id="a05406d6107cc20e7cf9cde995ad3b33d"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool cy_ota_agent_params_t::do_not_send_result</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>If true, do not send the result status. </p>
+
+</div>
+</div>
+<a class="anchor" id="a2f3b68d908f64e031aca84d871554850"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="group__group__ota__callback.html#gada4cd31993f1831e886a4beac9039220">cy_ota_callback_t</a> cy_ota_agent_params_t::cb_func</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Notification callback function. </p>
+
+</div>
+</div>
+<a class="anchor" id="a8734130b240a3c0121a412c1a92afffa"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void* cy_ota_agent_params_t::cb_arg</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Opaque argument passed to the notification callback function. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

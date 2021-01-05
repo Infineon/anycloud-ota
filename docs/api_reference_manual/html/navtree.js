@@ -1,14 +1,15 @@
 var NAVTREE =
 [
   [ "Over The Air (OTA) Update Library", "index.html", [
-    [ "Over The Air v2.0.0 Overview", "index.html", null ],
+    [ "Over The Air v3.0.0 Overview", "index.html", null ],
     [ "API Reference", "modules.html", "modules" ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"group__group__cy__ota.html"
+"group__group__cy__ota.html",
+"structcy__ota__mqtt__params__t.html#ac806ee0d85cccc193de4b7b9be601477"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

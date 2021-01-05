@@ -69,6 +69,7 @@ int boot_swap_type_multi(int image_index);
 int boot_swap_type(void);
 
 int boot_set_pending(int permanent);
+int boot_set_image_pending(int image, int permanent);
 int boot_set_confirmed(void);
 
 #ifdef __cplusplus

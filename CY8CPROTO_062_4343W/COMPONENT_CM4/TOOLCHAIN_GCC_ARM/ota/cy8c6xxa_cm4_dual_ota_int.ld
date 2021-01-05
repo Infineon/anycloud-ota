@@ -50,7 +50,8 @@ STACK_SIZE = 0x1000;
 /* MCUBOOT_HEADER_SIZE = 0x1000; */
 
 /* CY_BOOT_PRIMARY_1_SIZE Slot 1 size passed in as argument to ld.exe */
-/* CY_BOOT_PRIMARY_1_SIZE = 0xEE000 */
+/* CY_BOOT_PRIMARY_1_SIZE = 0x0EE000 (Internal FLASH) */
+/* CY_BOOT_PRIMARY_1_SIZE = 0x10C000 (External FLASH) */
 
 /* Force symbol to be entered in the output file as an undefined symbol. Doing
 * this may, for example, trigger linking of additional modules from standard
@@ -72,7 +73,7 @@ MEMORY
      * Your changes must be aligned with the corresponding memory regions for CM0+ core in 'xx_cm0plus.ld',
      * where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.ld'.
      */
-    ram               (rwx)   : ORIGIN = 0x08020000, LENGTH = 0xDF800
+    ram               (rwx)   : ORIGIN = 0x08020800, LENGTH = 0xDF000
     flash             (rx)    : ORIGIN = 0x10000000 + MCUBOOT_BOOTLOADER_SIZE, LENGTH = CY_BOOT_PRIMARY_1_SIZE
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.

@@ -17,11 +17,12 @@
 
 /** @file
  *
- * Cypress OTA API default values
+ * Cypress OTA API default values.
  *
- *  Default Values for OTA library
+ *  Default values for the OTA library
  *
- *  Over-ride these defines using the cy_ota_gonfig.h file
+ *  You can override these defines using the cy_ota_config.h file.
+ *  Copy from configs/cy_ota_config.h to the root directory of your build.
  *
  **********************************************************************/
 
@@ -46,121 +47,121 @@ extern "C" {
  */
 
 /**
- * @brief Initial OTA check
+ * @brief Initial OTA check.
  *
  * Time from when cy_ota_start() is called to when the OTA Agent first checks for an update.
- * You can over-ride this define in cy_ota_config.h
+ * You can override this define in cy_ota_config.h.
  *
  * Minimum value is  CY_OTA_INTERVAL_SECS_MIN.
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_INITIAL_CHECK_SECS
-#define CY_OTA_INITIAL_CHECK_SECS           (60)           /* 60 seconds */
+#define CY_OTA_INITIAL_CHECK_SECS           (60)           /* 60 seconds. */
 #endif
 
 /**
- * @brief Next OTA check
+ * @brief Next OTA check.
  *
- * Time from when after OTA Agent completes or fails an update until the next check.
- * You can over-ride this define in cy_ota_config.h
+ * Time from when after the OTA Agent completes or fails an update until the next check.
+ * You can override this define in cy_ota_config.h.
  *
  * Minimum value is  CY_OTA_INTERVAL_SECS_MIN.
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_NEXT_CHECK_INTERVAL_SECS
-#define CY_OTA_NEXT_CHECK_INTERVAL_SECS     (60 * 60 * 24) /* once per day */
+#define CY_OTA_NEXT_CHECK_INTERVAL_SECS     (60 * 60 * 24) /* Once per day. */
 #endif
 
 /**
- * @brief Retry Interval
+ * @brief Retry interval.
  *
- * Time between failures for connection before we re-try.
- * You can over-ride this define in cy_ota_config.h
+ * Time between failures for connection before you can retry.
+ * You can override this define in cy_ota_config.h.
  * Minimum value is  CY_OTA_INTERVAL_SECS_MIN.
  * Maximum value is  CY_OTA_INTERVAL_SECS_MAX.
  */
 #ifndef CY_OTA_RETRY_INTERVAL_SECS
-#define CY_OTA_RETRY_INTERVAL_SECS          (5)            /* 5 seconds */
+#define CY_OTA_RETRY_INTERVAL_SECS          (5)            /* 5 seconds. */
 #endif
 
 /**
- * @brief Length of time to check for downloads
+ * @brief Length of time to check for downloads.
  *
- * OTA Agent wakes up, connects to server, and waits this much time before disconnecting.
+ * The OTA Agent wakes up, connects to server, and waits this much time before disconnecting.
  * This allows the OTA Agent to be inactive for long periods of time, only checking for short periods.
  * Use 0x00 to continue checking once started.
  */
 #ifndef CY_OTA_CHECK_TIME_SECS
-#define CY_OTA_CHECK_TIME_SECS              (10 * 60)       /* 10 minutes */
+#define CY_OTA_CHECK_TIME_SECS              (10 * 60)       /* 10 minutes. */
 #endif
 
 /**
-* @brief Expected maximum download time between each OTA packet arrival
+* @brief Expected maximum download time between each OTA packet arrival.
 *
 * This is used check that the download occurs in a reasonable time frame.
 */
 #ifndef CY_OTA_PACKET_INTERVAL_SECS
-#define CY_OTA_PACKET_INTERVAL_SECS         (60)           /* 1 minute */
+#define CY_OTA_PACKET_INTERVAL_SECS         (60)           /* 1 minute. */
 #endif
 
 /**
- * @brief Length of time to check for getting Job Document
+ * @brief Length of time to check for getting the Job document.
  *
- * OTA Agent wakes up, connects to broker/server, and waits this much time before disconnecting.
+ * The OTA Agent wakes up, connects to broker/server, and waits this much time before disconnecting.
  * This allows the OTA Agent to be inactive for long periods of time, only checking for short periods.
  * Use 0x00 to continue checking once started.
  */
 #ifndef CY_OTA_JOB_CHECK_TIME_SECS
-#define CY_OTA_JOB_CHECK_TIME_SECS           (30)          /* 30 seconds */
+#define CY_OTA_JOB_CHECK_TIME_SECS           (30)          /* 30 seconds. */
 #endif
 
 /**
- * @brief Length of time to check for getting OTA Image data
+ * @brief Length of time to check for getting the OTA image data.
  *
- * After getting the Job (or during a Direct download), this is the amount of time we wait before
- * deciding we are not going to get the download.
+ * After getting the Job (or during a Direct download), this is the amount of time to wait before
+ * canceling the download.
  * Use 0x00 to disable.
  */
 #ifndef CY_OTA_DATA_CHECK_TIME_SECS
-#define CY_OTA_DATA_CHECK_TIME_SECS          (5 * 60)      /* 5 minutes */
+#define CY_OTA_DATA_CHECK_TIME_SECS          (20 * 60)      /* 20 minutes. */
 #endif
 
 /**
- * @brief Length of time to check for OTA Image downloads
+ * @brief Length of time to check for OTA image downloads.
  *
- * OTA Agent wakes up, connects to server, and waits this much time before disconnecting.
+ * The OTA Agent wakes up, connects to server, and waits this much time before disconnecting.
  * This allows the OTA Agent to be inactive for long periods of time, only checking for short periods.
  * Use 0x00 to continue checking once started.
  */
 #ifndef CY_OTA_CHECK_TIME_SECS
-#define CY_OTA_CHECK_TIME_SECS                (60 * 10)    /* 10 minutes */
+#define CY_OTA_CHECK_TIME_SECS                (60 * 10)    /* 10 minutes. */
 #endif
 
 /**
- * @brief Number of OTA session retries
+ * @brief Number of OTA session retries.
  *
- * Retry count for overall OTA session attempts
+ * Retry count for overall OTA session attempts.
  */
 #ifndef CY_OTA_RETRIES
-#define CY_OTA_RETRIES                          (5)        /* 5 overall OTA retries */
+#define CY_OTA_RETRIES                          (5)        /* 5 overall OTA retries. */
 #endif
 
 /**
- * @brief Number of OTA Connect to Server/Broker retries
+ * @brief Number of OTA connect to server/Broker retries.
  *
- * Retry count for connection attempts
+ * Retry count for connection attempts.
  */
 #ifndef CY_OTA_CONNECT_RETRIES
-#define CY_OTA_CONNECT_RETRIES                  (3)        /* 3 server connect retries  */
+#define CY_OTA_CONNECT_RETRIES                  (3)        /* 3 server connect retries.  */
 #endif
 
 /**
- * @brief Number of OTA download retries
+ * @brief Number of OTA download retries.
  *
- * Retry count for attempts at downloading the OTA Image
+ * Retry count for attempts at downloading the OTA image.
  */
 #ifndef CY_OTA_MAX_DOWNLOAD_TRIES
-#define CY_OTA_MAX_DOWNLOAD_TRIES               (3)         /* 3 download OTA Image retries */
+#define CY_OTA_MAX_DOWNLOAD_TRIES               (3)         /* 3 download OTA image retries. */
 #endif
 
 
@@ -170,61 +171,80 @@ extern "C" {
 
 
 /**
- * @brief Last part of the topic to subscribe
+ * @brief Last part of the topic to subscribe.
  *
- * Topic for Device to send message to Publisher:
+ * Topic for the device to send a message to the Publisher:
  *  "COMPANY_TOPIC_PREPEND / BOARD_NAME / PUBLISHER_LISTEN_TOPIC"
- *  The combined topic needs to match the Publisher's subscribe topic
+ *  The combined topic must match the Publisher's subscribe topic.
  *
- * Override in cy_ota_config.h
+ * Override in cy_ota_config.h.
  */
 #ifndef PUBLISHER_LISTEN_TOPIC
 #define PUBLISHER_LISTEN_TOPIC              "publish_notify"
 #endif
 
 /**
- * @brief First part of the topic to subscribe / publish
+ * @brief First part of the topic to subscribe/publish.
  *
- * Topic for Device to send message to Publisher:
+ * Topic for the device to send a message to the Publisher:
  *  "COMPANY_TOPIC_PREPEND / BOARD_NAME / PUBLISHER_LISTEN_TOPIC"
  *
- * Override in cy_ota_config.h
+ * Override in cy_ota_config.h.
  */
 #ifndef COMPANY_TOPIC_PREPEND
 #define COMPANY_TOPIC_PREPEND               "anycloud"
 #endif
 
 /**
- * @brief End of Topic to send message to Publisher for Direct download
+ * @brief End of topic to send a message to the Publisher for Direct download.
  *
- * Override in cy_ota_config.h
+ * Override in cy_ota_config.h.
  */
 #ifndef PUBLISHER_DIRECT_TOPIC
 #define PUBLISHER_DIRECT_TOPIC               "OTAImage"
 #endif
 
 /**
- * @brief Update Successful message
+ * @brief "Update successful" message.
  *
- * Used with sprintf() to create RESULT message to Broker / Server
+ * Used with sprintf() to create a RESULT message to the Broker/server.
  */
 #ifndef CY_OTA_RESULT_SUCCESS
 #define CY_OTA_RESULT_SUCCESS               "Success"
 #endif
 
 /**
-* @brief Update Failure message
+* @brief "Update failed" message.
 *
-* Used with sprintf() to create RESULT message to Broker / Server
+* Used with sprintf() to create a RESULT message to the Broker/server.
 */
 #ifndef CY_OTA_RESULT_FAILURE
 #define CY_OTA_RESULT_FAILURE               "Failure"
 #endif
 
+
 /**
- * @brief Device message to Publisher to ask about updates
+ * @brief Default Job document name.
+ *
+ * Name of the update JSON file for HTTP.
+ */
+#ifndef CY_OTA_HTTP_JOB_FILE
+#define CY_OTA_HTTP_JOB_FILE               "/ota_update.json"
+#endif
+
+/**
+ * @brief Default OTA image file name.
+ *
+ * Name of the OTA image for HTTP.
+ */
+#ifndef CY_OTA_HTTP_DATA_FILE
+#define CY_OTA_HTTP_DATA_FILE              "/anycloud-ota.bin"
+#endif
+
+/**
+ * @brief Device message to the Publisher to ask about updates.
  * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
- * Override if desired by defining in cy_ota_config.h.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_SUBSCRIBE_UPDATES_AVAIL
 #define CY_OTA_SUBSCRIBE_UPDATES_AVAIL \
@@ -241,10 +261,10 @@ extern "C" {
 #endif
 
 /**
- * @brief Device message to Publisher to ask for a download
+ * @brief Device message to the Publisher to ask for a full download with one request.
  * *
  * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
- * Override if desired by defining in cy_ota_config.h.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_DOWNLOAD_REQUEST
 #define CY_OTA_DOWNLOAD_REQUEST \
@@ -261,10 +281,33 @@ extern "C" {
 #endif
 
 /**
- * @brief Device message to Publisher to ask for a download
+ * @brief Device message to the Publisher to ask for a chunk of data at a time.
  * *
  * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
- * Override if desired by defining in cy_ota_config.h.
+ * Override if required by defining in cy_ota_config.h.
+ */
+#ifndef CY_OTA_DOWNLOAD_CHUNK_REQUEST
+#define CY_OTA_DOWNLOAD_CHUNK_REQUEST \
+"{\
+\"Message\":\"Request Data Chunk\", \
+\"Manufacturer\": \"Express Widgits Corporation\", \
+\"ManufacturerID\": \"EWCO\", \
+\"ProductID\": \"Easy Widgit\", \
+\"SerialNumber\": \"ABC213450001\", \
+\"BoardName\": \"CY8CPROTO_062_4343W\", \
+\"Version\": \"%d.%d.%d\", \
+\"UniqueTopicName\": \"%s\", \
+\"Filename\": \"%s\", \
+\"Offset\": \"%ld\", \
+\"Size\": \"%ld\"\
+}"
+#endif
+
+/**
+ * @brief Device message to the Publisher to ask for a download.
+ * *
+ * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_DOWNLOAD_DIRECT_REQUEST
 #define CY_OTA_DOWNLOAD_DIRECT_REQUEST \
@@ -280,10 +323,10 @@ extern "C" {
 #endif
 
 /**
- * @brief Device JSON doc to respond to MQTT Publisher
+ * @brief Device JSON document to respond to the MQTT Publisher.
  *
- * Used with sprintf() to create the JSON message
- * Override if desired by defining in cy_ota_config.h.
+ * Used with sprintf() to create the JSON message.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_MQTT_RESULT_JSON
 #define CY_OTA_MQTT_RESULT_JSON \
@@ -294,10 +337,10 @@ extern "C" {
 #endif
 
 /**
- * @brief Device JSON doc to respond to HTTP Server
+ * @brief Device JSON document to respond to the HTTP server.
  *
- * Used with sprintf() to create the JSON message
- * Override if desired by defining in cy_ota_config.h.
+ * Used with sprintf() to create the JSON message.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_HTTP_RESULT_JSON
 #define CY_OTA_HTTP_RESULT_JSON \
@@ -308,10 +351,10 @@ extern "C" {
 #endif
 
 /**
- * @brief HTTP GET template
+ * @brief HTTP GET template.
  *
- * Used with sprintf() to create the GET request for HTTP server
- * Override if desired by defining in cy_ota_config.h.
+ * Used with sprintf() to create the GET request for the HTTP server.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_HTTP_GET_TEMPLATE
 #define CY_OTA_HTTP_GET_TEMPLATE \
@@ -321,10 +364,24 @@ extern "C" {
 #endif
 
 /**
- * @brief HTTP POST template
+ * @brief HTTP GET Range template.
  *
- * Used with sprintf() to create the POST message for HTTP server
- * Override if desired by defining in cy_ota_config.h.
+ * Used with sprintf() to create the GET request for the HTTP server
+ * when requesting a range of data.
+ */
+#ifndef CY_OTA_HTTP_GET_RANGE_TEMPLATE
+#define CY_OTA_HTTP_GET_RANGE_TEMPLATE \
+    "GET %s HTTP/1.1\r\n" \
+    "Host: %s:%d \r\n" \
+    "Range: bytes=%ld-%ld \r\n" \
+    "\r\n"
+#endif
+
+/**
+ * @brief HTTP POST template.
+ *
+ * Used with sprintf() to create the POST message for the HTTP server.
+ * Override if required by defining in cy_ota_config.h.
  */
 #ifndef CY_OTA_HTTP_POST_TEMPLATE
 #define CY_OTA_HTTP_POST_TEMPLATE \
@@ -340,29 +397,29 @@ extern "C" {
  **********************************************************************/
 
 /**
- * @brief The keep-alive interval for MQTT
- * @brief Maximum number of MQTT Topics
+ * @brief Keepalive interval for MQTT.
+ * @brief Maximum number of MQTT topics.
  *
  * An MQTT ping request will be sent periodically at this interval.
- * The maximum number of Topics for subscribing.
+ * The maximum number of topics for subscribing.
  */
 #ifndef CY_OTA_MQTT_KEEP_ALIVE_SECONDS
-#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS      (60)                /* 60 second keep-alive */
+#define CY_OTA_MQTT_KEEP_ALIVE_SECONDS      (60)                /* 60 second keepalive. */
 #endif
 
 /**
- * @brief Maximum number of MQTT Topics
+ * @brief Maximum number of MQTT topics.
  *
- * The maximum number of Topics for subscribing.
+ * The maximum number of topics for subscribing.
  */
 #ifndef CY_OTA_MQTT_MAX_TOPICS
 #define CY_OTA_MQTT_MAX_TOPICS                  (2)
 #endif
 
 /**
- * @brief TOPIC prefix
+ * @brief Topic prefix.
  *
- * Used as prefix for "Will" and "Acknowledgement" Messages
+ * Used as the prefix for "Will" and "Acknowledgement" messages.
  */
 #ifndef CY_OTA_MQTT_TOPIC_PREFIX
 #define CY_OTA_MQTT_TOPIC_PREFIX                   "cy_ota_device"

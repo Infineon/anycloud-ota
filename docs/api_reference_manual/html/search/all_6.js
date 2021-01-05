@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['image_5ftrailer',['image_trailer',['../structimage__trailer.html',1,'']]],
-  ['initial_5fconnection',['initial_connection',['../structcy__ota__network__params__t.html#abcc290be8049d49f332165ac7aafb3e0',1,'cy_ota_network_params_t']]]
+  ['gid',['gid',['../structustar__header__t.html#a7204b3906dbe365727577672681d49a7',1,'ustar_header_t']]],
+  ['gname',['gname',['../structustar__header__t.html#a3f843657c6f316bde2d3a93487dbc00d',1,'ustar_header_t']]]
 ];

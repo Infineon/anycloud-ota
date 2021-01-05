@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['offset',['offset',['../structcy__ota__storage__write__info__t.html#a0405b3806c0de934f5f5f55ac693c184',1,'cy_ota_storage_write_info_t']]]
+  ['linkname',['linkname',['../structustar__header__t.html#af040f7b9edb6b2a7b36331baac3b0b29',1,'ustar_header_t']]]
 ];

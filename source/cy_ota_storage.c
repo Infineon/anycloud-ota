@@ -32,6 +32,8 @@
 #include "sysflash/sysflash.h"
 #include "flash_map_backend/flash_map_backend.h"
 
+#include "cy_log.h"
+
 /***********************************************************************
  *
  * defines & enums
@@ -44,13 +46,6 @@
  * define tests
  *
  **********************************************************************/
-
-#ifndef CY_BOOT_PRIMARY_1_START
-    #error "CY_BOOT_PRIMARY_1_START must be defined and the same as defined for MCUBoot."
-#endif
-#ifndef CY_BOOT_PRIMARY_1_SIZE
-    #error "CY_BOOT_PRIMARY_1_SIZE must be defined and the same as defined for MCUBoot."
-#endif
 
 /***********************************************************************
  *
@@ -90,12 +85,12 @@ static int eraseSlotTwo(void)
 
     if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
     {
-        IotLogError("%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\n", __func__);
         return -1;
     }
     if (flash_area_erase(fap, 0, fap->fa_size) != 0)
     {
-        IotLogError("%s() flash_area_erase(fap, 0) failed\r\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_erase(fap, 0) failed\r\n", __func__);
         return -1;
     }
 
@@ -114,11 +109,12 @@ static int eraseSlotTwo(void)
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_OPEN_STORAGE
  */
-cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
+cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx_ptr)
 {
     const struct flash_area *fap;
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
 
     /* clear out the stats */
     ctx->total_image_size    = 0;
@@ -128,13 +124,13 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
     ctx->storage_loc         = NULL;
 
     /* erase secondary slot */
-    IotLogWarn("Erasing Secondary Slot...\n");
+    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Erasing Secondary Slot...\n");
     eraseSlotTwo();
-    IotLogWarn("Erasing Secondary Slot Done.\n");
+    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Erasing Secondary Slot Done.\n");
 
     if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
     {
-        IotLogError("%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
         return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
     }
     ctx->storage_loc = (void *)fap;
@@ -151,14 +147,14 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_t *ctx)
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_WRITE_STORAGE
  */
-cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_t *chunk_info)
+cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
 {
     int rc;
     const struct flash_area *fap;
-
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    IotLogDebug("%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
                              chunk_info->buffer, chunk_info->size,
                              chunk_info->offset, chunk_info->offset);
 
@@ -172,7 +168,7 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_
     rc = flash_area_write(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size);
     if (rc != 0)
     {
-        IotLogError("%s() flash_area_write() failed result:%d\n", __func__, rc);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_write() failed result:%d\n", __func__, rc);
         return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     }
 
@@ -187,12 +183,12 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_t *ctx, cy_ota_storage_write_info_
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_CLOSE_STORAGE
  */
-cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx)
+cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ctx_ptr)
 {
     const struct flash_area *fap;
-
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
-    IotLogDebug("%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
 
     /* close secondary slot */
     fap = (const struct flash_area *)ctx->storage_loc;
@@ -213,11 +209,11 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_t *ctx)
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_GENERAL
  */
-cy_rslt_t cy_ota_storage_verify(cy_ota_context_t *ctx)
+cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx_ptr)
 {
     int boot_ret;
     int boot_pending;
-
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
     /* We do not verify the slot - we expect that the Application
@@ -237,12 +233,18 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_t *ctx)
      *     without having to test on re-boot
      * */
     boot_ret = boot_set_pending(boot_pending);
-    IotLogDebug("%s() boot_set_pending(%d) result:%d\n", __func__, boot_pending, boot_ret);
     if (boot_ret != 0)
     {
-        IotLogError("%s() boot_set_pending() Failed\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() boot_set_pending() Failed ret:%d\n", __func__, boot_ret);
+#if (OTA_USE_EXTERNAL_FLASH != 0)
+        /* [stde] Internal FLASH always returns failure due to internal flash alignment issues in boot_write_trailer().
+         * We will re-visit after MW-3630. The call sets the proper "magic" value and mcuboot
+         * does do the update as expected.
+         */
         return CY_RSLT_OTA_ERROR_VERIFY;
+#endif
     }
+
     return CY_RSLT_SUCCESS;
 }
 
