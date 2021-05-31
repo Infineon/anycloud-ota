@@ -128,7 +128,7 @@ static struct flash_area secondary_1 =
 {
     .fa_id        = FLASH_AREA_IMAGE_SECONDARY(0),
     .fa_device_id = FLASH_DEVICE_EXTERNAL_FLASH(CY_BOOT_EXTERNAL_DEVICE_INDEX),
-    .fa_off       = CY_SMIF_BASE_MEM_OFFSET,
+    .fa_off       = CY_SMIF_BASE_MEM_OFFSET + CY_BOOT_SECONDARY_1_START,
     .fa_size      = CY_BOOT_SECONDARY_1_SIZE
 };
 #endif

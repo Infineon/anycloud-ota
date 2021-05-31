@@ -339,7 +339,7 @@ SECTIONS
 
 
     /* Emulated EEPROM Flash area */
-    .cy_em_eeprom :
+    .cy_em_eeprom (NOLOAD):
     {
         KEEP(*(.cy_em_eeprom))
     } > em_eeprom

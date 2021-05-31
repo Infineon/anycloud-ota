@@ -152,6 +152,13 @@ LOAD_REGION_1 FLASH_START FLASH_SIZE
     {
     }
 
+    ; Emulated EEPROM Flash area
+    ; The alignment and size of this region must match the
+    ; requirements for the emeeprom component
+    ER_EM_EEPROM EM_EEPROM_START EMPTY NOCOMPRESS EM_EEPROM_SIZE
+    {
+    }
+
     ; Used for the digital signature of the secure application and the
     ; Bootloader SDK application. The size of the section depends on the required
     ; data size.
@@ -163,7 +170,7 @@ LOAD_REGION_1 FLASH_START FLASH_SIZE
 }
 
 
-; Emulated EEPROM Flash area
+; Emulated EEPROM Flash area - Do not load into HEX file output
 ;LR_EM_EEPROM EM_EEPROM_START EM_EEPROM_SIZE
 ;{
 ;    .cy_em_eeprom +0

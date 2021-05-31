@@ -125,10 +125,10 @@ Macros</h2></td></tr>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga3cd431c05dec3136ee112edb90cce01f">CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE</a>&#160;&#160;&#160;(256)</td></tr>
 <tr class="memdesc:ga3cd431c05dec3136ee112edb90cce01f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size for the unique MQTT topic to get the OTA image. <br /></td></tr>
 <tr class="separator:ga3cd431c05dec3136ee112edb90cce01f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa987668674cd65e8d062f79c1486ec35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gaa987668674cd65e8d062f79c1486ec35"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gaa987668674cd65e8d062f79c1486ec35">CY_OTA_MQTT_MESSAGE_BUFF_SIZE</a>&#160;&#160;&#160;(1024)</td></tr>
-<tr class="memdesc:gaa987668674cd65e8d062f79c1486ec35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size for MQTT message to request Job. <br /></td></tr>
-<tr class="separator:gaa987668674cd65e8d062f79c1486ec35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga4c493ffd9af7da17c2551699bd0b1275"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ga4c493ffd9af7da17c2551699bd0b1275"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga4c493ffd9af7da17c2551699bd0b1275">CY_OTA_JSON_DOC_BUFF_SIZE</a>&#160;&#160;&#160;(1024)</td></tr>
+<tr class="memdesc:ga4c493ffd9af7da17c2551699bd0b1275"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of buffer for JSON update document. <br /></td></tr>
+<tr class="separator:ga4c493ffd9af7da17c2551699bd0b1275"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad8e421e4ebd8c8880843b63c1bf6c6f1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="gad8e421e4ebd8c8880843b63c1bf6c6f1"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gad8e421e4ebd8c8880843b63c1bf6c6f1">CY_OTA_CHUNK_SIZE</a>&#160;&#160;&#160;(4096)</td></tr>
 <tr class="memdesc:gad8e421e4ebd8c8880843b63c1bf6c6f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Size of data chunks for each transfer. <br /></td></tr>
@@ -301,6 +301,12 @@ Macros</h2></td></tr>
 <tr class="memitem:ga63713f2122581c2bee97ebd3dbf1815c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga63713f2122581c2bee97ebd3dbf1815c">CY_OTA_MAX_DOWNLOAD_TRIES</a>&#160;&#160;&#160;(3)         /* 3 download OTA image retries. */</td></tr>
 <tr class="memdesc:ga63713f2122581c2bee97ebd3dbf1815c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Number of OTA download retries.  <a href="#ga63713f2122581c2bee97ebd3dbf1815c">More...</a><br /></td></tr>
 <tr class="separator:ga63713f2122581c2bee97ebd3dbf1815c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad5faa23626341c735925265a87d38f95"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gad5faa23626341c735925265a87d38f95">CY_OTA_HTTP_TIMEOUT_SEND</a>&#160;&#160;&#160;(3000)         /* 3 second send timeout. */</td></tr>
+<tr class="memdesc:gad5faa23626341c735925265a87d38f95"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP timeout for sending messages.  <a href="#gad5faa23626341c735925265a87d38f95">More...</a><br /></td></tr>
+<tr class="separator:gad5faa23626341c735925265a87d38f95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1a9e20b6c3565aebadc28acbddc798f9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga1a9e20b6c3565aebadc28acbddc798f9">CY_OTA_HTTP_TIMEOUT_RECEIVE</a>&#160;&#160;&#160;(3000)         /* 3 second receive timeout. */</td></tr>
+<tr class="memdesc:ga1a9e20b6c3565aebadc28acbddc798f9"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP timeout for receiving messages.  <a href="#ga1a9e20b6c3565aebadc28acbddc798f9">More...</a><br /></td></tr>
+<tr class="separator:ga1a9e20b6c3565aebadc28acbddc798f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaaa47c22f94edbcb24052a7551f6a2f36"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#gaaa47c22f94edbcb24052a7551f6a2f36">PUBLISHER_LISTEN_TOPIC</a>&#160;&#160;&#160;&quot;publish_notify&quot;</td></tr>
 <tr class="memdesc:gaaa47c22f94edbcb24052a7551f6a2f36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last part of the topic to subscribe.  <a href="#gaaa47c22f94edbcb24052a7551f6a2f36">More...</a><br /></td></tr>
 <tr class="separator:gaaa47c22f94edbcb24052a7551f6a2f36"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -385,7 +391,9 @@ Enumerations</h2></td></tr>
 <br />
 &#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faafb7b34f95f26234a0036b611205f904a">CY_OTA_CONNECTION_HTTP</a>,
 <br />
-&#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706">CY_OTA_CONNECTION_HTTPS</a>
+&#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706">CY_OTA_CONNECTION_HTTPS</a>,
+<br />
+&#160;&#160;<a class="el" href="group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faaa6e2c528481c3eb950755dd86dfb272f">CY_OTA_CONNECTION_BLE</a>
 <br />
  }</td></tr>
 <tr class="memdesc:gabc03646427dec963bef37cb5dbb550fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">The connection type to use.  <a href="group__group__ota__typedefs.html#gabc03646427dec963bef37cb5dbb550fa">More...</a><br /></td></tr>
@@ -1020,6 +1028,34 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="gad5faa23626341c735925265a87d38f95"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CY_OTA_HTTP_TIMEOUT_SEND&#160;&#160;&#160;(3000)         /* 3 second send timeout. */</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>HTTP timeout for sending messages. </p>
+
+</div>
+</div>
+<a class="anchor" id="ga1a9e20b6c3565aebadc28acbddc798f9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define CY_OTA_HTTP_TIMEOUT_RECEIVE&#160;&#160;&#160;(3000)         /* 3 second receive timeout. */</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>HTTP timeout for receiving messages. </p>
+
+</div>
+</div>
 <a class="anchor" id="gaaa47c22f94edbcb24052a7551f6a2f36"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1402,6 +1438,9 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a class="anchor" id="ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706"></a>CY_OTA_CONNECTION_HTTPS&#160;</td><td class="fielddoc">
 <p>Use HTTPS connection. </p>
+</td></tr>
+<tr><td class="fieldname"><a class="anchor" id="ggabc03646427dec963bef37cb5dbb550faaa6e2c528481c3eb950755dd86dfb272f"></a>CY_OTA_CONNECTION_BLE&#160;</td><td class="fielddoc">
+<p>Use Bluetooth connection. </p>
 </td></tr>
 </table>
 

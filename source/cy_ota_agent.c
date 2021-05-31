@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -360,9 +360,15 @@ CY_LOG_LEVEL_T ota_logging_level = CY_LOG_ERR;
 void cy_ota_print_data(const char *buffer, uint32_t length)
 {
     uint32_t i, j;
+
+    if ( (buffer == NULL) || (length == 0) )
+    {
+        return;
+    }
+
     for (i = 0 ; i < length; i+=16)
     {
-        printf("0x%04lx ", i);
+        printf("0x%04x ", (int)i);
         for (j = 0 ; j < 16; j++)
         {
             if ( (i + j) < length)
@@ -379,7 +385,7 @@ void cy_ota_print_data(const char *buffer, uint32_t length)
         {
             if ( (i + j) < length)
             {
-                printf("%c ", (isprint((int)(buffer[i + j])) ? buffer[i + j] : '.') );
+                printf("%c", (isprint((int)(buffer[i + j])) ? buffer[i + j] : '.') );
             }
             else
             {
@@ -429,6 +435,7 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
         ctx->callback_data.error = cy_ota_last_error;
 
         /* fill in callback structure data for connection info */
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
         ctx->callback_data.connection_type = ctx->curr_connect_type;
         if (ctx->curr_server != NULL)
         {
@@ -439,13 +446,17 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
         /* copy connection specific fields */
         memset(ctx->callback_data.file, 0x00, sizeof(ctx->callback_data.file) );
         memset(ctx->callback_data.json_doc, 0x00, sizeof(ctx->callback_data.json_doc));
+#endif
+#ifdef COMPONENT_OTA_MQTT
         if (ctx->callback_data.connection_type == CY_OTA_CONNECTION_MQTT)
         {
             strncpy(ctx->callback_data.json_doc, ctx->mqtt.json_doc, (sizeof(ctx->callback_data.json_doc) - 1) );
             strncpy(ctx->callback_data.unique_topic, ctx->mqtt.unique_topic, (sizeof(ctx->callback_data.unique_topic) - 1) );
             ctx->callback_data.credentials = &ctx->network_params.mqtt.credentials;
         }
-        else if ( (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTP) ||
+#endif
+#ifdef COMPONENT_OTA_HTTP
+        if ( (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTP) ||
                   (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTPS) )
         {
             strncpy(ctx->callback_data.json_doc, ctx->http.json_doc, (sizeof(ctx->callback_data.json_doc) - 1) );
@@ -458,11 +469,14 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
             }
             ctx->callback_data.credentials = &ctx->network_params.http.credentials;
         }
+#endif
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
         if (ctx->curr_state == CY_OTA_STATE_JOB_PARSE)
         {
             strncpy(ctx->callback_data.json_doc, ctx->job_doc, (sizeof(ctx->callback_data.json_doc) - 1) );
         }
+#endif
 
         /* For STORAGE info */
         ctx->callback_data.storage = ctx->storage;
@@ -483,16 +497,19 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
         /* copy connection specific fields */
         if (ctx->curr_state == CY_OTA_STATE_JOB_PARSE)
         {
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
             if (strlen(ctx->callback_data.json_doc) > 0)
             {
                 memcpy(ctx->job_doc, ctx->callback_data.json_doc, sizeof(ctx->job_doc));
             }
+#endif
         }
         else if(  (ctx->curr_state == CY_OTA_STATE_JOB_CONNECT) ||
                   (ctx->curr_state == CY_OTA_STATE_DATA_CONNECT) ||
                   (ctx->curr_state == CY_OTA_STATE_RESULT_CONNECT) ||
                   (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD) )
         {
+#ifdef COMPONENT_OTA_MQTT
             if (ctx->callback_data.connection_type == CY_OTA_CONNECTION_MQTT)
             {
                 if (ctx->callback_data.mqtt_connection != NULL)
@@ -518,8 +535,10 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
                 {
                     strncpy(ctx->mqtt.unique_topic, ctx->callback_data.unique_topic, (sizeof(ctx->mqtt.unique_topic) - 1));
                 }
-            }
-            else if ( (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTP) ||
+            } /* MQTT type */
+#endif
+#ifdef COMPONENT_OTA_HTTP
+            if ( (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTP) ||
                       (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTPS) )
             {
                 if (ctx->callback_data.http_connection != NULL)
@@ -543,7 +562,8 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
                 {
                     strncpy(ctx->http.file, ctx->callback_data.file, (sizeof(ctx->http.file) - 1) );
                 }
-            } /* connection type */
+            } /* HTTP type */
+#endif
         } /* if starting a connection */
 
         if ( cb_result == CY_OTA_CB_RSLT_APP_SUCCESS &&
@@ -556,21 +576,28 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
              * our connection information.
              */
 
+
+#ifdef COMPONENT_OTA_MQTT
             if (ctx->callback_data.connection_type == CY_OTA_CONNECTION_MQTT)
             {
                 ctx->mqtt.connection_from_app    = false;
                 ctx->mqtt.connection_established = false;
                 ctx->mqtt.mqtt_connection        = NULL;
             }
-            else
+#endif
+#ifdef COMPONENT_OTA_HTTP
+            if ( (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTP) ||
+                 (ctx->callback_data.connection_type == CY_OTA_CONNECTION_HTTPS) )
             {
                 ctx->http.connection_from_app = false;
                 ctx->http.connection          = NULL;
             }
+#endif
         }
     } /* called callback */
 
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG1, "%s(reason:%d) CB returning 0x%lx\n", __func__, reason, cb_result);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s(reason:%d) CB returning 0x%lx\n", __func__, reason, cb_result);
+
     return cb_result;
 }
 
@@ -579,7 +606,7 @@ cy_ota_callback_results_t cy_ota_internal_call_cb( cy_ota_context_t *ctx,
  * Miscellaneous Functions
  *
  **********************************************************************/
-static void cy_ota_set_state(cy_ota_context_t *ctx, cy_ota_agent_state_t state)
+void cy_ota_set_state(cy_ota_context_t *ctx, cy_ota_agent_state_t state)
 {
     CY_OTA_CONTEXT_ASSERT(ctx);
 
@@ -674,6 +701,7 @@ cy_rslt_t cy_ota_setup_connection_type(cy_ota_context_t *ctx)
     }
     else if (ctx->curr_state == CY_OTA_STATE_JOB_REDIRECT)
     {
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "redirect:   curr: %s : %d\n", ctx->curr_server->host_name, ctx->curr_server->port);
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "redirect: parsed: %s : %d\n", ctx->parsed_job.broker_server.host_name, ctx->parsed_job.broker_server.port);
         if ( (strcmp(ctx->curr_server->host_name, ctx->parsed_job.broker_server.host_name) != 0 ) ||
@@ -685,6 +713,7 @@ cy_rslt_t cy_ota_setup_connection_type(cy_ota_context_t *ctx)
                     ctx->curr_server->host_name, ctx->curr_server->port);
             result = CY_RSLT_OTA_CHANGING_SERVER;
         }
+#endif
     }
     else
     {
@@ -696,6 +725,7 @@ cy_rslt_t cy_ota_setup_connection_type(cy_ota_context_t *ctx)
             result = CY_RSLT_OTA_ERROR_REDIRECT;
             break;
 
+#ifdef COMPONENT_OTA_MQTT
         case CY_OTA_CONNECTION_MQTT:
             if (ctx->curr_server != &ctx->network_params.mqtt.broker)
             {
@@ -705,7 +735,11 @@ cy_rslt_t cy_ota_setup_connection_type(cy_ota_context_t *ctx)
                 result = CY_RSLT_OTA_CHANGING_SERVER;
             }
             break;
-
+#else
+        case CY_OTA_CONNECTION_MQTT:
+            break;
+#endif
+#ifdef COMPONENT_OTA_HTTP
         case CY_OTA_CONNECTION_HTTP:
         case CY_OTA_CONNECTION_HTTPS:
             if (ctx->curr_server != &ctx->network_params.http.server )
@@ -716,6 +750,15 @@ cy_rslt_t cy_ota_setup_connection_type(cy_ota_context_t *ctx)
                 result = CY_RSLT_OTA_CHANGING_SERVER;
             }
             break;
+#else
+        case CY_OTA_CONNECTION_HTTP:
+        case CY_OTA_CONNECTION_HTTPS:
+            break;
+#endif
+
+        case CY_OTA_CONNECTION_BLE: /* nothing to do here */
+            break;
+
         } /* switch */
     }
 
@@ -883,11 +926,13 @@ cy_rslt_t cy_OTA_JSON_callback(cy_JSON_object_t* json_object, void *arg)
                     memcpy(ctx->parsed_job.new_host_name, val, val_len);
                 }
             }
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
             else if ( (obj_len == strlen(CY_OTA_PORT_FIELD) ) &&
                       (strncasecmp(obj, CY_OTA_PORT_FIELD, obj_len) == 0) )
             {
                 ctx->parsed_job.broker_server.port = atoi(val);
             }
+#endif
             else if ( (obj_len == strlen(CY_OTA_FILE_FIELD) ) &&
                       (strncasecmp(obj, CY_OTA_FILE_FIELD, obj_len) == 0) )
             {
@@ -930,6 +975,7 @@ cy_rslt_t cy_OTA_JSON_callback(cy_JSON_object_t* json_object, void *arg)
     return CY_RSLT_SUCCESS;
 }
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
 static void cy_ota_print_parsed_doc_info(cy_ota_context_t *ctx)
 {
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "\n");
@@ -966,6 +1012,7 @@ static void cy_ota_print_parsed_doc_info(cy_ota_context_t *ctx)
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "   Unique Topic : %s\n", ctx->parsed_job.topic);
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "\n");
 }
+#endif
 
 /*-----------------------------------------------------------*/
 /**
@@ -988,6 +1035,7 @@ static void cy_ota_print_parsed_doc_info(cy_ota_context_t *ctx)
  */
 cy_rslt_t cy_ota_parse_job_info(cy_ota_context_t *ctx, const char *buffer, uint32_t length)
 {
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
     cy_rslt_t   result;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
@@ -1002,6 +1050,7 @@ cy_rslt_t cy_ota_parse_job_info(cy_ota_context_t *ctx, const char *buffer, uint3
     memset(ctx->parsed_job.new_host_name, 0x00, sizeof(ctx->parsed_job.new_host_name));
     strncpy(ctx->parsed_job.new_host_name, ctx->curr_server->host_name, (sizeof(ctx->parsed_job.new_host_name) - 1) );
     ctx->parsed_job.broker_server.port = ctx->curr_server->port;
+    ctx->parsed_job.connect_type = ctx->curr_connect_type;
 
     /* parse the OTA Job */
     cy_JSON_parser_register_callback( cy_OTA_JSON_callback, (void *)ctx);
@@ -1017,7 +1066,6 @@ cy_rslt_t cy_ota_parse_job_info(cy_ota_context_t *ctx, const char *buffer, uint3
 
     /* set up our pointer into our parsed data for new "broker_server" info */
     ctx->parsed_job.broker_server.host_name = ctx->parsed_job.new_host_name;
-
 
     /* validate version is higher than current application */
     if ( (APP_VERSION_MAJOR > ctx->parsed_job.ver_major) ||
@@ -1071,7 +1119,6 @@ cy_rslt_t cy_ota_parse_job_info(cy_ota_context_t *ctx, const char *buffer, uint3
         goto _end_JSON_parse;
     }
 
-
     /* Warn if Port is unexpected for connection type */
     if (ctx->parsed_job.connect_type == CY_OTA_CONNECTION_MQTT)
     {
@@ -1105,18 +1152,9 @@ _end_JSON_parse:
         cy_ota_print_parsed_doc_info(ctx);
     }
     return result;
-}
-
-/* --------------------------------------------------------------- */
-static cy_rslt_t cy_ota_validate_agent_params(cy_ota_agent_params_t *agent_params)
-{
-        /* nothing to test at this time
-         *
-         * timer values tested at compile time
-         *
-         */
-
-    return CY_RSLT_SUCCESS;
+#else
+    return CY_RSLT_OTA_ERROR_BLE_GENERAL;
+#endif  /* defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT) */
 }
 
 /* --------------------------------------------------------------- */
@@ -1191,6 +1229,7 @@ static cy_rslt_t cy_ota_wait_for_start(cy_ota_context_t *ctx)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
     uint32_t  waitfor;
+    cy_time_t                   tval;
 
     /* reset counters & flags */
     ctx->contact_server_retry_count = 0;
@@ -1198,18 +1237,19 @@ static cy_rslt_t cy_ota_wait_for_start(cy_ota_context_t *ctx)
     ctx->stop_OTA_session = 0;
     cy_ota_set_last_error(ctx, CY_RSLT_SUCCESS);
 
+    cy_rtos_get_time(&tval);
+
     /* clear received / written info before we start */
     cy_ota_clear_curr_connection_info(ctx);
 
+#ifdef COMPONENT_OTA_MQTT
     /* Create unique MQTT topic name.
      * Do this each time we start a session.
      */
-    ctx->mqtt.unique_topic[0] = 0;
-    cy_time_t                   tval;
-    cy_rtos_get_time(&tval);
     memset(ctx->mqtt.unique_topic, 0x00, sizeof(ctx->mqtt.unique_topic) );
     sprintf(ctx->mqtt.unique_topic, "%s/%s/%s/%d",
             COMPANY_TOPIC_PREPEND, CY_TARGET_BOARD_STRING, CY_OTA_MQTT_MAGIC, (uint16_t)(tval & 0x0000FFFF) );
+#endif
 
     /* clear any old events */
     waitfor = CY_OTA_EVENT_THREAD_EVENTS;
@@ -1266,9 +1306,10 @@ static cy_rslt_t cy_ota_determine_flow(cy_ota_context_t *ctx)
 
     /* possibly restore the connection */
     result = cy_ota_setup_connection_type(ctx);
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() cy_ota_setup_connection_type() result: 0x%lx to server %s:%d.\n", __func__,
             result, ctx->curr_server->host_name, ctx->curr_server->port);
-
+#endif
     if ( (result == CY_RSLT_SUCCESS) || (result == CY_RSLT_OTA_CHANGING_SERVER) )
     {
         /* changing server is ok for detecting flow */
@@ -1282,6 +1323,10 @@ static cy_rslt_t cy_ota_determine_flow(cy_ota_context_t *ctx)
         }
     }
 
+    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "OTA Begin %s\n",
+        (ctx->network_params.use_get_job_flow == CY_OTA_JOB_FLOW) ? "Job Flow" : "Direct Flow");
+
+#ifdef COMPONENT_OTA_HTTP
     /* Set up http.file
      * - if Job flow, App set to the name of the Job file
      * - If Direct flow, App set to the name of the OTA Image file
@@ -1292,9 +1337,9 @@ static cy_rslt_t cy_ota_determine_flow(cy_ota_context_t *ctx)
     {
         strncpy(ctx->http.file, CY_OTA_HTTP_JOB_FILE, (sizeof(ctx->http.file) - 1) );
     }
-
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "OTA Begin %s [%s]\n",
         (ctx->network_params.use_get_job_flow == CY_OTA_JOB_FLOW) ? "Job Flow" : "Direct Flow", ctx->http.file);
+#endif
     return result;
 }
 
@@ -1357,6 +1402,7 @@ static cy_rslt_t cy_ota_connect(cy_ota_context_t *ctx)
     cy_ota_set_last_error(ctx, CY_RSLT_SUCCESS);
 
     /* make the connection */
+#ifdef COMPONENT_OTA_MQTT
     if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
     {
         /* check if app provided connection */
@@ -1374,7 +1420,10 @@ static cy_rslt_t cy_ota_connect(cy_ota_context_t *ctx)
 
         result = cy_ota_mqtt_connect(ctx);
     }
-    else if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
+    else
+#endif
+#ifdef COMPONENT_OTA_HTTP
+        if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
               (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
     {
         /* check if app provided connection */
@@ -1392,6 +1441,7 @@ static cy_rslt_t cy_ota_connect(cy_ota_context_t *ctx)
         result = cy_ota_http_connect(ctx);
     }
     else
+#endif
     {
         cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() CONNECT Invalid job Connection type :%d\n", __func__, ctx->curr_connect_type);
         result = CY_RSLT_OTA_ERROR_GET_JOB;
@@ -1417,7 +1467,9 @@ static cy_rslt_t cy_ota_connect(cy_ota_context_t *ctx)
                     (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) ? "HTTPS" : "unknown",
             (ctx->device_connected == 1) ? "Succeeded" : cy_ota_get_error_string(result));
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "   %s:%d.\n", ctx->curr_server->host_name, ctx->curr_server->port );
+#endif
 
     return result;
 }
@@ -1432,24 +1484,27 @@ static cy_rslt_t cy_ota_disconnect(cy_ota_context_t *ctx)
     if (ctx->device_connected == 1)
     {
 
-		/* we will not check for last_error or APP stopped, we always want to disconnect */
-		if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
-		{
-			result = cy_ota_mqtt_disconnect(ctx);
-		}
-		else if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
-				  (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
-		{
-			result = cy_ota_http_disconnect(ctx);
-		}
-
-		cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s %s Disconnected.\n",
-				(ctx->curr_state == CY_OTA_STATE_JOB_DISCONNECT) ? "Job" :
-						(ctx->curr_state == CY_OTA_STATE_DATA_DISCONNECT) ? "Data" :
-						(ctx->curr_state == CY_OTA_STATE_RESULT_DISCONNECT) ? "Result" : "Unknown",
-				(ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT) ? "MQTT" :
-						(ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ? "HTTP" :
-						(ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) ? "HTTPS" : "unknown");
+        /* we will not check for last_error or APP stopped, we always want to disconnect */
+#ifdef COMPONENT_OTA_MQTT
+        if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
+        {
+            result = cy_ota_mqtt_disconnect(ctx);
+        }
+#endif
+#ifdef COMPONENT_OTA_HTTP
+            if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
+                  (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
+        {
+            result = cy_ota_http_disconnect(ctx);
+        }
+#endif
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s %s Disconnected.\n",
+                (ctx->curr_state == CY_OTA_STATE_JOB_DISCONNECT) ? "Job" :
+                        (ctx->curr_state == CY_OTA_STATE_DATA_DISCONNECT) ? "Data" :
+                        (ctx->curr_state == CY_OTA_STATE_RESULT_DISCONNECT) ? "Result" : "Unknown",
+                (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT) ? "MQTT" :
+                        (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ? "HTTP" :
+                        (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) ? "HTTPS" : "unknown");
     }
 
     /* We are no longer connected, clear the flag */
@@ -1470,16 +1525,19 @@ static cy_rslt_t cy_ota_job_download(cy_ota_context_t *ctx)
         cy_ota_start_timer(ctx, ctx->job_check_timeout_sec, CY_OTA_EVENT_DATA_DOWNLOAD_TIMEOUT);
     }
 
+#ifdef COMPONENT_OTA_MQTT
     if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
     {
         result = cy_ota_mqtt_get_job(ctx);
     }
-    else if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
+#endif
+#ifdef COMPONENT_OTA_HTTP
+    if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
               (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
     {
         result = cy_ota_http_get_job(ctx);
     }
-
+#endif
     /* stop the "check for an update" timer */
     cy_ota_stop_timer(ctx);
 
@@ -1517,18 +1575,22 @@ static cy_rslt_t cy_ota_job_redirect(cy_ota_context_t *ctx)
     {
         ctx->curr_connect_type = ctx->parsed_job.connect_type;
         result = cy_ota_setup_connection_type(ctx);
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
         cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "JOB document redirect to Data server %s:%d.\n",
                 ctx->curr_server->host_name, ctx->curr_server->port);
+#endif
 
         if (result == CY_RSLT_OTA_CHANGING_SERVER)
         {
             result = CY_RSLT_SUCCESS;
         }
 
+#ifdef COMPONENT_OTA_MQTT
         /* We need to send a unique topic for the Publisher script
          * to send us OTA Image through MQTT Broker.
          */
         ctx->mqtt.use_unique_topic = 1;
+#endif
 
     }
     else if (ctx->parsed_job.parse_result != CY_RSLT_SUCCESS)
@@ -1541,10 +1603,12 @@ static cy_rslt_t cy_ota_job_redirect(cy_ota_context_t *ctx)
         /* Data Broker/Server is the same as for Job
          */
 
+#ifdef COMPONENT_OTA_MQTT
         /* We need to send a unique topic for the Publisher script
          * to send us OTA Image through MQTT Broker.
          */
         ctx->mqtt.use_unique_topic = 1;
+#endif
     }
 
     return result;
@@ -1568,15 +1632,19 @@ static cy_rslt_t cy_ota_data_download(cy_ota_context_t *ctx)
     cy_ota_clear_received_stats(ctx);
 
     /* get_data functions */
+#ifdef COMPONENT_OTA_MQTT
     if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
     {
         result = cy_ota_mqtt_get_data(ctx);
     }
-    else if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
+#endif
+#ifdef COMPONENT_OTA_HTTP
+    if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
               (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
     {
         result = cy_ota_http_get_data(ctx);
     }
+#endif
 
     /* stop the "check for an update" timer */
     cy_ota_stop_timer(ctx);
@@ -1620,8 +1688,10 @@ static cy_rslt_t cy_ota_result_redirect(cy_ota_context_t *ctx)
     {
         ctx->curr_connect_type = ctx->network_params.initial_connection;
         result = cy_ota_setup_connection_type(ctx);
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
         cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Redirect to Result server %s:%d.\n",
                 ctx->curr_server->host_name, ctx->curr_server->port);
+#endif
     }
 
     return result;
@@ -1631,15 +1701,19 @@ static cy_rslt_t cy_ota_result_send(cy_ota_context_t *ctx)
 {
     cy_rslt_t result = CY_RSLT_SUCCESS;
 
+#ifdef COMPONENT_OTA_MQTT
     if (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT)
     {
         result = cy_ota_mqtt_report_result(ctx, cy_ota_last_error);
     }
-    else if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
+#endif
+#ifdef COMPONENT_OTA_HTTP
+    if ( (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTP) ||
               (ctx->curr_connect_type == CY_OTA_CONNECTION_HTTPS) )
     {
         result = cy_ota_http_report_result(ctx, cy_ota_last_error);
     }
+#endif
 
     cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s Result Send %s.\n",
             (ctx->curr_connect_type == CY_OTA_CONNECTION_MQTT) ? "MQTT" :
@@ -1685,6 +1759,7 @@ static cy_rslt_t cy_ota_complete(cy_ota_context_t *ctx)
  * - incorporates the State Machine
  *****************************************************************************/
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
 static void cy_ota_agent( cy_thread_arg_t arg )
 {
     cy_ota_callback_results_t   cb_result = CY_OTA_CB_RSLT_OTA_CONTINUE;
@@ -1988,6 +2063,7 @@ _exit_ota_agent:
     cy_rtos_exit_thread();
 
 }
+#endif  /* CY_OTA_BLE_ONLY */
 
 /******************************************************************************
  *
@@ -1999,7 +2075,9 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
 {
     cy_rslt_t           result = CY_RSLT_TYPE_ERROR;
     cy_ota_context_t    *ctx;
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
     uint32_t            waitfor;
+#endif
 
     /* sanity checks */
     if (ctx_handle == NULL)
@@ -2010,6 +2088,7 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
     {
         return CY_RSLT_OTA_ERROR_BADARG;
     }
+#ifdef COMPONENT_OTA_MQTT
     if (network_params->initial_connection == CY_OTA_CONNECTION_MQTT)
     {
         if (cy_ota_mqtt_validate_network_params(network_params) != CY_RSLT_SUCCESS)
@@ -2018,7 +2097,10 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
             return CY_RSLT_OTA_ERROR_BADARG;
         }
     }
-    else if ( (network_params->initial_connection == CY_OTA_CONNECTION_HTTP) ||
+#endif
+
+#ifdef COMPONENT_OTA_HTTP
+    if ( (network_params->initial_connection == CY_OTA_CONNECTION_HTTP) ||
               (network_params->initial_connection == CY_OTA_CONNECTION_HTTPS) )
     {
         if (cy_ota_http_validate_network_params(network_params) != CY_RSLT_SUCCESS)
@@ -2027,17 +2109,19 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
             return CY_RSLT_OTA_ERROR_BADARG;
         }
     }
-    else
+#endif
+
+#ifdef COMPONENT_OTA_BLUETOOTH
+    if (network_params->initial_connection == CY_OTA_CONNECTION_BLE)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Incorrect Network Connection (%d)!\n", __func__, network_params->initial_connection);
-        return CY_RSLT_OTA_ERROR_BADARG;
+        if (cy_ota_ble_validate_network_params(network_params) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() BLE Network Parameters incorrect!\n", __func__);
+            return CY_RSLT_OTA_ERROR_BADARG;
+        }
     }
 
-    if (cy_ota_validate_agent_params(agent_params) != CY_RSLT_SUCCESS)
-    {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Agent Parameters incorrect!\n", __func__);
-        return CY_RSLT_OTA_ERROR_BADARG;
-    }
+#endif
 
     if (ota_context_only_one != NULL)
     {
@@ -2114,35 +2198,45 @@ cy_rslt_t cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_age
     */
    *ctx_handle = ctx;
 
-   /* create OTA Agent thread */
-   result = cy_rtos_create_thread(&ctx->ota_agent_thread, cy_ota_agent,
-                                   "CY OTA Agent", NULL, OTA_AGENT_THREAD_STACK_SIZE,
-                                   CY_RTOS_PRIORITY_NORMAL, ctx);
-   if (result != CY_RSLT_SUCCESS)
-   {
-       /* Thread create failed */
-       cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() OTA Agent Thread Create Failed!\n", __func__);
-       goto _ota_init_err;
-    }
-
    /* Set default log level and warn caller if cy_log facility is not enabled */
    if (cy_log_set_facility_level(CYLF_OTA, ota_logging_level) == CY_RSLT_TYPE_ERROR)
    {
        cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "Call cy_log_set_facility_level() to enable logging messages.\n");
    }
 
-    /* wait for signal from started thread */
-    waitfor = CY_OTA_EVENT_RUNNING_EXITING;
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG1, "%s() Wait for Thread to start\n", __func__);
-    result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor, 1, 1, 1000);
-    if (result != CY_RSLT_SUCCESS)
-    {
-        /* Thread create failed ? */
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() OTA Agent Thread Create No response\n", __func__);
-        goto _ota_init_err;
-    }
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
+    /* Current thinking is that BLE will not need a separate thread,
+    * since all the interactions are done with callbacks that the
+    * application needs to handle by calling into cy_ota_xxx() functions.
+    */
+   if (network_params->initial_connection != CY_OTA_CONNECTION_BLE)
+   {
+       /* create OTA Agent thread */
+       result = cy_rtos_create_thread(&ctx->ota_agent_thread, cy_ota_agent,
+                                       "CY OTA Agent", NULL, OTA_AGENT_THREAD_STACK_SIZE,
+                                       CY_RTOS_PRIORITY_NORMAL, ctx);
+       if (result != CY_RSLT_SUCCESS)
+       {
+           /* Thread create failed */
+           cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() OTA Agent Thread Create Failed!\n", __func__);
+           goto _ota_init_err;
+        }
+
+        /* wait for signal from started thread */
+        waitfor = CY_OTA_EVENT_RUNNING_EXITING;
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG1, "%s() Wait for Thread to start\n", __func__);
+        result = cy_rtos_waitbits_event(&ctx->ota_event, &waitfor, 1, 1, 1000);
+        if (result != CY_RSLT_SUCCESS)
+        {
+            /* Thread create failed ? */
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() OTA Agent Thread Create No response\n", __func__);
+            goto _ota_init_err;
+        }
+   }
+#endif
 
     /* keep track of the context */
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() DONE\n", __func__);
     ota_context_only_one = ctx;
 
     return CY_RSLT_SUCCESS;
@@ -2164,9 +2258,9 @@ _ota_init_err:
 }
 
 /* --------------------------------------------------------------- */
-cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)
+cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ctx_ptr)
 {
-    cy_ota_context_t *ctx = (cy_ota_context_t *)ota_ctxt;
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
 
     /* sanity check */
     if (ctx == NULL)
@@ -2175,6 +2269,13 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)
         return CY_RSLT_OTA_ERROR_BADARG;
     }
     CY_OTA_CONTEXT_ASSERT(ctx);
+
+#ifdef COMPONENT_OTA_BLUETOOTH
+    if (ctx->network_params.initial_connection == CY_OTA_CONNECTION_BLE)
+    {
+        return CY_RSLT_OTA_ERROR_UNSUPPORTED;
+    }
+#endif
 
     if (ctx->curr_state < CY_OTA_STATE_AGENT_WAITING )
     {
@@ -2196,8 +2297,10 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ctxt)
 
 cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ctx_handle)
 {
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
     cy_rslt_t           result;
     uint32_t            waitfor;
+#endif
     cy_ota_context_t    *ctx;
 
     /* sanity check */
@@ -2215,6 +2318,8 @@ cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ctx_handle)
 
     ctx->curr_state = CY_OTA_STATE_EXITING;
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
+
     /* Signal thread to end */
     cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_SHUTDOWN_NOW, 0);
 
@@ -2230,6 +2335,7 @@ cy_rslt_t cy_ota_agent_stop(cy_ota_context_ptr *ctx_handle)
 
     /* wait for thread to exit */
     cy_rtos_join_thread(&ctx->ota_agent_thread);
+#endif
 
     /* clear timer */
     cy_rtos_deinit_timer(&ctx->ota_timer);
@@ -2273,8 +2379,9 @@ void cy_ota_set_log_level(CY_LOG_LEVEL_T level)
     }
     ota_logging_level = level;
     cy_log_set_facility_level(CYLF_OTA, ota_logging_level);
-//    cy_log_set_facility_level(CYLF_MIDDLEWARE, 5);        /* enable when debugging mqtt & http-client libraries */
+    //    cy_log_set_facility_level(CYLF_MIDDLEWARE, 5);        /* enable when debugging mqtt & http-client libraries */
 }
+
 /* --------------------------------------------------------------- */
 cy_rslt_t cy_ota_get_last_error(void)
 {

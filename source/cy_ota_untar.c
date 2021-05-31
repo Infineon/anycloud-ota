@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,13 +26,15 @@
 
 #include <FreeRTOS.h>
 
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
 /* lwIP header files */
 #include <lwip/tcpip.h>
 #include <lwip/api.h>
+#include "ip4_addr.h"
+#endif
 
 #include "cy_ota_api.h"
 #include "cy_ota_internal.h"
-#include "ip4_addr.h"
 
 #include "cyabs_rtos.h"
 #include "cy_log.h"
@@ -93,13 +95,6 @@
  * @brief Context structure for parsing the tar file
  */
 cy_untar_context_t  ota_untar_context;
-
-/**
- * @brief Flag to denote this is a tar file
- *
- * We use this flag on subsequent chunks of file to know how to handle the data
- */
-int ota_is_tar_archive;
 
 /**
  * @brief FLASH write block
@@ -168,7 +163,6 @@ static cy_untar_result_t write_data_to_flash( const struct flash_area *fap,
                 cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s() flash_area_write() failed\n", __LINE__, __func__);
                 return CY_UNTAR_ERROR;
             }
-
         }
         else
         {
@@ -226,7 +220,7 @@ cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
     else
     {
         /* unknown file type */
-//        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s BAD FILE TYPE : >%s<\n", __LINE__, __func__, ctxt->files[file_index].type);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%d:%s Unknown File Type: >%s<\n", __LINE__, __func__, ctxt->files[file_index].type);
         return CY_UNTAR_ERROR;
     }
 
@@ -256,11 +250,14 @@ cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
  * return   CY_UNTAR_SUCCESS
  *          CY_UNTAR_ERROR
  */
-cy_untar_result_t cy_ota_untar_init_context( cy_untar_context_t* ctx )
+cy_untar_result_t cy_ota_untar_init_context(cy_ota_context_ptr ctx_ptr, cy_untar_context_t* ctx )
 {
     if (cy_untar_init( ctx, ota_untar_write_callback, NULL ) == CY_RSLT_SUCCESS)
     {
-        ota_is_tar_archive  = 1;
+        cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
+        CY_OTA_CONTEXT_ASSERT(ctx);
+
+        ctx->ota_is_tar_archive  = 1;
         return CY_UNTAR_SUCCESS;
     }
     return CY_UNTAR_ERROR;
@@ -288,10 +285,10 @@ cy_untar_result_t cy_ota_untar_set_pending(void)
         else
         {
             /* unknown file type */
-            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s BAD FILE TYPE %d: >%s<\n", __LINE__, __func__, i, ota_untar_context.files[i].type);
+            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%d:%s BAD FILE TYPE %d: >%s<\n", __LINE__, __func__, i, ota_untar_context.files[i].type);
             continue;
         }
-        boot_set_image_pending(image, 0);
+        boot_set_pending(image, 0);
     }
 
     return CY_UNTAR_SUCCESS;
@@ -301,7 +298,6 @@ cy_untar_result_t cy_ota_untar_set_pending(void)
 /**
  * @brief Determine if tar or non-tar and call correct write function
  *
- * @param[in]   ctx_ptr     - pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   chunk_info  - pointer to chunk information
  *
  * @return  CY_UNTAR_SUCCESS
@@ -309,10 +305,11 @@ cy_untar_result_t cy_ota_untar_set_pending(void)
  */
 cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
 {
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
 
-    if (chunk_info == NULL)
+    if ( (ctx_ptr == NULL) || (chunk_info == NULL) )
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() chunk_info is NULL ! \n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() BAD ARGUMENTS ! \n", __func__);
         return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     }
 
@@ -324,7 +321,8 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
          */
         if (cy_is_tar_header( chunk_info->buffer, chunk_info->size) == CY_UNTAR_SUCCESS)
         {
-            if (cy_ota_untar_init_context(&ota_untar_context) != CY_RSLT_SUCCESS)
+            cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() TAR ARCHIVE\n", __func__);
+            if (cy_ota_untar_init_context(ctx_ptr, &ota_untar_context) != CY_RSLT_SUCCESS)
             {
                 cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() cy_ota_untar_init_context() FAILED! \n", __func__);
                 return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
@@ -333,9 +331,10 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
     }
 
     /* treat a tar file differently from a "normal" OTA */
-    if (ota_is_tar_archive != 0)
+    if (ctx->ota_is_tar_archive != 0)
     {
         uint32_t consumed = 0;
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() TAR ARCHIVE\n", __func__);
 
         while( consumed < chunk_info->size )
         {
@@ -394,14 +393,16 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
     {
         /* non-tarball OTA here, always image 0x00 */
         const struct flash_area *fap;
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() NON-TAR \n", __func__);
         if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
         {
             cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_pointer is NULL\n", __func__);
             return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
         }
 
-        if (write_data_to_flash( fap, chunk_info->offset, chunk_info->buffer, chunk_info->size) == -1)
+        if (write_data_to_flash( fap, chunk_info->offset, chunk_info->buffer, chunk_info->size) != CY_RSLT_SUCCESS)
         {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() WRITE FAILED\n", __func__);
             return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
         }
 

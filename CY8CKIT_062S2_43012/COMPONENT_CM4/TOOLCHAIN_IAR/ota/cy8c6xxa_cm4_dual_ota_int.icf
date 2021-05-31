@@ -168,8 +168,8 @@ place at start of FLASH_REGION  {section .intvec, readonly};
 /* Used for the digital signature of the secure application and the Bootloader SDK application. */
 /* ".cy_app_signature" : place at address (__ICFEDIT_region_IROM1_end__ - 0x200) { section .cy_app_signature }; [stde] */
 
-/* Emulated EEPROM Flash area */
-/* ".cy_em_eeprom" : place at start of IROM2_region  { section .cy_em_eeprom };  [stde] */
+/* Emulated EEPROM Flash area  - Do not load into HEX file output */
+".cy_em_eeprom" : place noload at start of IROM2_region  { section .cy_em_eeprom };
 
 /* Supervisory Flash - User Data */
 /* ".cy_sflash_user_data" : place at start of IROM3_region  { section .cy_sflash_user_data };  [stde] */
@@ -204,7 +204,7 @@ keep {
         section .intvec,
 /*
         section .cy_app_signature,
-        section .cy_em_eeprom,
+        section .cy_em_eeprom,       - Do not load into HEX file output
         section .cy_sflash_user_data,
         section .cy_sflash_nar,
         section .cy_sflash_public_key,

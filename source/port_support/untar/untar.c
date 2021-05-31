@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -296,7 +296,7 @@ static cy_untar_result_t cy_untar_parse_process_data(cy_untar_context_t *ctxt, u
             *consumed = ctxt->files[CY_UNTAR_COMPONENTS_JSON_INDEX].size;
             ctxt->already_parsed_components_json = 1;
             ctxt->state = CY_TAR_PARSE_FIND_HEADER;
-#if 1  //DEBUG
+#if 0  //DEBUG
             {
                 configPRINTF( ("%d:%s() parsed components.json done \n", __LINE__, __func__) );
                 configPRINTF( ("       version : %s\n", ctxt->version) );
@@ -312,7 +312,7 @@ static cy_untar_result_t cy_untar_parse_process_data(cy_untar_context_t *ctxt, u
 #endif
             return CY_UNTAR_SUCCESS;
         }
-        else if (CY_UNTAR_NOT_ENOUGH_DATA)
+        else if (result == CY_UNTAR_NOT_ENOUGH_DATA)
         {
             /* Data is not enough for components.json to be parsed
              * Signal for buffer to coalesce data until we have enough to parse.

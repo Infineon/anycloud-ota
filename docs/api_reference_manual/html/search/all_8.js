@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['initial_5fconnection',['initial_connection',['../structcy__ota__network__params__t.html#abcc290be8049d49f332165ac7aafb3e0',1,'cy_ota_network_params_t']]]
+  ['header_5foffset',['header_offset',['../structcy__ota__file__info__t.html#ac66d23e077df5a73e8e00ae3c5297a78',1,'cy_ota_file_info_t']]]
 ];

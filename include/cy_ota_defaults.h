@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -164,6 +164,22 @@ extern "C" {
 #define CY_OTA_MAX_DOWNLOAD_TRIES               (3)         /* 3 download OTA image retries. */
 #endif
 
+/**
+ * @brief HTTP timeout for sending messages
+ *
+ */
+#ifndef CY_OTA_HTTP_TIMEOUT_SEND
+#define CY_OTA_HTTP_TIMEOUT_SEND                (3000)         /* 3 second send timeout. */
+#endif
+
+
+/**
+ * @brief HTTP timeout for receiving messages
+ *
+ */
+#ifndef CY_OTA_HTTP_TIMEOUT_RECEIVE
+#define CY_OTA_HTTP_TIMEOUT_RECEIVE             (3000)         /* 3 second receive timeout. */
+#endif
 
 /**********************************************************************
  * Message Defines

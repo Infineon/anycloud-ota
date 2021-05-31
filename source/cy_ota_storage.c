@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -114,7 +114,7 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx_ptr)
     const struct flash_area *fap;
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s()\n", __func__);
 
     /* clear out the stats */
     ctx->total_image_size    = 0;
@@ -139,6 +139,44 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx_ptr)
 }
 
 /**
+ * @brief Read from storage area
+ *
+ * @param[in]       ctx         - pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in][out]  chunk_info  - pointer to chunk information, buffer pointer used for the read
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_READ_STORAGE
+ */
+cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
+{
+    int                         rc;
+    cy_rslt_t                   result = CY_RSLT_SUCCESS;
+    const struct flash_area     *fap;
+
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
+                             chunk_info->buffer, chunk_info->size,
+                             chunk_info->offset, chunk_info->offset);
+
+    /* Always read from secondary slot */
+    if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
+        return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
+    }
+
+    /* read into the chunk_info buffer */
+    rc = flash_area_read(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size);
+    if (rc != 0)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read() failed result:%d\n", __func__, rc);
+        result = CY_RSLT_OTA_ERROR_READ_STORAGE;
+    }
+
+    flash_area_close(fap);
+    return result;
+}
+
+/**
  * @brief Write to storage area
  *
  * @param[in]   ctx         - pointer to OTA agent context @ref cy_ota_context_t
@@ -154,7 +192,7 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
 
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
                              chunk_info->buffer, chunk_info->size,
                              chunk_info->offset, chunk_info->offset);
 
@@ -162,6 +200,7 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_
     fap = (const struct flash_area *)ctx->storage_loc;
     if (fap == NULL)
     {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() no fap!\n", __func__);
         return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
     }
 
@@ -188,7 +227,7 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ctx_ptr)
     const struct flash_area *fap;
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s()\n", __func__);
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s()\n", __func__);
 
     /* close secondary slot */
     fap = (const struct flash_area *)ctx->storage_loc;
@@ -225,6 +264,8 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx_ptr)
     {
         boot_pending = 0;
     }
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() boot_pending:%d\n", __func__, boot_pending);
+
     /*
      * boot_set_pending(x)
      *
@@ -232,11 +273,11 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx_ptr)
      * 1 - We believe this to be good and ready to move to Primary Slot
      *     without having to test on re-boot
      * */
-    boot_ret = boot_set_pending(boot_pending);
+    boot_ret = boot_set_pending(0, boot_pending);
     if (boot_ret != 0)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() boot_set_pending() Failed ret:%d\n", __func__, boot_ret);
 #if (OTA_USE_EXTERNAL_FLASH != 0)
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() boot_set_pending() External Failed ret:%d\n", __func__, boot_ret);
         /* [stde] Internal FLASH always returns failure due to internal flash alignment issues in boot_write_trailer().
          * We will re-visit after MW-3630. The call sets the proper "magic" value and mcuboot
          * does do the update as expected.

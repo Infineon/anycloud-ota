@@ -5,7 +5,7 @@ var group__group__ota__typedefs =
     [ "CY_TARGET_BOARD_STRING", "group__group__ota__typedefs.html#gaa62bde5eb7581727adb8838fa28f4382", null ],
     [ "CY_OTA_MQTT_FILENAME_BUFF_SIZE", "group__group__ota__typedefs.html#gabf98602574aa1fdfb627d3c59f62b2ac", null ],
     [ "CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE", "group__group__ota__typedefs.html#ga3cd431c05dec3136ee112edb90cce01f", null ],
-    [ "CY_OTA_MQTT_MESSAGE_BUFF_SIZE", "group__group__ota__typedefs.html#gaa987668674cd65e8d062f79c1486ec35", null ],
+    [ "CY_OTA_JSON_DOC_BUFF_SIZE", "group__group__ota__typedefs.html#ga4c493ffd9af7da17c2551699bd0b1275", null ],
     [ "CY_OTA_CHUNK_SIZE", "group__group__ota__typedefs.html#gad8e421e4ebd8c8880843b63c1bf6c6f1", null ],
     [ "CY_OTA_HTTP_FILENAME_SIZE", "group__group__ota__typedefs.html#gad528bd1c223ff089ca1416f3530c6cd1", null ],
     [ "CY_OTA_MQTT_MAGIC", "group__group__ota__typedefs.html#ga1c07f2e527b6ee3653960f93cd90092d", null ],
@@ -57,6 +57,8 @@ var group__group__ota__typedefs =
     [ "CY_OTA_RETRIES", "group__group__ota__typedefs.html#gad937d8f959bccec87b87f11a9315ae3a", null ],
     [ "CY_OTA_CONNECT_RETRIES", "group__group__ota__typedefs.html#gaf05c3cff9a4bcdf5d63e5f5d0962f25a", null ],
     [ "CY_OTA_MAX_DOWNLOAD_TRIES", "group__group__ota__typedefs.html#ga63713f2122581c2bee97ebd3dbf1815c", null ],
+    [ "CY_OTA_HTTP_TIMEOUT_SEND", "group__group__ota__typedefs.html#gad5faa23626341c735925265a87d38f95", null ],
+    [ "CY_OTA_HTTP_TIMEOUT_RECEIVE", "group__group__ota__typedefs.html#ga1a9e20b6c3565aebadc28acbddc798f9", null ],
     [ "PUBLISHER_LISTEN_TOPIC", "group__group__ota__typedefs.html#gaaa47c22f94edbcb24052a7551f6a2f36", null ],
     [ "COMPANY_TOPIC_PREPEND", "group__group__ota__typedefs.html#gab3832b31bfefc10020675d714665cd0d", null ],
     [ "PUBLISHER_DIRECT_TOPIC", "group__group__ota__typedefs.html#ga1a071cfd0e7d56ca360196cdc8af9356", null ],
@@ -86,7 +88,8 @@ var group__group__ota__typedefs =
       [ "CY_OTA_CONNECTION_UNKNOWN", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa141f64e2edc3273de1e0374dc8e681ca", null ],
       [ "CY_OTA_CONNECTION_MQTT", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98", null ],
       [ "CY_OTA_CONNECTION_HTTP", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faafb7b34f95f26234a0036b611205f904a", null ],
-      [ "CY_OTA_CONNECTION_HTTPS", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706", null ]
+      [ "CY_OTA_CONNECTION_HTTPS", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706", null ],
+      [ "CY_OTA_CONNECTION_BLE", "group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faaa6e2c528481c3eb950755dd86dfb272f", null ]
     ] ],
     [ "cy_ota_mqtt_session_type_t", "group__group__ota__typedefs.html#ga6424608a6e19ecd99e52f4013354fa82", [
       [ "CY_OTA_MQTT_SESSION_CLEAN", "group__group__ota__typedefs.html#gga6424608a6e19ecd99e52f4013354fa82a63a3e6f75f26a0026b89674544f8c162", null ],

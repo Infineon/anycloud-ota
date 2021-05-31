@@ -6,16 +6,20 @@ See the [README.md](./README.md) for a complete description of the OTA library.
 
 ## Known Issues
 
-- None.
+- CY8CKIT-064B0S2-4343W support of Bluetooth is restricted to GCC compiler.
 
 ## Changelog
+
+### v4.0.0
+ - Added Bluetooth transport support. This is a Push model where the Host pushes the changes to the IoT Device.
+ - Updated for use with MCUboot v1.7.2.
 
 ### v3.0.0
 
 - Updated for new MQTT and HTTP-CLIENT libraries. New APIs and data flow changes.
 - Updated for use with MCUboot v1.7.0, which includes SWAP and REVERT functionality.
 - Updated documentation to describe API changes and new functionality.
-- Added OTA support for CY8CKIT_064B0S2_4343W.
+- Added OTA support for CY8CKIT-064B0S2-4343W.
 
 
 ### v2.0.1

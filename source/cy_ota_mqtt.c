@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,16 +25,17 @@
 #include <string.h>
 
 #include "cy_ota_api.h"
+
+#ifdef COMPONENT_OTA_MQTT
+
 #include "cy_ota_internal.h"
 #include "cyabs_rtos.h"
 
 //#include "cy_iot_network_secured_socket.h"
 #include "cy_mqtt_api.h"
-
-
 #include "cy_json_parser.h"
-
 #include "cy_log.h"
+
 
 #define IOT_PUBLISH_RETRY_LIMIT                        (10)
 #define IOT_PUBLISH_RETRY_MS                           (1000)
@@ -366,6 +367,7 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
     /* start with clean slate */
     memset(chunk_info, 0x00, sizeof(cy_ota_storage_write_info_t) );
 
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Chunk length: %d \n", length);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Magic: %c%c%c%c%c%c%c%c\n", header->magic[0], header->magic[1], header->magic[2], header->magic[3],
                                             header->magic[4], header->magic[5], header->magic[6], header->magic[7]);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->offset_to_data     off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,offset_to_data), header->offset_to_data);
@@ -378,7 +380,7 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->this_payload_index off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,this_payload_index), header->this_payload_index);
 
     /* test for magic */
-    if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0) )
+    if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
     {
         return CY_RSLT_OTA_ERROR_NOT_A_HEADER;
     }
@@ -561,9 +563,9 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
         /* Make sure the callback we get is when we are expecting it
         * Do this before grabbing the Mutex !
         */
-        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "               CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE !! state:%d\n", ctx->curr_state);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "               CY_MQTT_EVENT_TYPE_PUBLISH_RECEIVE !! state:%d mutex:%d\n", ctx->curr_state, ctx->sub_callback_mutex_inited);
 
-        if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
+       if (ctx->curr_state == CY_OTA_STATE_JOB_DOWNLOAD)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received Job packet.\n", __func__);
        }
@@ -579,7 +581,7 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received DATA.\n", __func__);
 
            header = (cy_ota_mqtt_chunk_payload_header_t *)event.data.pub_msg.received_message.payload;
-           if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, sizeof(CY_OTA_MQTT_MAGIC) != 0) )
+           if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
            {
                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() Received packet outside of downloading on topic %.*s.\n", __func__
                        , event.data.pub_msg.received_message.topic_len, event.data.pub_msg.received_message.topic);
@@ -614,7 +616,7 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
 
        cy_mqtt_publish_info_t *pub_msg = &event.data.pub_msg.received_message;
        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "\n\n");
-       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Peceived pub_msg:\n");
+       cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Received pub_msg:\n");
        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "               qos: %d\n", pub_msg->qos);
        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "            retain: %d\n", pub_msg->retain);
        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "         duplicate: %d\n", pub_msg->dup);
@@ -1567,7 +1569,7 @@ cy_rslt_t cy_ota_mqtt_report_result(cy_ota_context_t *ctx, cy_rslt_t last_error)
         break;
     }
 
-    // TODO: STDE wait for response ?
-
     return result;
 }
+
+#endif  /* COMPONENT_OTA_MQTT */

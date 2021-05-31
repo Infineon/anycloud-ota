@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['uid',['uid',['../structustar__header__t.html#ae4a4fd8cc9dd8bb5c4a6339f3f7ff0c3',1,'ustar_header_t']]],
-  ['uname',['uname',['../structustar__header__t.html#a45e43cc7b591833fbb654d05a9138a8d',1,'ustar_header_t']]],
-  ['unique_5ftopic',['unique_topic',['../structcy__ota__cb__struct__t.html#ab3b3a87b636c188c6549c614a50ba4e3',1,'cy_ota_cb_struct_t']]],
-  ['use_5fget_5fjob_5fflow',['use_get_job_flow',['../structcy__ota__network__params__t.html#a5668e310a824240b5b756b23f63095c0',1,'cy_ota_network_params_t']]]
+  ['validate_5fafter_5freboot',['validate_after_reboot',['../structcy__ota__agent__params__t.html#a4474305852ba2b1f29e8b0d15ca671c5',1,'cy_ota_agent_params_t']]],
+  ['version',['version',['../structustar__header__t.html#a221e6c066702728c67bd6f60b54f255d',1,'ustar_header_t::version()'],['../structcy__untar__context__t.html#a05056b5f94625c9c3875751adfa9553e',1,'cy_untar_context_t::version()']]]
 ];

@@ -119,9 +119,30 @@ Functions</h2></td></tr>
 <tr class="memitem:ga825b8796ddeac75de9f46fb0542392ea"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga825b8796ddeac75de9f46fb0542392ea">cy_ota_storage_open</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx)</td></tr>
 <tr class="memdesc:ga825b8796ddeac75de9f46fb0542392ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open the storage area for download.  <a href="#ga825b8796ddeac75de9f46fb0542392ea">More...</a><br /></td></tr>
 <tr class="separator:ga825b8796ddeac75de9f46fb0542392ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga907832374ebc42a89c9f99968885cf0e"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga907832374ebc42a89c9f99968885cf0e">cy_ota_storage_read</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx, <a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *chunk_info)</td></tr>
+<tr class="memdesc:ga907832374ebc42a89c9f99968885cf0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read from storage area.  <a href="#ga907832374ebc42a89c9f99968885cf0e">More...</a><br /></td></tr>
+<tr class="separator:ga907832374ebc42a89c9f99968885cf0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac2021dfbc81e6aee03e3f37761deff6c"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gac2021dfbc81e6aee03e3f37761deff6c">cy_ota_storage_write</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx, <a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *chunk_info)</td></tr>
-<tr class="memdesc:gac2021dfbc81e6aee03e3f37761deff6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Open the storage area for download.  <a href="#gac2021dfbc81e6aee03e3f37761deff6c">More...</a><br /></td></tr>
+<tr class="memdesc:gac2021dfbc81e6aee03e3f37761deff6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write data into the storage area.  <a href="#gac2021dfbc81e6aee03e3f37761deff6c">More...</a><br /></td></tr>
 <tr class="separator:gac2021dfbc81e6aee03e3f37761deff6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga882daead3a7355d2ab1ed3dd954a35b4"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga882daead3a7355d2ab1ed3dd954a35b4">cy_ota_write_incoming_data_block</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr, <a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *chunk_info)</td></tr>
+<tr class="memdesc:ga882daead3a7355d2ab1ed3dd954a35b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine if tar or non-tar and call correct write function.  <a href="#ga882daead3a7355d2ab1ed3dd954a35b4">More...</a><br /></td></tr>
+<tr class="separator:ga882daead3a7355d2ab1ed3dd954a35b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7f62499bb087d6ce1a6fc378063e1845"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga7f62499bb087d6ce1a6fc378063e1845">cy_ota_ble_download_prepare</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr, uint16_t bt_conn_id, uint16_t bt_config_descriptor)</td></tr>
+<tr class="memdesc:ga7f62499bb087d6ce1a6fc378063e1845"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare for Bluetooth OTA Download.  <a href="#ga7f62499bb087d6ce1a6fc378063e1845">More...</a><br /></td></tr>
+<tr class="separator:ga7f62499bb087d6ce1a6fc378063e1845"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaeae2d76e632f0fadebe11db6052456ab"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gaeae2d76e632f0fadebe11db6052456ab">cy_ota_ble_download</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id, uint16_t bt_config_descriptor)</td></tr>
+<tr class="memdesc:gaeae2d76e632f0fadebe11db6052456ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bluetooth OTA Download starting.  <a href="#gaeae2d76e632f0fadebe11db6052456ab">More...</a><br /></td></tr>
+<tr class="separator:gaeae2d76e632f0fadebe11db6052456ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga94564dccc737f337f5ac26dac0a93708"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga94564dccc737f337f5ac26dac0a93708">cy_ota_ble_download_write</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr, wiced_bt_gatt_event_data_t *p_req)</td></tr>
+<tr class="memdesc:ga94564dccc737f337f5ac26dac0a93708"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bluetooth OTA data write.  <a href="#ga94564dccc737f337f5ac26dac0a93708">More...</a><br /></td></tr>
+<tr class="separator:ga94564dccc737f337f5ac26dac0a93708"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga04a9bc6ee6f00f5cc1094acf228604ff"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga04a9bc6ee6f00f5cc1094acf228604ff">cy_ota_ble_download_verify</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id)</td></tr>
+<tr class="memdesc:ga04a9bc6ee6f00f5cc1094acf228604ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Bluetooth OTA Verify download.  <a href="#ga04a9bc6ee6f00f5cc1094acf228604ff">More...</a><br /></td></tr>
+<tr class="separator:ga04a9bc6ee6f00f5cc1094acf228604ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac3dd727bc5a95099a0f6f3dbff52a977"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#gac3dd727bc5a95099a0f6f3dbff52a977">cy_ota_ble_download_abort</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx_ptr)</td></tr>
+<tr class="memdesc:gac3dd727bc5a95099a0f6f3dbff52a977"><td class="mdescLeft">&#160;</td><td class="mdescRight">Abort Bluetooth OTA download.  <a href="#gac3dd727bc5a95099a0f6f3dbff52a977">More...</a><br /></td></tr>
+<tr class="separator:gac3dd727bc5a95099a0f6f3dbff52a977"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga547c81a023f34c43ec7f64749dbba163"><td class="memItemLeft" align="right" valign="top">cy_rslt_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__functions.html#ga547c81a023f34c43ec7f64749dbba163">cy_ota_storage_close</a> (<a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> ctx)</td></tr>
 <tr class="memdesc:ga547c81a023f34c43ec7f64749dbba163"><td class="mdescLeft">&#160;</td><td class="mdescRight">Close the storage area for download.  <a href="#ga547c81a023f34c43ec7f64749dbba163">More...</a><br /></td></tr>
 <tr class="separator:ga547c81a023f34c43ec7f64749dbba163"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -265,11 +286,47 @@ Functions</h2></td></tr>
 <p>NOTE: Typically, this erases the secondary slot.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ctx</td><td>- Pointer to the OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx</td><td>Pointer to the OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_OPEN_STORAGE </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga907832374ebc42a89c9f99968885cf0e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_storage_read </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *&#160;</td>
+          <td class="paramname"><em>chunk_info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read from storage area. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx</td><td>Pointer to OTA agent context cy_ota_context_t </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">out]</td><td>chunk_info Pointer to chunk information, buffer pointer used for the read</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_READ_STORAGE </dd></dl>
 
 </div>
 </div>
@@ -297,15 +354,250 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Open the storage area for download. </p>
+<p>Write data into the storage area. </p>
+<p>NOTE: This writes data directly into FLASH. For writing data from a TAR archive, use <a class="el" href="group__group__ota__functions.html#ga882daead3a7355d2ab1ed3dd954a35b4" title="Determine if tar or non-tar and call correct write function. ">cy_ota_write_incoming_data_block()</a>, which checks for TAR archives and separates the data properly.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">ctx</td><td>- Pointer to the OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>. </td></tr>
-    <tr><td class="paramdir">[in]</td><td class="paramname">chunk_info</td><td>- Pointer to the chunk information.</td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx</td><td>Pointer to the OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>. </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">chunk_info</td><td>Pointer to the chunk information.</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_WRITE_STORAGE </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga882daead3a7355d2ab1ed3dd954a35b4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_write_incoming_data_block </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structcy__ota__storage__write__info__t.html">cy_ota_storage_write_info_t</a> *&#160;</td>
+          <td class="paramname"><em>chunk_info</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Determine if tar or non-tar and call correct write function. </p>
+<p>NOTE: This function handles both TAR archive and non-TAR archive files. This function is used by Pull Mode for MQTT and HTTP</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">chunk_info</td><td>Pointer to chunk information</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_GENERAL </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga7f62499bb087d6ce1a6fc378063e1845"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_ble_download_prepare </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>bt_conn_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>bt_config_descriptor</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Prepare for Bluetooth OTA Download. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bt_conn_id</td><td>BT Connection id </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bt_config_descriptor</td><td>BT configuration (notification vs. indication )</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BLE_GATT </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gaeae2d76e632f0fadebe11db6052456ab"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_ble_download </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">wiced_bt_gatt_event_data_t *&#160;</td>
+          <td class="paramname"><em>p_req</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>bt_conn_id</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>bt_config_descriptor</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bluetooth OTA Download starting. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">p_req</td><td>Pointer to gatt event data structure </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bt_conn_id</td><td>BT Connection id </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bt_config_descriptor</td><td>BT configuration (notification vs. indication )</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BLE_GATT </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga94564dccc737f337f5ac26dac0a93708"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_ble_download_write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">wiced_bt_gatt_event_data_t *&#160;</td>
+          <td class="paramname"><em>p_req</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bluetooth OTA data write. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">p_req</td><td>Pointer to gatt event data structure</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BLE_GATT </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ga04a9bc6ee6f00f5cc1094acf228604ff"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_ble_download_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">wiced_bt_gatt_event_data_t *&#160;</td>
+          <td class="paramname"><em>p_req</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t&#160;</td>
+          <td class="paramname"><em>bt_conn_id</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Bluetooth OTA Verify download. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a> </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">p_req</td><td>Pointer to gatt event data structure </td></tr>
+    <tr><td class="paramdir">[in]</td><td class="paramname">bt_conn_id</td><td>BT Connection id</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS CY_RSLT_OTA_ERROR_BLE_GATT </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="gac3dd727bc5a95099a0f6f3dbff52a977"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">cy_rslt_t cy_ota_ble_download_abort </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a>&#160;</td>
+          <td class="paramname"><em>ctx_ptr</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Abort Bluetooth OTA download. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramdir">[in]</td><td class="paramname">ctx_ptr</td><td>Pointer to OTA agent context <a class="el" href="group__group__ota__typedefs.html#ga50b8b1ec191a1d5f9a8fcd3472811694">cy_ota_context_ptr</a></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>CY_RSLT_SUCCESS </dd></dl>
 
 </div>
 </div>

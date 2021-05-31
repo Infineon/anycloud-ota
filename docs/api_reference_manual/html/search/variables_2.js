@@ -8,7 +8,6 @@ var searchData=
   ['coalesce_5fneeds',['coalesce_needs',['../structcy__untar__context__t.html#a3053bb3b91d7e2830ec488ffe488fffa',1,'cy_untar_context_t']]],
   ['coalesce_5fstream_5foffset',['coalesce_stream_offset',['../structcy__untar__context__t.html#a0f17bc00f2b56dcaf99a7aaf74f18460',1,'cy_untar_context_t']]],
   ['connection_5ftype',['connection_type',['../structcy__ota__cb__struct__t.html#aabc069ca938caaeda44300df68d31903',1,'cy_ota_cb_struct_t']]],
-  ['credentials',['credentials',['../structcy__ota__http__params__t.html#afefcfe7b24dfcf382ceef3fdb6e5b59f',1,'cy_ota_http_params_t::credentials()'],['../structcy__ota__mqtt__params__t.html#ac479b12c36411127a03f464ad00a0ce8',1,'cy_ota_mqtt_params_t::credentials()'],['../structcy__ota__cb__struct__t.html#a5eb663dbca52197e49b911f2f5e05af9',1,'cy_ota_cb_struct_t::credentials()']]],
   ['curr_5ffile_5fin_5fjson',['curr_file_in_json',['../structcy__untar__context__t.html#abf2c32e09a702d991b0b86cc233c972e',1,'cy_untar_context_t']]],
   ['current_5ffile',['current_file',['../structcy__untar__context__t.html#af8dc6c9b003d6afc1a94ab9bd052d5f6',1,'cy_untar_context_t']]]
 ];

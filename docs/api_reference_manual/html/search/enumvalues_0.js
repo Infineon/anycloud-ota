@@ -5,6 +5,7 @@ var searchData=
   ['cy_5fota_5fcb_5frslt_5fapp_5fsuccess',['CY_OTA_CB_RSLT_APP_SUCCESS',['../group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63a874db6e6b0afe4654eca56b1e66fe419',1,'cy_ota_api.h']]],
   ['cy_5fota_5fcb_5frslt_5fota_5fcontinue',['CY_OTA_CB_RSLT_OTA_CONTINUE',['../group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63a9b6b16fa9fcb36760749ced06ea21513',1,'cy_ota_api.h']]],
   ['cy_5fota_5fcb_5frslt_5fota_5fstop',['CY_OTA_CB_RSLT_OTA_STOP',['../group__group__ota__typedefs.html#gga83280df2ca46db528cc12901d949fd63ab33edc4fae91e1c99f93933fc3a06bd5',1,'cy_ota_api.h']]],
+  ['cy_5fota_5fconnection_5fble',['CY_OTA_CONNECTION_BLE',['../group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faaa6e2c528481c3eb950755dd86dfb272f',1,'cy_ota_api.h']]],
   ['cy_5fota_5fconnection_5fhttp',['CY_OTA_CONNECTION_HTTP',['../group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faafb7b34f95f26234a0036b611205f904a',1,'cy_ota_api.h']]],
   ['cy_5fota_5fconnection_5fhttps',['CY_OTA_CONNECTION_HTTPS',['../group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa680a4b7838e45eff7b93f98dde4af706',1,'cy_ota_api.h']]],
   ['cy_5fota_5fconnection_5fmqtt',['CY_OTA_CONNECTION_MQTT',['../group__group__ota__typedefs.html#ggabc03646427dec963bef37cb5dbb550faa7955097dd62d0b81cb447d287d12bd98',1,'cy_ota_api.h']]],

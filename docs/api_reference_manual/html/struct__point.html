@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Over The Air (OTA) Update Library: cy_ota_http_params_t Struct Reference</title>
+<title>Over The Air (OTA) Update Library: PointAff Struct Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -77,7 +77,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   </div>
 </div>
 <script type="text/javascript">
-$(document).ready(function(){initNavTree('structcy__ota__http__params__t.html','');});
+$(document).ready(function(){initNavTree('struct__point.html','');});
 </script>
 <div id="doc-content">
 <!-- window showing the filter options -->
@@ -98,69 +98,22 @@ $(document).ready(function(){initNavTree('structcy__ota__http__params__t.html','
   <div class="summary">
 <a href="#pub-attribs">Data Fields</a>  </div>
   <div class="headertitle">
-<div class="title">cy_ota_http_params_t Struct Reference<div class="ingroups"><a class="el" href="group__group__ota__structures.html">OTA Structures</a></div></div>  </div>
+<div class="title">PointAff Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<a name="details" id="details"></a><h2 class="groupheader">Description</h2>
-<div class="textblock"><p>OTA HTTP-specific connection parameters. </p>
-</div><table class="memberdecls">
+<table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Data Fields</h2></td></tr>
-<tr class="memitem:a45626624140f47a3b1ec6972d54f86b8"><td class="memItemLeft" align="right" valign="top">cy_awsport_server_info_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a45626624140f47a3b1ec6972d54f86b8">server</a></td></tr>
-<tr class="memdesc:a45626624140f47a3b1ec6972d54f86b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">HTTP server to get the Job or OTA image.  <a href="#a45626624140f47a3b1ec6972d54f86b8">More...</a><br /></td></tr>
-<tr class="separator:a45626624140f47a3b1ec6972d54f86b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e685fc8622e19d7a9cd87dc4b159656"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#a1e685fc8622e19d7a9cd87dc4b159656">file</a></td></tr>
-<tr class="memdesc:a1e685fc8622e19d7a9cd87dc4b159656"><td class="mdescLeft">&#160;</td><td class="mdescRight">File name for the Job or OTA image.  <a href="#a1e685fc8622e19d7a9cd87dc4b159656">More...</a><br /></td></tr>
-<tr class="separator:a1e685fc8622e19d7a9cd87dc4b159656"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="memItemLeft" align="right" valign="top">cy_awsport_ssl_credentials_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structcy__ota__http__params__t.html#afefcfe7b24dfcf382ceef3fdb6e5b59f">credentials</a></td></tr>
-<tr class="memdesc:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Setting credentials uses TLS (NULL == non-TLS).  <a href="#afefcfe7b24dfcf382ceef3fdb6e5b59f">More...</a><br /></td></tr>
-<tr class="separator:afefcfe7b24dfcf382ceef3fdb6e5b59f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af090e802979b946e6d64cfa3b9f3ad7f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af090e802979b946e6d64cfa3b9f3ad7f"></a>
+DWORD&#160;</td><td class="memItemRight" valign="bottom"><b>x</b> [KEY_LENGTH_DWORDS]</td></tr>
+<tr class="separator:af090e802979b946e6d64cfa3b9f3ad7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d1b61f274ab6b44301790a69a0be89d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7d1b61f274ab6b44301790a69a0be89d"></a>
+DWORD&#160;</td><td class="memItemRight" valign="bottom"><b>y</b> [KEY_LENGTH_DWORDS]</td></tr>
+<tr class="separator:a7d1b61f274ab6b44301790a69a0be89d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a57fa9a7129b8351736ea9aed545be4a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57fa9a7129b8351736ea9aed545be4a1"></a>
+DWORD&#160;</td><td class="memItemRight" valign="bottom"><b>z</b> [KEY_LENGTH_DWORDS]</td></tr>
+<tr class="separator:a57fa9a7129b8351736ea9aed545be4a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Field Documentation</h2>
-<a class="anchor" id="a45626624140f47a3b1ec6972d54f86b8"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">cy_awsport_server_info_t cy_ota_http_params_t::server</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>HTTP server to get the Job or OTA image. </p>
-<p>Set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine the use of the Job document. </p>
-
-</div>
-</div>
-<a class="anchor" id="a1e685fc8622e19d7a9cd87dc4b159656"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">const char* cy_ota_http_params_t::file</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>File name for the Job or OTA image. </p>
-<p>Set use_get_job_flow in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to determine the OTA update flow. </p>
-
-</div>
-</div>
-<a class="anchor" id="afefcfe7b24dfcf382ceef3fdb6e5b59f"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">cy_awsport_ssl_credentials_t cy_ota_http_params_t::credentials</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Setting credentials uses TLS (NULL == non-TLS). </p>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -51,7 +51,8 @@
 #include "stddef.h"
 #include "stdbool.h"
 
-#ifndef off_t
+#ifndef off_t_defined
+#define off_t_defined
 typedef long int off_t;
 #endif
 

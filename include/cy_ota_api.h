@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,17 +57,45 @@ extern "C" {
 
 #include "cy_ota_config.h"          /* Customer OTA overrides.   */
 #include "cy_ota_defaults.h"        /* Defaults for OTA.         */
-
 #include "cyhal.h"
 #include "cybsp.h"
-#include "cybsp_wifi.h"
-
-#include "cy_tcpip_port_secure_sockets.h"
-#include "cy_http_client_api.h"
-#include "cy_mqtt_api.h"
 #include "cy_result_mw.h"
-
 #include "cy_log.h"
+
+/*
+ * To use WiFi-HTTP support, add this to the makefile.
+ * COMPONENT+=OTA_HTTP
+ */
+
+/*
+ * To use WiFi-MQTT support, add this to the makefile.
+ * COMPONENT+=OTA_MQTT
+ */
+
+/*
+ * To use Bluetooth, add this define to the makefile.
+ * Note that application must provide Bluetooth initialization and callback handling.
+ * Please see full documentation for code snippets.
+ * COMPONENT+=OTA_BLUETOOTH
+ */
+
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
+#include "cybsp_wifi.h"
+#include "cy_tcpip_port_secure_sockets.h"
+#endif
+
+#ifdef COMPONENT_OTA_HTTP
+#include "cy_http_client_api.h"
+#endif
+
+#ifdef COMPONENT_OTA_MQTT
+#include "cy_mqtt_api.h"
+#endif
+
+/* We need another include for Bluetooth support */
+#ifdef COMPONENT_OTA_BLUETOOTH
+#include "wiced_bt_gatt.h"
+#endif
 
 /**
  * @brief - Reuse CYLF_AUDIO for OTA logging.
@@ -105,7 +133,7 @@ extern "C" {
 *
 * Module base: This base is derived from CY_RSLT_MODULE_MIDDLEWARE_BASE (defined in cy_result.h) and is an offset of CY_RSLT_MODULE_MIDDLEWARE_BASE.
 *              Details of the offset and the middleware base are defined in cy_result_mw.h, which is part of [Github connectivity-utilities] (https://github.com/cypresssemiconductorco/connectivity-utilities).
-*              For example, OTA uses CY_RSLT_MODULE_OTA_UPDATE_BASE as the module base, which is 0x020D.
+*              For example, OTA uses CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE as the module base, which is 0x020D.
 *
 * Type: This type is defined in cy_result.h and can be one of CY_RSLT_TYPE_FATAL, CY_RSLT_TYPE_ERROR, CY_RSLT_TYPE_WARNING, or CY_RSLT_TYPE_INFO. MQTT library error codes are of type CY_RSLT_TYPE_ERROR which is 0x2.
 *
@@ -114,49 +142,56 @@ extern "C" {
 * Helper macros used for creating library-specific results are provided as part of cy_result.h.
 */
 
-#ifndef CY_RSLT_MODULE_OTA_UPDATE_BASE
+#ifndef CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE
 /* Will be defined in cy_result_mw.h - if not merged yet, we have this here. */
-#define CY_RSLT_MODULE_OTA_UPDATE_BASE  (CY_RSLT_MODULE_MIDDLEWARE_BASE + 13) /**< OTA Update module base. */
-
+#define CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE  (CY_RSLT_MODULE_MIDDLEWARE_BASE + 13) /**< OTA Update module base. */
 #endif
 
-#define CY_RSLT_OTA_ERROR_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_OTA_UPDATE_BASE, 0) /**< OTA Update error code base. */
+#define CY_RSLT_OTA_ERROR_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE, 0) /**< OTA Update error code base. */
 
 #define CY_RSLT_OTA_ERROR_UNSUPPORTED           (CY_RSLT_OTA_ERROR_BASE +  1) /**< Unsupported feature.                  */
 #define CY_RSLT_OTA_ERROR_GENERAL               (CY_RSLT_OTA_ERROR_BASE +  2) /**< Generic error.                        */
 #define CY_RSLT_OTA_ERROR_BADARG                (CY_RSLT_OTA_ERROR_BASE +  3) /**< Bad argument.                         */
 #define CY_RSLT_OTA_ERROR_OUT_OF_MEMORY         (CY_RSLT_OTA_ERROR_BASE +  4) /**< Out of Memory error.                  */
-#define CY_RSLT_OTA_ERROR_ALREADY_STARTED       (CY_RSLT_OTA_ERROR_BASE +  5) /**< OTA update already started.                  */
+#define CY_RSLT_OTA_ERROR_ALREADY_STARTED       (CY_RSLT_OTA_ERROR_BASE +  5) /**< OTA update already started.           */
 #define CY_RSLT_OTA_ERROR_MQTT_INIT             (CY_RSLT_OTA_ERROR_BASE +  6) /**< MQTT init failed.                     */
-#define CY_RSLT_OTA_ERROR_OPEN_STORAGE          (CY_RSLT_OTA_ERROR_BASE +  7) /**< Could not open local storage.             */
-#define CY_RSLT_OTA_ERROR_WRITE_STORAGE         (CY_RSLT_OTA_ERROR_BASE +  8) /**< Could not Write to local storage.         */
-#define CY_RSLT_OTA_ERROR_CLOSE_STORAGE         (CY_RSLT_OTA_ERROR_BASE +  9) /**< Close local storage error.            */
-#define CY_RSLT_OTA_ERROR_CONNECT               (CY_RSLT_OTA_ERROR_BASE + 10) /**< Connection to the server failed.                */
-#define CY_RSLT_OTA_ERROR_DISCONNECT            (CY_RSLT_OTA_ERROR_BASE + 11) /**< Server disconnect error.              */
-#define CY_RSLT_OTA_ERROR_REDIRECT              (CY_RSLT_OTA_ERROR_BASE + 12) /**< Redirection failure.                  */
-#define CY_RSLT_OTA_ERROR_SERVER_DROPPED        (CY_RSLT_OTA_ERROR_BASE + 13) /**< Broker/server disconnected.             */
-#define CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE        (CY_RSLT_OTA_ERROR_BASE + 14) /**< Broker/server Subscribe error.        */
-#define CY_RSLT_OTA_ERROR_MQTT_PUBLISH          (CY_RSLT_OTA_ERROR_BASE + 15) /**< Broker/Server Publish error.          */
-#define CY_RSLT_OTA_ERROR_GET_JOB               (CY_RSLT_OTA_ERROR_BASE + 16) /**< Failed to get the OTA Job document.       */
-#define CY_RSLT_OTA_ERROR_GET_DATA              (CY_RSLT_OTA_ERROR_BASE + 17) /**< Failed to get the OTA image.              */
-#define CY_RSLT_OTA_ERROR_NOT_A_HEADER          (CY_RSLT_OTA_ERROR_BASE + 18) /**< No header in the payload.                 */
-#define CY_RSLT_OTA_ERROR_NOT_A_JOB_DOC         (CY_RSLT_OTA_ERROR_BASE + 19) /**< Job document is invalid.              */
-#define CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC     (CY_RSLT_OTA_ERROR_BASE + 20) /**< Malformed Job document.               */
-#define CY_RSLT_OTA_ERROR_WRONG_BOARD           (CY_RSLT_OTA_ERROR_BASE + 21) /**< Board in Job document does not match. */
-#define CY_RSLT_OTA_ERROR_INVALID_VERSION       (CY_RSLT_OTA_ERROR_BASE + 22) /**< Invalid version in Job or Packet.     */
-#define CY_RSLT_OTA_ERROR_VERIFY                (CY_RSLT_OTA_ERROR_BASE + 23) /**< Verify image failure.                 */
-#define CY_RSLT_OTA_ERROR_SENDING_RESULT        (CY_RSLT_OTA_ERROR_BASE + 24) /**< Sending result failed.                */
-#define CY_RSLT_OTA_ERROR_APP_RETURNED_STOP     (CY_RSLT_OTA_ERROR_BASE + 25) /**< Callback returned Stop OTA download.  */
-#define CY_RSLT_OTA_ERROR_APP_EXCEEDED_RETRIES  (CY_RSLT_OTA_ERROR_BASE + 26) /**< Number of retries exceeded.           */
+#define CY_RSLT_OTA_ERROR_OPEN_STORAGE          (CY_RSLT_OTA_ERROR_BASE +  7) /**< Could not open local storage.         */
+#define CY_RSLT_OTA_ERROR_READ_STORAGE          (CY_RSLT_OTA_ERROR_BASE +  8) /**< Could not Read from local storage.    */
+#define CY_RSLT_OTA_ERROR_WRITE_STORAGE         (CY_RSLT_OTA_ERROR_BASE +  9) /**< Could not Write to local storage.     */
+#define CY_RSLT_OTA_ERROR_CLOSE_STORAGE         (CY_RSLT_OTA_ERROR_BASE + 10) /**< Close local storage error.            */
+#define CY_RSLT_OTA_ERROR_CONNECT               (CY_RSLT_OTA_ERROR_BASE + 11) /**< Connection to the server failed.      */
+#define CY_RSLT_OTA_ERROR_DISCONNECT            (CY_RSLT_OTA_ERROR_BASE + 12) /**< Server disconnect error.              */
+#define CY_RSLT_OTA_ERROR_REDIRECT              (CY_RSLT_OTA_ERROR_BASE + 13) /**< Redirection failure.                  */
+#define CY_RSLT_OTA_ERROR_SERVER_DROPPED        (CY_RSLT_OTA_ERROR_BASE + 14) /**< Broker/server disconnected.           */
+#define CY_RSLT_OTA_ERROR_MQTT_SUBSCRIBE        (CY_RSLT_OTA_ERROR_BASE + 15) /**< Broker/server Subscribe error.        */
+#define CY_RSLT_OTA_ERROR_MQTT_PUBLISH          (CY_RSLT_OTA_ERROR_BASE + 16) /**< Broker/Server Publish error.          */
+#define CY_RSLT_OTA_ERROR_GET_JOB               (CY_RSLT_OTA_ERROR_BASE + 17) /**< Failed to get the OTA Job document.   */
+#define CY_RSLT_OTA_ERROR_GET_DATA              (CY_RSLT_OTA_ERROR_BASE + 18) /**< Failed to get the OTA image.          */
+#define CY_RSLT_OTA_ERROR_NOT_A_HEADER          (CY_RSLT_OTA_ERROR_BASE + 19) /**< No header in the payload.             */
+#define CY_RSLT_OTA_ERROR_NOT_A_JOB_DOC         (CY_RSLT_OTA_ERROR_BASE + 20) /**< Job document is invalid.              */
+#define CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC     (CY_RSLT_OTA_ERROR_BASE + 21) /**< Malformed Job document.               */
+#define CY_RSLT_OTA_ERROR_WRONG_BOARD           (CY_RSLT_OTA_ERROR_BASE + 22) /**< Board in Job document does not match. */
+#define CY_RSLT_OTA_ERROR_INVALID_VERSION       (CY_RSLT_OTA_ERROR_BASE + 23) /**< Invalid version in Job or Packet.     */
+#define CY_RSLT_OTA_ERROR_VERIFY                (CY_RSLT_OTA_ERROR_BASE + 24) /**< Verify image failure.                 */
+#define CY_RSLT_OTA_ERROR_SENDING_RESULT        (CY_RSLT_OTA_ERROR_BASE + 25) /**< Sending result failed.                */
+#define CY_RSLT_OTA_ERROR_APP_RETURNED_STOP     (CY_RSLT_OTA_ERROR_BASE + 26) /**< Callback returned Stop OTA download.  */
+#define CY_RSLT_OTA_ERROR_APP_EXCEEDED_RETRIES  (CY_RSLT_OTA_ERROR_BASE + 27) /**< Number of retries exceeded.           */
+#define CY_RSLT_OTA_ERROR_TRANSPORT_UNSUPPORTED (CY_RSLT_OTA_ERROR_BASE + 28) /**< HTTP, MQTT or Bluetooth not supported in this build. */
 
-#define CY_RSLT_OTA_INFO_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_INFO, CY_RSLT_MODULE_OTA_UPDATE_BASE, 0)   /**< Base for informational results. */
-#define CY_RSLT_OTA_EXITING                     (CY_RSLT_OTA_INFO_BASE + 1) /**< OTA Agent exiting.                       */
-#define CY_RSLT_OTA_ALREADY_CONNECTED           (CY_RSLT_OTA_INFO_BASE + 2) /**< OTA already connected.                */
-#define CY_RSLT_OTA_CHANGING_SERVER             (CY_RSLT_OTA_INFO_BASE + 3) /**< Data broker/server different from job.   */
+#if defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN)
+#define CY_RSLT_OTA_ERROR_BLE_GENERAL           (CY_RSLT_OTA_ERROR_BASE + 32) /**< General Bluetooth error.                     */
+#define CY_RSLT_OTA_ERROR_BLE_VERIFY            (CY_RSLT_OTA_ERROR_BASE + 33) /**< Bluetooth Verification of download error.    */
+#define CY_RSLT_OTA_ERROR_BLE_GATT              (CY_RSLT_OTA_ERROR_BASE + 34) /**< Bluetooth GATT event error.                  */
+#endif
+
+#define CY_RSLT_OTA_INFO_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_INFO, CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE, 0)   /**< Base for informational results. */
+#define CY_RSLT_OTA_EXITING                     (CY_RSLT_OTA_INFO_BASE + 1) /**< OTA Agent exiting.                         */
+#define CY_RSLT_OTA_ALREADY_CONNECTED           (CY_RSLT_OTA_INFO_BASE + 2) /**< OTA already connected.                     */
+#define CY_RSLT_OTA_CHANGING_SERVER             (CY_RSLT_OTA_INFO_BASE + 3) /**< Data broker/server different from job.     */
 
 #define CY_RSLT_OTA_USE_JOB_FLOW                (CY_RSLT_SUCCESS          ) /**< Use Job flow for update.                 */
 #define CY_RSLT_OTA_USE_DIRECT_FLOW             (CY_RSLT_OTA_INFO_BASE + 4) /**< Use Direct flow for update.              */
-#define CY_RSLT_OTA_NO_UPDATE_AVAILABLE         (CY_RSLT_OTA_INFO_BASE + 5) /**< No OTA update on the server.                 */
+#define CY_RSLT_OTA_NO_UPDATE_AVAILABLE         (CY_RSLT_OTA_INFO_BASE + 5) /**< No OTA update on the server.             */
 
 /** \} group_ota_macros */
 
@@ -197,9 +232,9 @@ extern "C" {
 #define CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE      (256)
 
 /**
- * @brief Size for MQTT message to request Job.
+ * @brief Size of buffer for JSON update document
  */
-#define CY_OTA_MQTT_MESSAGE_BUFF_SIZE           (1024)
+#define CY_OTA_JSON_DOC_BUFF_SIZE               (1024)
 
 /**
  * @brief Size of data chunks for each transfer.
@@ -539,10 +574,11 @@ typedef enum
  */
 typedef enum
 {
-    CY_OTA_CONNECTION_UNKNOWN = 0,      /**< Unknown connection type.        */
-    CY_OTA_CONNECTION_MQTT,             /**< Use MQTT connection.            */
-    CY_OTA_CONNECTION_HTTP,             /**< Use HTTP connection.            */
-    CY_OTA_CONNECTION_HTTPS,            /**< Use HTTPS connection.           */
+    CY_OTA_CONNECTION_UNKNOWN = 0,      /**< Unknown connection type.       */
+    CY_OTA_CONNECTION_MQTT,             /**< Use MQTT connection.           */
+    CY_OTA_CONNECTION_HTTP,             /**< Use HTTP connection.           */
+    CY_OTA_CONNECTION_HTTPS,            /**< Use HTTPS connection.          */
+    CY_OTA_CONNECTION_BLE,              /**< Use Bluetooth connection       */
 } cy_ota_connection_t;
 
 /**
@@ -563,7 +599,7 @@ typedef enum
 typedef enum
 {
     CY_OTA_REASON_STATE_CHANGE = 0,     /**< OTA Agent state changed, see cb_data->state.    */
-    CY_OTA_REASON_SUCCESS,              /**< State function successful.                       */
+    CY_OTA_REASON_SUCCESS,              /**< State function successful.                      */
     CY_OTA_REASON_FAILURE,              /**< State function failed.                          */
 
     CY_OTA_LAST_REASON                  /**< Placeholder, Do not use.                        */
@@ -578,39 +614,56 @@ typedef enum
     CY_OTA_STATE_EXITING,               /**< OTA system is exiting.                                  */
     CY_OTA_STATE_INITIALIZING,          /**< OTA system is initializing.                             */
     CY_OTA_STATE_AGENT_STARTED,         /**< OTA Agent has started.                                  */
-    CY_OTA_STATE_AGENT_WAITING,         /**< OTA Agent is waiting for the timer to start.                */
+    CY_OTA_STATE_AGENT_WAITING,         /**< OTA Agent is waiting for the timer to start.            */
 
     CY_OTA_STATE_STORAGE_OPEN,          /**< OTA Agent will call cy_storage_open.                    */
     CY_OTA_STATE_STORAGE_WRITE,         /**< OTA Agent will call cy_storage_write.                   */
     CY_OTA_STATE_STORAGE_CLOSE,         /**< OTA Agent will call cy_storage_close.                   */
 
-    CY_OTA_STATE_START_UPDATE,          /**< OTA Agent will determine the flow: Job or Direct.             */
+    CY_OTA_STATE_START_UPDATE,          /**< OTA Agent will determine the flow: Job or Direct.       */
 
-    CY_OTA_STATE_JOB_CONNECT,           /**< OTA Agent will connect to the Job Broker/server.          */
-    CY_OTA_STATE_JOB_DOWNLOAD,          /**< OTA Agent will get the Job from the Broker/server.            */
-    CY_OTA_STATE_JOB_DISCONNECT,        /**< OTA Agent will disconnect from the Job Broker/server.     */
+    CY_OTA_STATE_JOB_CONNECT,           /**< OTA Agent will connect to the Job Broker/server.        */
+    CY_OTA_STATE_JOB_DOWNLOAD,          /**< OTA Agent will get the Job from the Broker/server.      */
+    CY_OTA_STATE_JOB_DISCONNECT,        /**< OTA Agent will disconnect from the Job Broker/server.   */
 
-    CY_OTA_STATE_JOB_PARSE,             /**< OTA Agent will parse the Job.                               */
-    CY_OTA_STATE_JOB_REDIRECT,          /**< OTA Agent will use the Job to change the Broker/server.       */
+    CY_OTA_STATE_JOB_PARSE,             /**< OTA Agent will parse the Job.                           */
+    CY_OTA_STATE_JOB_REDIRECT,          /**< OTA Agent will use the Job to change the Broker/server. */
 
-    CY_OTA_STATE_DATA_CONNECT,          /**< OTA Agent will connect to the data Broker/server.         */
-    CY_OTA_STATE_DATA_DOWNLOAD,         /**< OTA Agent will download the data.                           */
-    CY_OTA_STATE_DATA_DISCONNECT,       /**< OTA Agent will disconnect from the data Broker/server.    */
+    CY_OTA_STATE_DATA_CONNECT,          /**< OTA Agent will connect to the data Broker/server.       */
+    CY_OTA_STATE_DATA_DOWNLOAD,         /**< OTA Agent will download the data.                       */
+    CY_OTA_STATE_DATA_DISCONNECT,       /**< OTA Agent will disconnect from the data Broker/server.  */
 
-    CY_OTA_STATE_VERIFY,                /**< OTA Agent will verify the download.                         */
+    CY_OTA_STATE_VERIFY,                /**< OTA Agent will verify the download.                     */
 
-    CY_OTA_STATE_RESULT_REDIRECT,       /**< OTA Agent will redirect back to the initial connection.     */
+    CY_OTA_STATE_RESULT_REDIRECT,       /**< OTA Agent will redirect back to the initial connection. */
 
-    CY_OTA_STATE_RESULT_CONNECT,        /**< OTA Agent will connecting to the result Broker/server.    */
-    CY_OTA_STATE_RESULT_SEND,           /**< OTA Agent will send the result.                             */
-    CY_OTA_STATE_RESULT_RESPONSE,       /**< OTA Agent will wait for a result response.                */
-    CY_OTA_STATE_RESULT_DISCONNECT,     /**< OTA Agent will disconnect from the result Broker/server.  */
+    CY_OTA_STATE_RESULT_CONNECT,        /**< OTA Agent will connecting to the result Broker/server.  */
+    CY_OTA_STATE_RESULT_SEND,           /**< OTA Agent will send the result.                         */
+    CY_OTA_STATE_RESULT_RESPONSE,       /**< OTA Agent will wait for a result response.              */
+    CY_OTA_STATE_RESULT_DISCONNECT,     /**< OTA Agent will disconnect from the result Broker/server.*/
 
     CY_OTA_STATE_OTA_COMPLETE,          /**< OTA Agent is done with current session.
-                                             OTA Agent will reboot or will wait.           */
+                                             OTA Agent will reboot or will wait.                     */
 
     CY_OTA_NUM_STATES                   /**< Not used, placeholder. */
 } cy_ota_agent_state_t;
+
+#ifdef COMPONENT_OTA_BLUETOOTH
+
+/* Command definitions for the OTA FW upgrade */
+#define CY_OTA_UPGRADE_COMMAND_PREPARE_DOWNLOAD               1
+#define CY_OTA_UPGRADE_COMMAND_DOWNLOAD                       2
+#define CY_OTA_UPGRADE_COMMAND_VERIFY                         3
+#define CY_OTA_UPGRADE_COMMAND_ABORT                          4
+
+/* Event definitions for the OTA FW upgrade */
+#define CY_OTA_UPGRADE_STATUS_OK                              0
+#define CY_OTA_UPGRADE_STATUS_BAD                             1
+
+/* Starting value for crc file check */
+#define CRC32_INITIAL_VALUE             0x00000000
+
+#endif  /* COMPONENT_OTA_BLUETOOTH */
 
 /**
  *  The OTA context pointer.
@@ -681,10 +734,10 @@ typedef void *cy_ota_context_ptr;
 
 typedef enum
 {
-    CY_OTA_CB_RSLT_OTA_CONTINUE = 0,  /**< OTA Agent to continue with the function, using the modified data from the application.  */
-    CY_OTA_CB_RSLT_OTA_STOP,          /**< OTA Agent to end the current update session (do not quit the OTA Agent).           */
-    CY_OTA_CB_RSLT_APP_SUCCESS,       /**< Application completed task; OTA Agent uses success.                        */
-    CY_OTA_CB_RSLT_APP_FAILED,        /**< Application failed task; OTA Agent uses failure.                           */
+    CY_OTA_CB_RSLT_OTA_CONTINUE = 0,  /**< OTA Agent to continue with the function, using the modified data from the application. */
+    CY_OTA_CB_RSLT_OTA_STOP,          /**< OTA Agent to end the current update session (do not quit the OTA Agent).               */
+    CY_OTA_CB_RSLT_APP_SUCCESS,       /**< Application completed task; OTA Agent uses success.                                    */
+    CY_OTA_CB_RSLT_APP_FAILED,        /**< Application failed task; OTA Agent uses failure.                                       */
 
     CY_OTA_CB_NUM_RESULTS             /**< Placeholder, do not use. */
 } cy_ota_callback_results_t;
@@ -711,34 +764,38 @@ typedef enum
  */
 typedef struct
 {
-    uint32_t        total_size;     /**< Pass the total size to the storage module; 0 = disregard.   */
+    uint32_t        total_size;     /**< Pass the total size to the storage module; 0 = disregard.  */
 
-    uint32_t        offset;         /**< Offset into file/area where the data belongs.           */
-    uint8_t         *buffer;        /**< Pointer to the buffer with the chunk of data.               */
-    uint32_t        size;           /**< Size of the data in the buffer.                             */
+    uint32_t        offset;         /**< Offset into file/area where the data belongs.              */
+    uint8_t         *buffer;        /**< Pointer to the buffer with the chunk of data.              */
+    uint32_t        size;           /**< Size of the data in the buffer.                            */
 
-                                    /* When using MQTT connection.  */
-    uint16_t        packet_number;  /**< MQTT: The packet number of this chunk.              */
-    uint16_t        total_packets;  /**< MQTT: Total packets (chunks) in the OTA image.          */
+                                    /* When using MQTT connection.                                  */
+    uint16_t        packet_number;  /**< MQTT: The packet number of this chunk.                     */
+    uint16_t        total_packets;  /**< MQTT: Total packets (chunks) in the OTA image.             */
 } cy_ota_storage_write_info_t;
 
+#ifdef COMPONENT_OTA_HTTP
 /**
  * @brief OTA HTTP-specific connection parameters.
  * \struct cy_ota_http_params_t
  */
 typedef struct
 {
-    cy_awsport_server_info_t        server;         /**< HTTP server to get the Job or OTA image.
+    cy_awsport_server_info_t        server;     /**< HTTP server to get the Job or OTA image.
                                                  *    Set use_get_job_flow in cy_ota_network_params_t
                                                  *    to determine the use of the Job document.
                                                  */
 
-    const char                  *file;          /**< File name for the Job or OTA image.
+    const char                      *file;      /**< File name for the Job or OTA image.
                                                  *    Set use_get_job_flow in cy_ota_network_params_t
                                                  *    to determine the OTA update flow.
                                                  */
-    cy_awsport_ssl_credentials_t    credentials;     /**< Setting credentials uses TLS (NULL == non-TLS). */
-    } cy_ota_http_params_t;
+    cy_awsport_ssl_credentials_t    credentials;/**< Setting credentials uses TLS (NULL == non-TLS). */
+} cy_ota_http_params_t;
+#endif  /* COMPONENT_OTA_HTTP */
+
+#ifdef COMPONENT_OTA_MQTT
 
 /**
  *  OTA MQTT-specific connection parameters.
@@ -747,10 +804,10 @@ typedef struct
 typedef struct
 {
     bool                        awsIotMqttMode;    /**< 0 = normal MQTT; 1 = Special Amazon mode.    */
-    const char                  *pIdentifier;      /**< Pointer to the device ID.                            */
+    const char                  *pIdentifier;      /**< Pointer to the device ID.                    */
     uint8_t                     numTopicFilters;   /**< Number of topics for MQTT Subscribe.         */
     const char                  **pTopicFilters;   /**< Topic filter text.                           */
-    cy_ota_mqtt_session_type_t  session_type;      /**< @ref cy_ota_mqtt_session_type_t             */
+    cy_ota_mqtt_session_type_t  session_type;      /**< @ref cy_ota_mqtt_session_type_t              */
 
     cy_awsport_server_info_t        broker;            /**< Broker to get the Job or OTA image.
                                                     *    Set use_get_job_flow in cy_ota_network_params_t
@@ -759,6 +816,8 @@ typedef struct
     cy_awsport_ssl_credentials_t    credentials;     /**< Setting credentials uses TLS (NULL == non-TLS). */
 
 } cy_ota_mqtt_params_t;
+
+#endif  /* COMPONENT_OTA_MQTT   */
 
 /**
  * @brief Structure passed to the callback.
@@ -770,30 +829,38 @@ typedef struct
  */
 typedef struct
 {
-    cy_ota_cb_reason_t          reason;         /**< Reason for the callback.                                */
-    void                        *cb_arg;        /**< Argument passed when registering the callback.       */
+    cy_ota_cb_reason_t          reason;         /**< Reason for the callback.                               */
+    void                        *cb_arg;        /**< Argument passed when registering the callback.         */
 
-    cy_ota_agent_state_t        state;          /**< Current OTA Agent state.                                */
-    cy_rslt_t                   error;          /**< Current OTA Agent error status.                         */
+    cy_ota_agent_state_t        state;          /**< Current OTA Agent state.                               */
+    cy_rslt_t                   error;          /**< Current OTA Agent error status.                        */
 
-    cy_ota_storage_write_info_t *storage;       /**< Pointer to a chunk of data to write.                    */
-    uint32_t                    total_size;     /**< Total # bytes to be downloaded.                         */
-    uint32_t                    bytes_written;  /**< Total # bytes downloaded.                               */
-    uint32_t                    percentage;     /**< Percentage of bytes downloaded.                                     */
+    cy_ota_storage_write_info_t *storage;       /**< Pointer to a chunk of data to write.                   */
+    uint32_t                    total_size;     /**< Total # bytes to be downloaded.                        */
+    uint32_t                    bytes_written;  /**< Total # bytes downloaded.                              */
+    uint32_t                    percentage;     /**< Percentage of bytes downloaded.                        */
 
-    cy_ota_connection_t         connection_type; /**< Connection type @ref cy_ota_connection_t.              */
-    cy_awsport_server_info_t    broker_server;   /**< MQTT Broker (or HTTP server) for connection.           */
+    cy_ota_connection_t         connection_type; /**< Connection type @ref cy_ota_connection_t.             */
 
-    cy_awsport_ssl_credentials_t *credentials;     /**< Setting credentials uses TLS (NULL == non-TLS). */
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
+    cy_awsport_server_info_t    broker_server;   /**< MQTT Broker (or HTTP server) for connection.          */
+    cy_awsport_ssl_credentials_t *credentials;     /**< Setting credentials uses TLS (NULL == non-TLS).     */
+#endif
 
-    cy_http_client_t            http_connection; /**< For Passing HTTP connection instance                  */
+#ifdef COMPONENT_OTA_MQTT
     cy_mqtt_t                   mqtt_connection; /**< For Passing MQTT connection instance                  */
-
-    char                        file[CY_OTA_MQTT_FILENAME_BUFF_SIZE]; /**< File name to request OTA data.     */
-
-    /* For MQTT Get Job Message. */
     char                        unique_topic[CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE];   /**< Topic for receiving the OTA data. */
-    char                        json_doc[CY_OTA_MQTT_MESSAGE_BUFF_SIZE];            /**< Message to request the OTA data.  */
+#endif
+#ifdef COMPONENT_OTA_HTTP
+    cy_http_client_t            http_connection; /**< For Passing HTTP connection instance                  */
+#endif
+
+#if defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT)
+    char                        file[CY_OTA_MQTT_FILENAME_BUFF_SIZE]; /**< File name to request OTA data.   */
+
+    /* For Get Job Message. */
+    char                        json_doc[CY_OTA_JSON_DOC_BUFF_SIZE];                /**< Message to request the OTA data.  */
+#endif
 
 } cy_ota_cb_struct_t;
 
@@ -833,9 +900,12 @@ typedef struct
     cy_ota_connection_t         initial_connection; /**< Initial connection type @ref cy_ota_connection_t.   */
 
     /* MQTT and HTTP  settings */
+#ifdef COMPONENT_OTA_MQTT
     cy_ota_mqtt_params_t        mqtt;               /**< MQTT connection information.                        */
+#endif
+#ifdef COMPONENT_OTA_HTTP
     cy_ota_http_params_t        http;               /**< HTTP connection information.                        */
-
+#endif
     cy_ota_update_flow_t        use_get_job_flow;   /**< Job flow (CY_OTA_JOB_FLOW or CY_OTA_DIRECT_FLOW).   */
 } cy_ota_network_params_t;
 
@@ -847,13 +917,13 @@ typedef struct
  */
 typedef struct
 {
-    uint8_t     reboot_upon_completion;     /**< 1 = Automatically reboot upon download completion and verify.   */
+    uint8_t     reboot_upon_completion;     /**< 1 = Automatically reboot upon download completion and verify.  */
     uint8_t     validate_after_reboot;      /**< 0 = OTA will set MCUboot to permanent before reboot.
-                                             *   1 = Application must call cy_ota_validated() after reboot.      */
-    bool        do_not_send_result;         /**< If true, do not send the result status.                             */
+                                             *   1 = Application must call cy_ota_validated() after reboot.     */
+    bool        do_not_send_result;         /**< If true, do not send the result status.                        */
 
-    cy_ota_callback_t   cb_func;            /**< Notification callback function.                                  */
-    void                *cb_arg;            /**< Opaque argument passed to the notification callback function.            */
+    cy_ota_callback_t   cb_func;            /**< Notification callback function.                                */
+    void                *cb_arg;            /**< Opaque argument passed to the notification callback function.  */
 } cy_ota_agent_params_t;
 
 /** \} group_ota_structures */
@@ -922,7 +992,7 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);
  *
  * NOTE: Typically, this erases the secondary slot.
  *
- * @param[in]   ctx - Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   ctx             Pointer to the OTA agent context @ref cy_ota_context_ptr.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_OPEN_STORAGE
@@ -930,15 +1000,105 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);
 cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx);
 
 /**
- * @brief Open the storage area for download.
+ * @brief Read from storage area
  *
- * @param[in]   ctx         - Pointer to the OTA agent context @ref cy_ota_context_ptr.
- * @param[in]   chunk_info  - Pointer to the chunk information.
+ * @param[in]       ctx         Pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in][out]  chunk_info  Pointer to chunk information, buffer pointer used for the read
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_READ_STORAGE
+ */
+cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx, cy_ota_storage_write_info_t *chunk_info);
+
+/**
+ * @brief Write data into the storage area.
+ *
+ * NOTE: This writes data directly into FLASH.
+ *       For writing data from a TAR archive, use cy_ota_write_incoming_data_block(),
+ *       which checks for TAR archives and separates the data properly.
+ *
+ * @param[in]   ctx             Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   chunk_info      Pointer to the chunk information.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_WRITE_STORAGE
  */
 cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx, cy_ota_storage_write_info_t *chunk_info);
+
+/**
+ * @brief Determine if tar or non-tar and call correct write function
+ *
+ * NOTE: This function handles both TAR archive and non-TAR archive files.
+ *       This function is used by Pull Mode for MQTT and HTTP
+ *
+ * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   chunk_info              Pointer to chunk information
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info);
+
+#if defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN)
+
+/**
+ * @brief Prepare for Bluetooth OTA Download
+ *
+ * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   bt_conn_id              BT Connection id
+ * @param[in]   bt_config_descriptor    BT configuration (notification vs. indication )
+ *
+ * @return      CY_RSLT_SUCCESS
+ *              CY_RSLT_OTA_ERROR_BLE_GATT
+ */
+cy_rslt_t cy_ota_ble_download_prepare(cy_ota_context_ptr ctx_ptr, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
+
+/**
+ * @brief Bluetooth OTA Download starting
+ *
+ * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   p_req                   Pointer to gatt event data structure
+ * @param[in]   bt_conn_id              BT Connection id
+ * @param[in]   bt_config_descriptor    BT configuration (notification vs. indication )
+ *
+ * @return      CY_RSLT_SUCCESS
+ *              CY_RSLT_OTA_ERROR_BLE_GATT
+ */
+cy_rslt_t cy_ota_ble_download(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
+
+/**
+ * @brief Bluetooth OTA data write
+ *
+ * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   p_req                   Pointer to gatt event data structure
+ *
+ * @return      CY_RSLT_SUCCESS
+ *              CY_RSLT_OTA_ERROR_BLE_GATT
+ */
+cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req);
+
+/**
+ * @brief Bluetooth OTA Verify download
+ *
+ * @param[in]   ctx_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   p_req       Pointer to gatt event data structure
+ * @param[in]   bt_conn_id              BT Connection id
+ *
+ * @return      CY_RSLT_SUCCESS
+ *              CY_RSLT_OTA_ERROR_BLE_GATT
+ */
+cy_rslt_t cy_ota_ble_download_verify(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id);
+
+/**
+ * @brief Abort Bluetooth OTA download
+ *
+ * @param[in]   ctx_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
+ *
+ * @return      CY_RSLT_SUCCESS
+ */
+cy_rslt_t cy_ota_ble_download_abort(cy_ota_context_ptr ctx_ptr);
+
+#endif  /* defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN) */
 
 /**
  * @brief Close the storage area for download.

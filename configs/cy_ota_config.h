@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Cypress Semiconductor Corporation
+ * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,7 +70,7 @@ extern "C" {
 /**
  * @brief Expected maximum download time between each OTA packet arrival.
  *
- * This is used verify that the download occurs in a reasonable time frame.
+ * This is used to verify that the download occurs in a reasonable time frame.
  * Set to 0 to disable this check.
  */
 #define CY_OTA_PACKET_INTERVAL_SECS         (0)             /* Default disabled. */
