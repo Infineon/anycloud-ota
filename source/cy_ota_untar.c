@@ -148,7 +148,7 @@ static cy_untar_result_t write_data_to_flash( const struct flash_area *fap,
         }
 
         /* this should only happen on last part of last 4k chunk */
-        if (chunk_size % CY_FLASH_SIZEOF_ROW)
+        if ( (chunk_size % CY_FLASH_SIZEOF_ROW) != 0)
         {
             /* we will read a 512 byte block, write out data into the block, then write the whole block */
             if (flash_area_read(fap, curr_offset, block_buffer, sizeof(block_buffer)) != 0)
@@ -194,7 +194,7 @@ static cy_untar_result_t write_data_to_flash( const struct flash_area *fap,
  * return   CY_UNTAR_SUCCESS
  *          CY_UNTAR_ERROR
  */
-cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
+static cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
                                    uint16_t file_index,
                                    uint8_t *buffer,
                                    uint32_t file_offset,
@@ -245,14 +245,15 @@ cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
 /**
  * @brief Initialization routine for handling tarball OTA file
  *
- * @param ctxt[in,out]  pointer to untar context to be initialized
+ * @param ctx_ptr               Pointer to OTA agent context
+ * @param ctx_untar[in,out]     pointer to untar context to be initialized
  *
  * return   CY_UNTAR_SUCCESS
  *          CY_UNTAR_ERROR
  */
-cy_untar_result_t cy_ota_untar_init_context(cy_ota_context_ptr ctx_ptr, cy_untar_context_t* ctx )
+static cy_untar_result_t cy_ota_untar_init_context(cy_ota_context_ptr ctx_ptr, cy_untar_context_t* ctx_untar )
 {
-    if (cy_untar_init( ctx, ota_untar_write_callback, NULL ) == CY_RSLT_SUCCESS)
+    if (cy_untar_init( ctx_untar, ota_untar_write_callback, NULL ) == CY_RSLT_SUCCESS)
     {
         cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
         CY_OTA_CONTEXT_ASSERT(ctx);
@@ -263,6 +264,7 @@ cy_untar_result_t cy_ota_untar_init_context(cy_ota_context_ptr ctx_ptr, cy_untar
     return CY_UNTAR_ERROR;
 }
 
+#if 0 /* keep if needed later */
 /**
  * @brief - set pending for the files contained in the TAR archive we just validated.
  *
@@ -270,8 +272,8 @@ cy_untar_result_t cy_ota_untar_init_context(cy_ota_context_ptr ctx_ptr, cy_untar
  */
 cy_untar_result_t cy_ota_untar_set_pending(void)
 {
-    int i;
-    int image = 0;
+    uint16_t i;
+    uint16_t image = 0;
     for (i = 0; i < ota_untar_context.num_files_in_json; i++ )
     {
         if ( strncmp(ota_untar_context.files[i].type, CY_FILE_TYPE_SPE, strlen(CY_FILE_TYPE_SPE)) == 0)
@@ -294,11 +296,13 @@ cy_untar_result_t cy_ota_untar_set_pending(void)
     return CY_UNTAR_SUCCESS;
 
 }
+#endif
 
 /**
  * @brief Determine if tar or non-tar and call correct write function
  *
- * @param[in]   chunk_info  - pointer to chunk information
+ * @param[in]   ota_ptr         Pointer to OTA agent context
+ * @param[in]   chunk_info      Pointer to chunk information
  *
  * @return  CY_UNTAR_SUCCESS
  *          CY_UNTAR_ERROR
@@ -396,7 +400,7 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() NON-TAR \n", __func__);
         if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
         {
-            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_pointer is NULL\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open()\n", __func__);
             return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
         }
 

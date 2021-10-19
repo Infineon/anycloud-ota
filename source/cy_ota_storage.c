@@ -104,15 +104,15 @@ static int eraseSlotTwo(void)
  *
  * NOTE: Typically, this erases Secondary Slot
  *
- * @param[in]   ctx - pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in]   ota_ptr - pointer to OTA agent context @ref cy_ota_context_t
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_OPEN_STORAGE
  */
-cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx_ptr)
+cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ota_ptr)
 {
     const struct flash_area *fap;
-    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ota_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s()\n", __func__);
 
@@ -141,13 +141,13 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx_ptr)
 /**
  * @brief Read from storage area
  *
- * @param[in]       ctx         - pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in]       ota_ptr     - pointer to OTA agent context @ref cy_ota_context_t
  * @param[in][out]  chunk_info  - pointer to chunk information, buffer pointer used for the read
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_READ_STORAGE
  */
-cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
+cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_info_t *chunk_info)
 {
     int                         rc;
     cy_rslt_t                   result = CY_RSLT_SUCCESS;

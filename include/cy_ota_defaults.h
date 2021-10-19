@@ -320,25 +320,6 @@ extern "C" {
 #endif
 
 /**
- * @brief Device message to the Publisher to ask for a download.
- * *
- * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
- * Override if required by defining in cy_ota_config.h.
- */
-#ifndef CY_OTA_DOWNLOAD_DIRECT_REQUEST
-#define CY_OTA_DOWNLOAD_DIRECT_REQUEST \
-"{\
-\"Message\":\"Send Direct Update\", \
-\"Manufacturer\": \"Express Widgits Corporation\", \
-\"ManufacturerID\": \"EWCO\", \
-\"ProductID\": \"Easy Widgit\", \
-\"SerialNumber\": \"ABC213450001\", \
-\"BoardName\": \"CY8CPROTO_062_4343W\", \
-\"Version\": \"%d.%d.%d\" \
-}"
-#endif
-
-/**
  * @brief Device JSON document to respond to the MQTT Publisher.
  *
  * Used with sprintf() to create the JSON message.

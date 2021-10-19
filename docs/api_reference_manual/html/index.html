@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Over The Air (OTA) Update Library: Over The Air v4.0.0 Overview</title>
+<title>Over The Air (OTA) Update Library: Over The Air v4.1.0 Overview</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -30,7 +30,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
-  <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
+  <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="infineon_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
@@ -96,14 +96,14 @@ $(document).ready(function(){initNavTree('index.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Over The Air v4.0.0 Overview </div>  </div>
+<div class="title">Over The Air v4.1.0 Overview </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This library provides support for OTA updating of the application code running on a PSoC® 6 Connectivity Device, using Wi-Fi or Bluetooth. For simplification, this document will refer to an MQTT Broker or an HTTP Server as "server".</p>
+<div class="textblock"><p>This library provides support for OTA updating of the application code running on a PSoC™ 6 Connectivity Device, using Wi-Fi or Bluetooth®. For simplification, this document will refer to an MQTT Broker or an HTTP Server as "server".</p>
 <p>The library provides a number of combinations on how to get the OTA image:<br />
 <br />
-<b>Bluetooth</b></p><ul>
-<li>We use a Push model with Bluetooth. A Peer application running on a laptop or phone will connect and push an update to the Device.</li>
+<b>Bluetooth®</b></p><ul>
+<li>We use a Push model with Bluetooth®. A Peer application running on a laptop or phone will connect and push an update to the Device.</li>
 </ul>
 <p><b>MQTT and HTTP</b></p><ul>
 <li>MQTT and HTTP use a Pull model. One or two steps can be used to get the OTA image. The two steps are "get job" and "get data". The caller can skip the "get job" step and get the OTA image directly.</li>
@@ -124,7 +124,7 @@ $(document).ready(function(){initNavTree('index.html','');});
 <p>The ModusToolbox OTA code examples import this OTA library automatically.</p>
 <h1><a class="anchor" id="section_features"></a>
 Features and Functionality</h1>
-<p>This library utilizes MQTT or HTTPS and TLS, or Bluetooth to securely connect to and download an update for the users application.</p>
+<p>This library utilizes MQTT or HTTPS and TLS, or Bluetooth® to securely connect to and download an update for the users application.</p>
 <p>Other features:</p>
 <p>Server info, credentials, and other parameters are passed into <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start the OTA Background Agent. ">cy_ota_agent_start()</a>.</p>
 <p>MQTT and HTTP</p><ul>
@@ -142,7 +142,7 @@ Integration Notes</h1>
  directory to the top-level code example directory.<br />
 <br />
 </li>
-<li>For Bluetooth builds, add the following to COMPONENTS in the code example project's Makefile<br />
+<li>For Bluetooth® builds, add the following to COMPONENTS in the code example project's Makefile<br />
 <ul>
 <li>FREERTOS, PSOC6HAL, LWIP, WICED_BLE, OTA_BLUETOOTH Then add the Radio component, based on the platform.<br />
  For example, if CY8CPROTO-062-4343W is being used, the Makefile entry would be:<br />
@@ -189,7 +189,7 @@ General Concept</h1>
 API Overview</h1>
 <h2>Start the OTA Agent </h2>
 <p><code>cy_ota_start_agent()</code> is a non-blocking call, which returns a context pointer that is used in subsequent calls.<br />
- When using Bluetooth, <code>cy_ota_start_agent()</code> is called after the Peer sends a PREPARE_DOWNLOAD message.<br />
+ When using Bluetooth®, <code>cy_ota_start_agent()</code> is called after the Peer sends a PREPARE_DOWNLOAD message.<br />
  When using MQTT or HTTP, the OTA Agent uses callbacks to signal the application when events occur.<br />
  <br />
  <code>cy_rslt_t <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start the OTA Background Agent. ">cy_ota_agent_start(cy_ota_network_params_t *network_params, cy_ota_agent_params_t *agent_params, cy_ota_context_ptr *ota_ptr)</a>;</code></p>
@@ -291,17 +291,6 @@ Override Default Settings</h1>
 <div class="line"><span class="preprocessor">\&quot;Filename\&quot;: \&quot;%s\&quot;, \</span></div>
 <div class="line"><span class="preprocessor">\&quot;Offset\&quot;: \&quot;%ld\&quot;, \</span></div>
 <div class="line"><span class="preprocessor">\&quot;Size\&quot;: \&quot;%ld\&quot;\</span></div>
-<div class="line"><span class="preprocessor">}&quot;</span></div>
-<div class="line"></div>
-<div class="line"><span class="preprocessor">#define CY_OTA_DOWNLOAD_DIRECT_REQUEST \</span></div>
-<div class="line"><span class="preprocessor">&quot;{\</span></div>
-<div class="line"><span class="preprocessor">\&quot;Message\&quot;:\&quot;Send Direct Update\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \</span></div>
-<div class="line"><span class="preprocessor">\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot; \</span></div>
 <div class="line"><span class="preprocessor">}&quot;</span></div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">#define CY_OTA_MQTT_RESULT_JSON \</span></div>
@@ -790,15 +779,15 @@ Code Snippets</h1>
 <div class="line">    <span class="keywordflow">return</span> result;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> <br />
- <b>Application Bluetooth initialization:</b><br />
- The following code snippet demonstrates and example for initializing the Bluetooth Stack required before starting the OTA Agent. The next snippet shows the BT GATT callback handler.<br />
+ <b>Application Bluetooth® initialization:</b><br />
+ The following code snippet demonstrates and example for initializing the Bluetooth® Stack required before starting the OTA Agent. The next snippet shows the Bluetooth® GATT callback handler.<br />
  </p><div class="fragment"><div class="line"><span class="comment">/*</span></div>
 <div class="line"><span class="comment"> * Function name:</span></div>
 <div class="line"><span class="comment"> * bt_app_init</span></div>
 <div class="line"><span class="comment"> *</span></div>
 <div class="line"><span class="comment"> * Function Description:</span></div>
 <div class="line"><span class="comment"> * @brief    This function is executed if BTM_ENABLED_EVT event occurs in</span></div>
-<div class="line"><span class="comment"> *           Bluetooth management callback.</span></div>
+<div class="line"><span class="comment"> *           Bluetooth® management callback.</span></div>
 <div class="line"><span class="comment"> *</span></div>
 <div class="line"><span class="comment"> * @param    void</span></div>
 <div class="line"><span class="comment"> *</span></div>
@@ -845,16 +834,16 @@ Code Snippets</h1>
 <div class="line">    wiced_result = wiced_bt_stack_init(app_bt_management_callback , &amp;wiced_bt_cfg_settings);</div>
 <div class="line">    <span class="keywordflow">if</span>( WICED_BT_SUCCESS == wiced_result)</div>
 <div class="line">    {</div>
-<div class="line">        printf(<span class="stringliteral">&quot;Bluetooth Stack Initialization Successful \n&quot;</span>);</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Bluetooth(r) Stack Initialization Successful \n&quot;</span>);</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">else</span></div>
 <div class="line">    {</div>
-<div class="line">        printf(<span class="stringliteral">&quot;Bluetooth Stack Initialization failed!!\n&quot;</span>);</div>
+<div class="line">        printf(<span class="stringliteral">&quot;Bluetooth(r) Stack Initialization failed!!\n&quot;</span>);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> <br />
- <b>Application Bluetooth Callback Handling</b>:<br />
- The following code snippet demonstrates and example for initializing the Bluetooth Stack required before starting the OTA Agent.<br />
+ <b>Application Bluetooth® Callback Handling</b>:<br />
+ The following code snippet demonstrates and example for initializing the Bluetooth® Stack required before starting the OTA Agent.<br />
  </p><div class="fragment"><div class="line"><span class="comment">/*</span></div>
 <div class="line"><span class="comment"> * Function Name:</span></div>
 <div class="line"><span class="comment"> * app_bt_gatt_event_handler</span></div>
@@ -862,10 +851,10 @@ Code Snippets</h1>
 <div class="line"><span class="comment"> * Function Description:</span></div>
 <div class="line"><span class="comment"> * @brief  This Function handles the all the GATT events - GATT Event Handler</span></div>
 <div class="line"><span class="comment"> *</span></div>
-<div class="line"><span class="comment"> * @param event            BLE GATT event type</span></div>
-<div class="line"><span class="comment"> * @param p_event_data     Pointer to BLE GATT event data</span></div>
+<div class="line"><span class="comment"> * @param event            Bluetooth® GATT event type</span></div>
+<div class="line"><span class="comment"> * @param p_event_data     Pointer to Bluetooth® GATT event data</span></div>
 <div class="line"><span class="comment"> *</span></div>
-<div class="line"><span class="comment"> * @return wiced_bt_gatt_status_t  BLE GATT status</span></div>
+<div class="line"><span class="comment"> * @return wiced_bt_gatt_status_t  Bluetooth® GATT status</span></div>
 <div class="line"><span class="comment"> */</span></div>
 <div class="line"><span class="keyword">static</span> wiced_bt_gatt_status_t app_bt_gatt_event_handler(wiced_bt_gatt_evt_t event, wiced_bt_gatt_event_data_t *p_event_data)</div>
 <div class="line">{</div>
@@ -920,8 +909,8 @@ Code Snippets</h1>
 <div class="line">    <span class="keywordflow">return</span> status;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> <br />
- <b>OTA Agent Bluetooth initialization:</b><br />
- The following code snippet demonstrates starting the OTA Agent for use with Bluetooth.<br />
+ <b>OTA Agent Bluetooth® initialization:</b><br />
+ The following code snippet demonstrates starting the OTA Agent for use with Bluetooth®.<br />
  </p><div class="fragment"><div class="line"><span class="comment">/* Initialize and start the OTA Agent.</span></div>
 <div class="line"><span class="comment"> *</span></div>
 <div class="line"><span class="comment"> * The main application must:</span></div>
@@ -931,7 +920,7 @@ Code Snippets</h1>
 <div class="line"><span class="comment"> *          cyhal_wdt_free(&amp;wdt_obj);</span></div>
 <div class="line"><span class="comment"> * - Validate the application (if the update just happened)</span></div>
 <div class="line"><span class="comment"> *          cy_ota_storage_validated();</span></div>
-<div class="line"><span class="comment"> * - Initialize Bluetooth.</span></div>
+<div class="line"><span class="comment"> * - Initialize Bluetooth®.</span></div>
 <div class="line"><span class="comment"> *</span></div>
 <div class="line"><span class="comment"> * */</span></div>
 <div class="line"></div>
@@ -949,7 +938,7 @@ Code Snippets</h1>
 <div class="line">    cy_rslt_t   result;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">/*****************************************************************************</span></div>
-<div class="line"><span class="comment">    * This is called from the Bluetooth callback</span></div>
+<div class="line"><span class="comment">    * This is called from the Bluetooth® callback</span></div>
 <div class="line"><span class="comment">    *   Handle : HDLC_OTA_FW_UPGRADE_SERVICE_OTA_UPGRADE_CONTROL_POINT_VALUE</span></div>
 <div class="line"><span class="comment">    *   Command: CY_OTA_UPGRADE_COMMAND_PREPARE_DOWNLOAD</span></div>
 <div class="line"><span class="comment">    ******************************************************************************/</span></div>
@@ -977,7 +966,7 @@ ModusToolbox OTA Code Examples</h1>
  ModusToolbox AnyCloud OTA HTTP code example:<br />
  <a href="https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-https">https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-https</a><br />
  <br />
- ModusToolbox AnyCloud OTA Bluetooth example:<br />
+ ModusToolbox AnyCloud OTA Bluetooth® example:<br />
  <a href="https://github.com/cypresssemiconductorco/mtb-example-anycloud-ble-battery-server">https://github.com/cypresssemiconductorco/mtb-example-anycloud-ble-battery-server</a><br />
 </p>
 </div></div><!-- contents -->

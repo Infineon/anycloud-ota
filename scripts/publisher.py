@@ -198,7 +198,6 @@ SEND_IMAGE_MQTT_CLIENT_ID = "OTASend"
 
 # Subscriptions
 COMPANY_TOPIC_PREPEND  = "anycloud"
-EXTRA_TOPIC_PREPEND    = ""
 PUBLISHER_LISTEN_TOPIC = "publish_notify"
 PUBLISHER_DIRECT_TOPIC = "OTAImage"
 
@@ -845,16 +844,18 @@ def publisher_loop():
 
 if __name__ == "__main__":
     print("Infineon Test MQTT Publisher.")
-    print("   Usage: 'python publisher.py [tls] [-l] [-b <broker>] [-k <kit>] [-f <filepath>] [-e <topic_suffix>]'")
-    print("<broker>       '[a] | [amazon] | [e] | [eclipse] | [m] | [mosquitto]'")
-    print("<kit>          '[CY8CKIT_062S2_43012] | [CY8CKIT_064B0S2_4343W] | [CY8CPROTO_062_4343W]'")
-    print("<filepath>     The location of the OTA Image file to server to the device")
-    print("<topic_suffix> This will be added to the beginning of the topic: 'anycloud'<topic_suffix")
-    print("Defaults: <non-TLS>")
+    print("   Usage: 'python publisher.py [tls] [-l] [-b <broker>] [-k <kit>] [-f <filepath>] [-c <company_topic>]'")
+    print("[tls]              Use TLS for connection")
+    print("-l                 Turn on extra logging")
+    print("-b <broker>        '[a] | [amazon] | [e] | [eclipse] | [m] | [mosquitto]'")
+    print("-k <kit>           '[CY8CKIT_062S2_43012] | [CY8CKIT_064B0S2_4343W] | [CY8CPROTO_062_4343W]'")
+    print("-f <filepath>      The location of the OTA Image file to server to the device")
+    print("-c <company_topic> This will be the beginning of the topic: <company_topic>/")
+    print("Defaults: non-TLS")
     print("        : -f " + OTA_IMAGE_FILE)
     print("        : -b mosquitto ")
     print("        : -k " + KIT)
-    print("        : -l turn on extra logging")
+    print("        : -c " + COMPANY_TOPIC_PREPEND)
     last_arg = ""
     for i, arg in enumerate(sys.argv):
         # print(f"Argument {i:>4}: {arg}")
@@ -865,8 +866,8 @@ if __name__ == "__main__":
             DEBUG_LOG_STRING = "1"
         if last_arg == "-f":
             OTA_IMAGE_FILE = arg
-        if last_arg == "-e":
-            EXTRA_TOPIC_PREPEND = arg
+        if last_arg == "-c":
+            COMPANY_TOPIC_PREPEND = arg
         if last_arg == "-b":
             if ((arg == "amazon") | (arg == "a")):
                 BROKER_ADDRESS = AMAZON_BROKER_ADDRESS
@@ -879,6 +880,7 @@ if __name__ == "__main__":
         last_arg = arg
 
 print("\n")
+print("Values for this run:\n")
 if TLS_ENABLED:
     print("   Using TLS")
 else:
@@ -887,11 +889,12 @@ print("   Using BROKER: " + BROKER_ADDRESS)
 print("   Using    KIT: " + KIT)
 print("   Using   File: " + OTA_IMAGE_FILE)
 print("   extra debug : " + DEBUG_LOG_STRING)
+print(" company topic : " + COMPANY_TOPIC_PREPEND)
 
-PUBLISHER_JOB_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
+PUBLISHER_JOB_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
 print("PUBLISHER_JOB_REQUEST_TOPIC   : " + PUBLISHER_JOB_REQUEST_TOPIC)
 
-PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
+PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
 print("PUBLISHER_DIRECT_REQUEST_TOPIC: " + PUBLISHER_DIRECT_REQUEST_TOPIC)
 print("\n")
 

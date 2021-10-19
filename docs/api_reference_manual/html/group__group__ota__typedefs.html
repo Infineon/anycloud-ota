@@ -30,7 +30,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
-  <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="cypress_logo.png"/></a></td>
+  <td id="projectlogo"><a href="http://www.cypress.com/"><img alt="Logo" src="infineon_logo.png"/></a></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Over The Air (OTA) Update Library</div>
   </td>
@@ -337,9 +337,6 @@ Macros</h2></td></tr>
 <tr class="memitem:ga60cd7bb2153af31d0687b08b2152bcc7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga60cd7bb2153af31d0687b08b2152bcc7">CY_OTA_DOWNLOAD_CHUNK_REQUEST</a>&#160;&#160;&#160;&quot;{\\&quot;Message\&quot;:\&quot;Request Data Chunk\&quot;, \\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot;, \\&quot;UniqueTopicName\&quot;: \&quot;%s\&quot;, \\&quot;Filename\&quot;: \&quot;%s\&quot;, \\&quot;Offset\&quot;: \&quot;%ld\&quot;, \\&quot;Size\&quot;: \&quot;%ld\&quot;\}&quot;</td></tr>
 <tr class="memdesc:ga60cd7bb2153af31d0687b08b2152bcc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device message to the Publisher to ask for a chunk of data at a time.  <a href="#ga60cd7bb2153af31d0687b08b2152bcc7">More...</a><br /></td></tr>
 <tr class="separator:ga60cd7bb2153af31d0687b08b2152bcc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga2d88b9b738dc724e8fb29883e04dcc23"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga2d88b9b738dc724e8fb29883e04dcc23">CY_OTA_DOWNLOAD_DIRECT_REQUEST</a>&#160;&#160;&#160;&quot;{\\&quot;Message\&quot;:\&quot;Send Direct Update\&quot;, \\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot; \}&quot;</td></tr>
-<tr class="memdesc:ga2d88b9b738dc724e8fb29883e04dcc23"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device message to the Publisher to ask for a download.  <a href="#ga2d88b9b738dc724e8fb29883e04dcc23">More...</a><br /></td></tr>
-<tr class="separator:ga2d88b9b738dc724e8fb29883e04dcc23"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1eace95e0ec47d50df1e2810f4751173"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__group__ota__typedefs.html#ga1eace95e0ec47d50df1e2810f4751173">CY_OTA_MQTT_RESULT_JSON</a>&#160;&#160;&#160;&quot;{\\&quot;Message\&quot;:\&quot;%s\&quot;, \\&quot;UniqueTopicName\&quot;: \&quot;%s\&quot;\}&quot;</td></tr>
 <tr class="memdesc:ga1eace95e0ec47d50df1e2810f4751173"><td class="mdescLeft">&#160;</td><td class="mdescRight">Device JSON document to respond to the MQTT Publisher.  <a href="#ga1eace95e0ec47d50df1e2810f4751173">More...</a><br /></td></tr>
 <tr class="separator:ga1eace95e0ec47d50df1e2810f4751173"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1212,23 +1209,6 @@ Enumerations</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga2d88b9b738dc724e8fb29883e04dcc23"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define CY_OTA_DOWNLOAD_DIRECT_REQUEST&#160;&#160;&#160;&quot;{\\&quot;Message\&quot;:\&quot;Send Direct Update\&quot;, \\&quot;Manufacturer\&quot;: \&quot;Express Widgits Corporation\&quot;, \\&quot;ManufacturerID\&quot;: \&quot;EWCO\&quot;, \\&quot;ProductID\&quot;: \&quot;Easy Widgit\&quot;, \\&quot;SerialNumber\&quot;: \&quot;ABC213450001\&quot;, \\&quot;BoardName\&quot;: \&quot;CY8CPROTO_062_4343W\&quot;, \\&quot;Version\&quot;: \&quot;%d.%d.%d\&quot; \}&quot;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Device message to the Publisher to ask for a download. </p>
-<ul>
-<li>Used with sprintf() to insert the current version and UniqueTopicName at runtime. Override if required by defining in cy_ota_config.h. </li>
-</ul>
-
-</div>
-</div>
 <a class="anchor" id="ga1eace95e0ec47d50df1e2810f4751173"></a>
 <div class="memitem">
 <div class="memproto">
@@ -1440,7 +1420,7 @@ Enumerations</h2></td></tr>
 <p>Use HTTPS connection. </p>
 </td></tr>
 <tr><td class="fieldname"><a class="anchor" id="ggabc03646427dec963bef37cb5dbb550faaa6e2c528481c3eb950755dd86dfb272f"></a>CY_OTA_CONNECTION_BLE&#160;</td><td class="fielddoc">
-<p>Use Bluetooth connection. </p>
+<p>Use Bluetooth® connection. </p>
 </td></tr>
 </table>
 

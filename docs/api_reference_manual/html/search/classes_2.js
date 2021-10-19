@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ec',['EC',['../struct_e_c.html',1,'']]]
+  ['ota_5fec',['ota_EC',['../structota___e_c.html',1,'']]]
 ];

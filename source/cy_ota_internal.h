@@ -223,11 +223,11 @@ typedef struct cy_ota_mqtt_context_s {
 
     uint8_t             received_packets[CY_OTA_MAX_PACKETS];   /**< keep track of packets for missing / duplicates */
 
+    char                json_doc[CY_OTA_JSON_DOC_BUFF_SIZE];    /**< Message to request OTA data */
+
     uint8_t             use_unique_topic;               /**< if == 1, create and use unique topic!      */
     char                unique_topic[CY_OTA_MQTT_UNIQUE_TOPIC_BUFF_SIZE]; /**< Topic for receiving OTA data */
     bool                unique_topic_subscribed;        /**< true if UNIQUE MQTT subscription accepted    */
-
-    char                json_doc[CY_OTA_JSON_DOC_BUFF_SIZE];           /**< Message to request OTA data */
 } cy_ota_mqtt_context_t;
 
 #endif /* COMPONENT_OTA_MQTT    */
@@ -241,13 +241,13 @@ typedef struct cy_ota_mqtt_context_s {
 #ifdef COMPONENT_OTA_BLUETOOTH
 
 #ifdef  CY_OTA_BLE_SECURE_SUPPORT
-#include "ecc_pp.h"
+#include "ota_ecc_pp.h"
 #include "sha256.h"
 #endif
 
 
 /**
- * @brief standard signature length for BLE key
+ * @brief standard signature length for Bluetooth® key
  */
 #define SIGNATURE_LEN               (KEY_LENGTH_BYTES * 2)
 
@@ -258,18 +258,18 @@ typedef struct cy_ota_mqtt_context_s {
  **********************************************************************/
 
 /**
- * @brief BLE context data
+ * @brief Bluetooth® context data
  */
 typedef struct cy_ota_ble_context_s {
-    uint32_t                    received_crc32;             /**< BLE CRC sent from the Host                             */
-    uint32_t                    crc32;                      /**< BLE CRC calculated during download                     */
-    uint32_t                    file_bytes_written;         /**< BLE File bytes written                                 */
-    uint8_t                     percent;                    /**< BLE percentage downloaded                              */
-    uint8_t                     bt_notify_buff;             /**< BLE for notifications and indications                  */
+    uint32_t                    received_crc32;             /**< Bluetooth® CRC sent from the Host                             */
+    uint32_t                    crc32;                      /**< Bluetooth® CRC calculated during download                     */
+    uint32_t                    file_bytes_written;         /**< Bluetooth® File bytes written                                 */
+    uint8_t                     percent;                    /**< Bluetooth® percentage downloaded                              */
+    uint8_t                     bt_notify_buff;             /**< Bluetooth® for notifications and indications                  */
 #ifdef  CY_OTA_BLE_SECURE_SUPPORT
-    mbedtls_sha256_context      bt_sha2_ctx;                /**< BT For calculating the signature as we download chunks */
-    uint8_t                     signature[SIGNATURE_LEN];   /**< BT Downloaded signature for the file                   */
-    uint32_t                    sig_offset;                 /**< BT Signature offset for downloading in pieces          */
+    mbedtls_sha256_context      bt_sha2_ctx;                /**< Bluetooth® For calculating the signature as we download chunks */
+    uint8_t                     signature[SIGNATURE_LEN];   /**< Bluetooth® Downloaded signature for the file                   */
+    uint32_t                    sig_offset;                 /**< Bluetooth® Signature offset for downloading in pieces          */
 #endif
 } cy_ota_ble_context_t;
 
@@ -400,7 +400,7 @@ typedef struct cy_ota_context_s {
     cy_ota_http_context_t       http;                       /**< HTTP specific context data                                     */
 #endif
 #ifdef COMPONENT_OTA_BLUETOOTH
-    cy_ota_ble_context_t        ble;                        /**< BLE specific context data                                      */
+    cy_ota_ble_context_t        ble;                        /**< Bluetooth® specific context data                                */
 #endif
 
     uint8_t                     data_buffer[CY_OTA_SIZE_OF_RECV_BUFFER];    /**< Used to get Job and Data                        */

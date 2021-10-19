@@ -32,9 +32,9 @@
  */
 /*
  ********************************************************************
- *    File Name: ecc_pp.h
+ *    File Name: multprecision.h
  *
- *    Abstract: ECDSA signature sign and verify algorithms
+ *    Abstract: elliptic curve long integer math library
  *
  *    Functions:
  *            --
@@ -43,65 +43,113 @@
  *
  ********************************************************************
 */
+#ifndef MULTPRECISION_H
+#define MULTPRECISION_H
 
-#ifndef ECC_PP_H
-#define ECC_PP_H
+#ifndef TRUE
+#define    TRUE    1
+#endif
 
-#include "multprecision.h"
+#ifndef FALSE
+#define    FALSE    0
+#endif
+
+typedef unsigned char       UINT8;
+typedef unsigned int        UINT32;
+typedef unsigned long long  UINT64;
+typedef unsigned int        DWORD;
+typedef UINT32              BOOL32;
+
+#define DWORD_BITS              32
+#define DWORD_BYTES             4
+#define DWORD_BITS_SHIFT        5
+
+#define KEY_LENGTH_BITS         256
+#define KEY_LENGTH_DWORDS       (KEY_LENGTH_BITS/DWORD_BITS)
+#define KEY_LENGTH_BYTES        (KEY_LENGTH_DWORDS*DWORD_BYTES)
 
 /* EC point with projective coordinates */
 struct _point
 {
-	DWORD x[KEY_LENGTH_DWORDS];
-	DWORD y[KEY_LENGTH_DWORDS];
-	DWORD z[KEY_LENGTH_DWORDS];
+    DWORD x[KEY_LENGTH_DWORDS];
+    DWORD y[KEY_LENGTH_DWORDS];
+    DWORD z[KEY_LENGTH_DWORDS];
 };
 typedef struct _point Point;
 
 /* EC point with affine coordinates */
 struct _pointAff
 {
-	DWORD x[KEY_LENGTH_DWORDS];
-	DWORD y[KEY_LENGTH_DWORDS];
+    DWORD x[KEY_LENGTH_DWORDS];
+    DWORD y[KEY_LENGTH_DWORDS];
 };
 typedef struct _point PointAff;
 
 /* EC curve domain parameter type */
 typedef struct
 {
-	// prime modulus
+    // prime modulus
     DWORD p[KEY_LENGTH_DWORDS];
 
     // order
     DWORD n[KEY_LENGTH_DWORDS];
 
-	// base point, a point on E of order r
+    // base point, a point on E of order r
     Point G;
 
-}EC;
-
-extern EC curve;
-#define modp (DWORD*)(curve.p)
-#define modn (DWORD*)(curve.n)
-
-extern UINT32 nprime[];
-extern UINT32 rr[];
+}ota_EC;
 
 
-/* Point multiplication with NAF method */
-void ECC_PM_B_NAF(Point *q, Point *p, DWORD *n, UINT32 keyLength);
-#define ECC_PM(q, p, n, len)	ECC_PM_B_NAF(q, p, n, len)
+/* return 1 if a > b, return -1 if a < b, return 0 if a == b */
+int ota_MP_CMP(DWORD *a, DWORD *b);
 
-/* ECDSA verification */
-BOOL32 ecdsa_verify(unsigned char* digest, unsigned char* signature, Point* key);
+/* return 1 if a is zero, return 0 otherwise */
+int ota_MP_isZero(DWORD *a);
 
+/* set c = 0 */
+void ota_MP_Init(DWORD *c);
 
-/* Macro for endianess swap */
-#define BE_SWAP(buf, index) \
-    ((buf[index+0] << 24) | \
-     (buf[index+1] << 16) | \
-     (buf[index+2] << 8) | \
-     (buf[index+3] << 0))
+/* assign c = a */
+void ota_MP_Copy(DWORD *c, DWORD *a);
+
+/* return most significant bit postion */
+UINT32 ota_MP_MostSignBits(DWORD *a);
+
+/* compute aminus = u ^ -1 mod modulus */
+void ota_MP_InvMod(DWORD *aminus, DWORD *u, const DWORD* modulus);
+
+/* c = a + b */
+DWORD ota_MP_Add(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a + b mod p */
+void ota_MP_AddMod(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a - b */
+DWORD ota_MP_Sub(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a - b mod p */
+void ota_MP_SubMod(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a >> 1 */
+void ota_MP_RShift(DWORD * c, DWORD * a);
+
+/* c = a << 1 */
+DWORD ota_MP_LShift(DWORD * c, DWORD * a);
+
+/* c = a << 1  mod a */
+void ota_MP_LShiftMod(DWORD * c, DWORD * a);
+
+/* c = a * b mod p */
+void ota_MP_MersennsMultMod(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a * a mod p */
+void ota_MP_MersennsSquaMod(DWORD *c, DWORD *a);
+
+/* c = a * b */
+void ota_MP_Mult(DWORD *c, DWORD *a, DWORD *b);
+
+/* c = a * b * r^-1 mod n */
+void ota_MP_MultMont(DWORD *c, DWORD *a, DWORD *b);
 
 
 #endif

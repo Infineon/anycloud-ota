@@ -20,7 +20,6 @@ var group__group__ota__config =
     [ "CY_OTA_SUBSCRIBE_UPDATES_AVAIL", "group__group__ota__config.html#ga0e99cf1a339baebf4f71fe536b2967ea", null ],
     [ "CY_OTA_DOWNLOAD_REQUEST", "group__group__ota__config.html#ga66bd4606bfc0f6e85c2172603f9c62a0", null ],
     [ "CY_OTA_DOWNLOAD_CHUNK_REQUEST", "group__group__ota__config.html#ga60cd7bb2153af31d0687b08b2152bcc7", null ],
-    [ "CY_OTA_DOWNLOAD_DIRECT_REQUEST", "group__group__ota__config.html#ga2d88b9b738dc724e8fb29883e04dcc23", null ],
     [ "CY_OTA_MQTT_RESULT_JSON", "group__group__ota__config.html#ga1eace95e0ec47d50df1e2810f4751173", null ],
     [ "CY_OTA_HTTP_RESULT_JSON", "group__group__ota__config.html#gaa642af38818fce01f3a9c6960bc6d64d", null ],
     [ "CY_OTA_HTTP_GET_TEMPLATE", "group__group__ota__config.html#gabdddb494aa853699bec01c254bd307dd", null ],

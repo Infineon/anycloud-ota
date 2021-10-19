@@ -32,9 +32,9 @@
  */
 /*
  ********************************************************************
- *    File Name: multprecision.h
+ *    File Name: ecc_pp.h
  *
- *    Abstract: elliptic curve long integer math library
+ *    Abstract: ECDSA signature sign and verify algorithms
  *
  *    Functions:
  *            --
@@ -43,72 +43,34 @@
  *
  ********************************************************************
 */
-#ifndef MULTPRECISION_H
-#define MULTPRECISION_H
 
-#include "types.h"
+#ifndef ECC_PP_H
+#define ECC_PP_H
 
-//#define ARM_ASM
+#include "ota_multprecision.h"
 
-#define DWORD_BITS 		        32
-#define DWORD_BYTES 	        4
-#define DWORD_BITS_SHIFT        5
+extern ota_EC ota_curve;
+#define modp (DWORD*)(ota_curve.p)
+#define modn (DWORD*)(ota_curve.n)
 
-#define KEY_LENGTH_BITS			256
-#define KEY_LENGTH_DWORDS   	(KEY_LENGTH_BITS/DWORD_BITS)
-#define KEY_LENGTH_BYTES		(KEY_LENGTH_DWORDS*DWORD_BYTES)
+extern UINT32 ota_nprime[];
+extern UINT32 ota_rr[];
 
 
-/* return 1 if a > b, return -1 if a < b, return 0 if a == b */
-int MP_CMP(DWORD *a, DWORD *b);
+/* Point multiplication with NAF method */
+void ECC_PM_B_NAF(Point *q, Point *p, DWORD *n, UINT32 keyLength);
+#define ECC_PM(q, p, n, len)    ECC_PM_B_NAF(q, p, n, len)
 
-/* return 1 if a is zero, return 0 otherwise */
-int MP_isZero(DWORD *a);
+/* ECDSA verification */
+BOOL32 ota_ecdsa_verify(unsigned char* digest, unsigned char* signature, Point* key);
 
-/* set c = 0 */
-void MP_Init(DWORD *c);
 
-/* assign c = a */
-void MP_Copy(DWORD *c, DWORD *a);
-
-/* return most significant bit postion */
-UINT32 MP_MostSignBits(DWORD *a);
-
-/* compute aminus = u ^ -1 mod modulus */
-void MP_InvMod(DWORD *aminus, DWORD *u, const DWORD* modulus);
-
-/* c = a + b */
-DWORD MP_Add(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a + b mod p */
-void MP_AddMod(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a - b */
-DWORD MP_Sub(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a - b mod p */
-void MP_SubMod(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a >> 1 */
-void MP_RShift(DWORD * c, DWORD * a);
-
-/* c = a << 1 */
-DWORD MP_LShift(DWORD * c, DWORD * a);
-
-/* c = a << 1  mod a */
-void MP_LShiftMod(DWORD * c, DWORD * a);
-
-/* c = a * b mod p */
-void MP_MersennsMultMod(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a * a mod p */
-void MP_MersennsSquaMod(DWORD *c, DWORD *a);
-
-/* c = a * b */
-void MP_Mult(DWORD *c, DWORD *a, DWORD *b);
-
-/* c = a * b * r^-1 mod n */
-void MP_MultMont(DWORD *c, DWORD *a, DWORD *b);
+/* Macro for endianess swap */
+#define BE_SWAP(buf, index) \
+    ((buf[index+0] << 24) | \
+     (buf[index+1] << 16) | \
+     (buf[index+2] << 8) | \
+     (buf[index+3] << 0))
 
 
 #endif

@@ -162,14 +162,18 @@ extern "C" {
  *
  * Name of the update JSON file for HTTP.
  */
+#ifndef CY_OTA_HTTP_JOB_FILE
 #define CY_OTA_HTTP_JOB_FILE               "/ota_update.json"
+#endif
 
 /**
  * @brief Default OTA image file name.
  *
  * Name of the OTA image for HTTP.
  */
+#ifndef CY_OTA_HTTP_DATA_FILE
 #define CY_OTA_HTTP_DATA_FILE              "/anycloud-ota.bin"
+#endif
 
 /**
  * @brief Device message to the Publisher to ask about updates.
@@ -233,23 +237,6 @@ extern "C" {
 \"Filename\": \"%s\", \
 \"Offset\": \"%ld\", \
 \"Size\": \"%ld\"\
-}"
-
-/**
- * @brief Device message to the Publisher to ask for a download.
- * *
- * Used with sprintf() to insert the current version and UniqueTopicName at runtime.
- * Override if desired by defining in cy_ota_config.h.
- */
-#define CY_OTA_DOWNLOAD_DIRECT_REQUEST \
-"{\
-\"Message\":\"Send Direct Update\", \
-\"Manufacturer\": \"Express Widgits Corporation\", \
-\"ManufacturerID\": \"EWCO\", \
-\"ProductID\": \"Easy Widgit\", \
-\"SerialNumber\": \"ABC213450001\", \
-\"BoardName\": \"CY8CPROTO_062_4343W\", \
-\"Version\": \"%d.%d.%d\" \
 }"
 
 /**

@@ -1,6 +1,6 @@
 ﻿# Over-the-Air (OTA) Update Middleware Library
 
-This library provides support for OTA update of the application code running on a PSoC® 6 MCU with CYW4343W or CYW43012 connectivity device, using Wi-Fi or Bluetooth.
+The OTA library provides support for Over-The-Air update of the application code running on a PSoC™ 6 MCU with AIROC™ CYW4343W or CYW43012 Wi-Fi & Bluetooth® combo chip, using Wi-Fi or Bluetooth.
 
 ## 1. WiFi Update Flows
 
@@ -132,7 +132,7 @@ The OTA Agent now requests a "range" for each `GET` request when transferring th
 
 This release adds a message exchange between the device and the Publisher. The JSON-formatted "Job document" contains information where the OTA update image is located. This allows for the Job document to reside in one place, while the OTA update image can reside in another.
 
-For MQTT transport, this allows a Publisher Python script to be subscribed to a known topic (for example, `anycloud-CY8CPROTO_062_4343W/notify_publisher`) to listen for a device request. This allows for an asynchronous update sequence.
+For MQTT transport, this allows a Publisher Python script to be subscribed to a known topic (for example, `anycloud/CY8CPROTO_062_4343W/notify_publisher`) to listen for a device request. This allows for an asynchronous update sequence.
 
 For HTTP transport, the device will `GET` the Job document (for example:*ota_update.json*) which contains the same information as if it was served from an MQTT Broker.
 
@@ -183,7 +183,7 @@ Please check README.md for you application for more information.
 
 2. The device determines whether the OTA update image version is newer than the currently executing application, and the board name is the same, etc.
 
-   - If the OTA update image is accessible through an MQTT Broker, the device creates and subscribes to a unique topic name and sends a "Request Download" message with the "Unique Topic Name" to the Publisher on the known topic `anycloud-CY8CPROTO_062_4343W/notify_publisher`. The Publisher then splits the OTA update image into chunks and publishes them on the unique topic.
+   - If the OTA update image is accessible through an MQTT Broker, the device creates and subscribes to a unique topic name and sends a "Request Download" message with the "Unique Topic Name" to the Publisher on the known topic `anycloud/CY8CPROTO_062_4343W/notify_publisher`. The Publisher then splits the OTA update image into chunks and publishes them on the unique topic.
 
    - If the OTA update image is accessible on an HTTP Server, the device connects to the HTTP Server and downloads the OTA update image using an HTTP `GET` request, asking for a range of data sequentially until all data is transferred.
 
@@ -267,7 +267,7 @@ pip install paho-mqtt
 ```
 cd libs/anycloud-ota/scripts
 python publisher.py [tls] [-l] [-f <filepath>] [-b <broker>] [-k <kit>]
-                    [-e <topic_suffix]
+                    [-c <company_topic]
 ```
 
 Usage:
@@ -319,7 +319,9 @@ Usage:
 
   The kit name is used as part of the topic name; it must match the kit you are using.
 
-- `-e <topic_suffix>` - Add this to the first part of the topic path names.
+- `-c <company_topic>` - Add this to the first part of the topic path names.
+
+  - default is "anycloud"
 
   This must also be mirrored in the application for the topic name. This allows for multiple devices being tested to simultaneously connect to different instances of the  Publisher running on different systems so that they do not interfere with each other.
 
@@ -332,7 +334,7 @@ The *subscriber.py* script is provided as a verification script that acts the sa
 ```
 cd libs/anycloud-ota/scripts
 python subscriber.py [tls] [-l] [-b broker] [-k kit] [-f filepath] [-c <chunk_size>]
-                     [-e <topic_suffix]
+                     [-e <company_topic]
 ```
 
 Usage:
@@ -386,7 +388,9 @@ Usage:
 
 - `-c <chunk_size>` - The size in bytes of the chunk to request (used for testing).
 
-- `-e <topic_suffix>` - Add this to the first part of the topic path names.
+- `-e <company_topic>` - Add this to the first part of the topic path names.
+
+  - default is "anycloud"
 
   This must also be mirrored in the application for the topic name. This allows for multiple devices being tested to simultaneously connect to different instances of the Publisher running on different systems so that they do not interfere with each other.
 
@@ -520,11 +524,10 @@ Please refer to RELEASE.md for latest information.
 
 ## 10. Supported Kits
 
-- [PSoC 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
-
-- [PSoC 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
-
-- [PSoC® 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
+- [PSoC™ 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
+- [PSoC™ 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
+- [PSoC™ 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
+- [CY8CEVAL-062S2 Evaluation Kit][https://www.cypress.com/part/cy8ceval-062s2] (CY8CEVAL-062S2-LAI-4373M2)
 
 Only kits with 2M of internal flash and external flash are supported at this time. You will need to change the flash locations and sizes for the bootloader, primary slot (Slot 0) and secondary slot (Slot 1). See the Prepare MCUboot section below.
 
@@ -975,7 +978,7 @@ Adjust signing type for MCUboot as the default has changed from previous version
 
 For the CY8CKIT-062B0S2-4343W, we use a procedure called "provisioning" to put the CyBootloader into the device. Please refer to the board instructions for this procedure.
 
-[PSoC® 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
+[PSoC™ 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
 
 ## 16. Prepare for Building Your OTA Application
 
@@ -1044,7 +1047,7 @@ For external flash the secondary slot is an offset from the starting address of 
 
 - [OTA RELEASE.md]()
 - [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/api_reference_manual/html/index.html)
-- Cypress Modustoolbox OTA Examples
+- Cypress ModusToolbox OTA Examples
   - [Cypress OTA MQTT Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt )
   - [Cypress OTA HTTP Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-http )
   - [Cypress OTA Bluetooth Example ](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ble-battery-server)
@@ -1053,12 +1056,14 @@ For external flash the secondary slot is an offset from the starting address of 
 
 Cypress also provides a wealth of data at www.cypress.com to help you select the right device, and quickly and effectively integrate it into your design.
 
-For PSoC 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Cypress community.
+For PSoC™ 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Cypress community.
 
 ## 19. Document History
 
 | Document Version | Description of Change                                      |
 | ---------------- | ---------------------------------------------------------- |
+| 1.4.3            | Update publisher.py and subscriber.py documentation        |
+| 1.4.2            | Update Copyright info                                      |
 | 1.4.1            | Updated for OTA v4.0.0 BLE support and CyBootloader v1.7.2 |
 | 1.4.0            | Updated for OTA v3.0.0                                     |
 | 1.3.0            | Updated for new logging                                    |
@@ -1069,14 +1074,7 @@ For PSoC 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://
 
 ------
 
-All other trademarks or registered trademarks referenced herein are the property of their respective owners.
+© 2021, Cypress Semiconductor Corporation (an Infineon company) or an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
+This software, associated documentation and materials ("Software") is owned by Cypress Semiconductor Corporation or one of its affiliates ("Cypress") and is protected by and subject to worldwide patent protection (United States and foreign), United States copyright laws and international treaty provisions. Therefore, you may use this Software only as provided in the license agreement accompanying the software package from which you obtained this Software ("EULA"). If no EULA applies, then any reproduction, modification, translation, compilation, or representation of this Software is prohibited without the express written permission of Cypress.
+Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress reserves the right to make changes to the Software without notice. Cypress does not assume any liability arising out of the application or use of the Software or any product or circuit described in the Software. Cypress does not authorize its products for use in any products where a malfunction or failure of the Cypress product may reasonably be expected to result in significant property damage, injury or death ("High Risk Product"). By including Cypress's product in a High Risk Product, the manufacturer of such system or application assumes all risk of such use and in doing so agrees to indemnify Cypress against all liability.
 
-------
-
-![Banner](images/Banner.png)
-
--------------------------------------------------------------------------------
-
-© Cypress Semiconductor Corporation, 2020. This document is the property of Cypress Semiconductor Corporation and its subsidiaries ("Cypress"). This document, including any software or firmware included or referenced in this document ("Software"), is owned by Cypress under the intellectual property laws and treaties of the United States and other countries worldwide. Cypress reserves all rights under such laws and treaties and does not, except as specifically stated in this paragraph, grant any license under its patents, copyrights, trademarks, or other intellectual property rights. If the Software is not accompanied by a license agreement and you do not otherwise have a written agreement with Cypress governing the use of the Software, then Cypress hereby grants you a personal, non-exclusive, nontransferable license (without the right to sublicense) (1) under its copyright rights in the Software (a) for Software provided in source code form, to modify and reproduce the Software solely for use with Cypress hardware products, only internally within your organization, and (b) to distribute the Software in binary code form externally to end users (either directly or indirectly through resellers and distributors), solely for use on Cypress hardware product units, and (2) under those claims of Cypress's patents that are infringed by the Software (as provided by Cypress, unmodified) to make, use, distribute, and import the Software solely for use with Cypress hardware products. Any other use, reproduction, modification, translation, or compilation of the Software is prohibited.<br/>
-TO THE EXTENT PERMITTED BY APPLICABLE LAW, CYPRESS MAKES NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, WITH REGARD TO THIS DOCUMENT OR ANY SOFTWARE OR ACCOMPANYING HARDWARE, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. No computing device can be absolutely secure. Therefore, despite security measures implemented in Cypress hardware or software products, Cypress shall have no liability arising out of any security breach, such as unauthorized access to or use of a Cypress product. CYPRESS DOES NOT REPRESENT, WARRANT, OR GUARANTEE THAT CYPRESS PRODUCTS, OR SYSTEMS CREATED USING CYPRESS PRODUCTS, WILL BE FREE FROM CORRUPTION, ATTACK, VIRUSES, INTERFERENCE, HACKING, DATA LOSS OR THEFT, OR OTHER SECURITY INTRUSION (collectively, "Security Breach"). Cypress disclaims any liability relating to any Security Breach, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any Security Breach. In addition, the products described in these materials may contain design defects or errors known as errata which may cause the product to deviate from published specifications. To the extent permitted by applicable law, Cypress reserves the right to make changes to this document without further notice. Cypress does not assume any liability arising out of the application or use of any product or circuit described in this document. Any information provided in this document, including any sample design information or programming code, is provided only for reference purposes. It is the responsibility of the user of this document to properly design, program, and test the functionality and safety of any application made of this information and any resulting product. "High-Risk Device" means any device or system whose failure could cause personal injury, death, or property damage. Examples of High-Risk Devices are weapons, nuclear installations, surgical implants, and other medical devices. "Critical Component" means any component of a High-Risk Device whose failure to perform can be reasonably expected to cause, directly or indirectly, the failure of the High-Risk Device, or to affect its safety or effectiveness. Cypress is not liable, in whole or in part, and you shall and hereby do release Cypress from any claim, damage, or other liability arising from any use of a Cypress product as a Critical Component in a High-Risk Device. You shall indemnify and hold Cypress, its directors, officers, employees, agents, affiliates, distributors, and assigns harmless from and against all claims, costs, damages, and expenses, arising out of any claim, including claims for product liability, personal injury or death, or property damage arising from any use of a Cypress product as a Critical Component in a High-Risk Device. Cypress products are not intended or authorized for use as a Critical Component in any High-Risk Device except to the limited extent that (i) Cypress's published data sheet for the product explicitly states Cypress has qualified the product for use in a specific High-Risk Device, or (ii) Cypress has given you advance written authorization to use the product as a Critical Component in the specific High-Risk Device and you have signed a separate indemnification agreement.<br/>
-Cypress, the Cypress logo, Spansion, the Spansion logo, and combinations thereof, WICED, PSoC, CapSense, EZ-USB, F-RAM, and Traveo are trademarks or registered trademarks of Cypress in the United States and other countries. For a more complete list of Cypress trademarks, visit cypress.com. Other names and brands may be claimed as property of their respective owners.

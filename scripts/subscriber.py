@@ -28,14 +28,13 @@ KIT = "CY8CPROTO_062_4343W"
 
 # Subscriptions
 COMPANY_TOPIC_PREPEND = "anycloud"
-EXTRA_TOPIC_PREPEND    = ""         # add string here (or on command line) and in app to be unique
 PUBLISHER_LISTEN_TOPIC = "publish_notify"
 PUBLISHER_DIRECT_TOPIC = "OTAImage"
 
 # These are created at runtime so that KIT can be replaced
 
-# SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC    # Device sends messages to Publisher
-# PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC            # Device asks for Download Directly (no Job)
+# SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND  + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC    # Device sends messages to Publisher
+# PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC            # Device asks for Download Directly (no Job)
 
 BAD_JSON_DOC = "MALFORMED JSON DOCUMENT"            # Bad incoming message
 UPDATE_AVAILABLE_REQUEST = "Update Availability"    # Device requests if there is an Update avaialble
@@ -472,7 +471,7 @@ def get_OTA_image():
     # Create Unique Topic Name
     print( "Subscriber: Create unique topic to receive the OTA Image" )
     rand_string = str(random.randint(0, 1024*1024*1024))
-    unique_topic_name = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/subscriber/image" + rand_string
+    unique_topic_name = COMPANY_TOPIC_PREPEND + "/" + KIT + "/subscriber/image" + rand_string
 
     print("Subscriber: Waiting for message from Publisher on: " + unique_topic_name)
     sub_client.subscribe_mid = -1
@@ -578,7 +577,7 @@ if __name__ == "__main__":
         if last_arg == "-f":
             OTA_IMAGE_FILE = arg
         if last_arg == "-e":
-            EXTRA_TOPIC_PREPEND = arg
+            COMPANY_TOPIC_PREPEND = arg
         if last_arg == "-b":
             if ((arg == "amazon") | (arg == "a")):
                 BROKER_ADDRESS = AMAZON_BROKER_ADDRESS
@@ -605,10 +604,10 @@ print("    extra debug: " + DEBUG_LOG_STRING)
 if request_file_in_chunks == True:
     print("   Get file in chunks of size: " + str(file_in_chunks_chunk_size) )
 
-SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
+SUBSCRIBER_PUBLISH_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_LISTEN_TOPIC
 print("SUBSCRIBER_PUBLISH_TOPIC   : " + SUBSCRIBER_PUBLISH_TOPIC)
 
-PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
+PUBLISHER_DIRECT_REQUEST_TOPIC = COMPANY_TOPIC_PREPEND + "/" + KIT + "/" + PUBLISHER_DIRECT_TOPIC
 print("PUBLISHER_DIRECT_REQUEST_TOPIC: " + PUBLISHER_DIRECT_REQUEST_TOPIC)
 print("\n")
 
@@ -639,10 +638,10 @@ if TLS_ENABLED:
         ca_certs = "amazon_ca.crt"
         certfile = "amazon_client.crt"
         keyfile  = "amazon_private_key.pem"
-    print("Connecting using TLS to '" + COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
+    print("Connecting using TLS to '" + COMPANY_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
 else:
     BROKER_PORT = 1883
-    print("Unencrypted connection to '" + COMPANY_TOPIC_PREPEND + EXTRA_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
+    print("Unencrypted connection to '" + COMPANY_TOPIC_PREPEND + ":" + str(BROKER_PORT) + "'" + os.linesep)
 
 subscriber_loop()
 

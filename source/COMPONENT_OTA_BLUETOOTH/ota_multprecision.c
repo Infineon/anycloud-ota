@@ -44,160 +44,160 @@
  ********************************************************************
 */
 #include <string.h>
-#include "multprecision.h"
-#include "ecc_pp.h"
+#include "ota_multprecision.h"
+#include "ota_ecc_pp.h"
 
-void MP_Init(DWORD *c)
+void ota_MP_Init(DWORD *c)
 {
-	int i;
+    int i;
 
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-		c[i]=0;
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+        c[i]=0;
 }
 
-void MP_Copy(DWORD *c, DWORD *a)
+void ota_MP_Copy(DWORD *c, DWORD *a)
 {
-	int i;
+    int i;
 
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-	    c[i]=a[i];
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+        c[i]=a[i];
 }
 
-int MP_CMP(DWORD *a, DWORD *b)
+int ota_MP_CMP(DWORD *a, DWORD *b)
 {
-	int i;
-	int NumDWORDs=KEY_LENGTH_DWORDS;
+    int i;
+    int NumDWORDs=KEY_LENGTH_DWORDS;
 
-	for(i=NumDWORDs-1; i>=0; i--)
-	{
-		if(a[i]<b[i])
-			return -1;
-		if(a[i]>b[i])
-			return 1;
-	}
-	return 0;
+    for(i=NumDWORDs-1; i>=0; i--)
+    {
+        if(a[i]<b[i])
+            return -1;
+        if(a[i]>b[i])
+            return 1;
+    }
+    return 0;
 }
 
-int MP_isZero(DWORD *a)
+int ota_MP_isZero(DWORD *a)
 {
-	int i;
-	int NumDWORDs=KEY_LENGTH_DWORDS;
+    int i;
+    int NumDWORDs=KEY_LENGTH_DWORDS;
 
-	for(i=0; i<NumDWORDs; i++)
-		if(a[i])
-			return 0;
+    for(i=0; i<NumDWORDs; i++)
+        if(a[i])
+            return 0;
 
-	return 1;
+    return 1;
 }
 
-UINT32 MP_DWORDBits (DWORD a)
+UINT32 ota_MP_DWORDBits (DWORD a)
 {
-	int i;
+    int i;
 
-	for (i = 0; i < DWORD_BITS; i++, a >>= 1)
+    for (i = 0; i < DWORD_BITS; i++, a >>= 1)
       if (a == 0)
         break;
 
     return i;
 }
 
-UINT32 MP_MostSignDWORDs(DWORD *a)
+UINT32 ota_MP_MostSignDWORDs(DWORD *a)
 {
-	int i;
-	int NumDWORDs=KEY_LENGTH_DWORDS;
+    int i;
+    int NumDWORDs=KEY_LENGTH_DWORDS;
 
-	for(i=NumDWORDs-1; i>=0; i--)
-		if(a[i])
-			break;
-	return (i+1);
+    for(i=NumDWORDs-1; i>=0; i--)
+        if(a[i])
+            break;
+    return (i+1);
 }
 
-UINT32 MP_MostSignBits(DWORD *a)
+UINT32 ota_MP_MostSignBits(DWORD *a)
 {
-	int aMostSignDWORDs;
+    int aMostSignDWORDs;
 
-	aMostSignDWORDs=MP_MostSignDWORDs(a);
-	if(aMostSignDWORDs==0)
-		return 0;
+    aMostSignDWORDs = ota_MP_MostSignDWORDs(a);
+    if(aMostSignDWORDs==0)
+        return 0;
 
-	return ( ((aMostSignDWORDs-1)<<DWORD_BITS_SHIFT)+MP_DWORDBits(a[aMostSignDWORDs-1]) );
+    return ( ((aMostSignDWORDs-1)<<DWORD_BITS_SHIFT)+ota_MP_DWORDBits(a[aMostSignDWORDs-1]) );
 }
 
 
-DWORD MP_Add(DWORD *c, DWORD *a, DWORD *b)
+DWORD ota_MP_Add(DWORD *c, DWORD *a, DWORD *b)
 {
-	int i;
-	DWORD carrier;
-	DWORD temp;
+    int i;
+    DWORD carrier;
+    DWORD temp;
 
-	carrier=0;
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-	{
-		temp=a[i]+carrier;
-		carrier = (temp<carrier);
-		temp += b[i];
-		carrier |= (temp<b[i]);
-		c[i]=temp;
-	}
+    carrier=0;
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+    {
+        temp=a[i]+carrier;
+        carrier = (temp<carrier);
+        temp += b[i];
+        carrier |= (temp<b[i]);
+        c[i]=temp;
+    }
 
-	return carrier;
+    return carrier;
 }
 
 //c=a-b
-DWORD MP_Sub(DWORD *c, DWORD *a, DWORD *b)
+DWORD ota_MP_Sub(DWORD *c, DWORD *a, DWORD *b)
 {
-	int i;
-	DWORD borrow;
-	DWORD temp;
+    int i;
+    DWORD borrow;
+    DWORD temp;
 
-	borrow=0;
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-	{
-		temp=a[i]-borrow;
-		borrow=(temp>a[i]);
-		c[i] = temp-b[i];
-		borrow |= (c[i]>temp);
-	}
+    borrow=0;
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+    {
+        temp=a[i]-borrow;
+        borrow=(temp>a[i]);
+        c[i] = temp-b[i];
+        borrow |= (c[i]>temp);
+    }
 
-	return borrow;
+    return borrow;
 }
 
 
 // c=a*b; c must have a buffer of 2*Key_LENGTH_DWORDS, c != a != b
-void MP_Mult(DWORD *c, DWORD *a, DWORD *b)
+void ota_MP_Mult(DWORD *c, DWORD *a, DWORD *b)
 {
-	int i, j;
-	DWORD W, U, V;
+    int i, j;
+    DWORD W, U, V;
 
     memset(c, 0, KEY_LENGTH_BYTES*2);
 
-	//assume little endian right now
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-	{
-		U = 0;
-		for(j=0; j<KEY_LENGTH_DWORDS; j++)
+    //assume little endian right now
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+    {
+        U = 0;
+        for(j=0; j<KEY_LENGTH_DWORDS; j++)
         {
             {
                 UINT64 result;
                 result = ((UINT64)a[i]) * ((UINT64)b[j]);
-                W = result >> 32;
+                W = (DWORD)(result >> 32);
                 V= (DWORD)result;
             }
 
-			V=V+U;
-			U=(V<U);
-			U+=W;
+            V=V+U;
+            U=(V<U);
+            U+=W;
 
-			V = V+c[i+j];
-			U += (V<c[i+j]);
+            V = V+c[i+j];
+            U += (V<c[i+j]);
 
-			c[i+j] = V;
-		}
-		c[i+KEY_LENGTH_DWORDS]=U;
-	}
+            c[i+j] = V;
+        }
+        c[i+KEY_LENGTH_DWORDS]=U;
+    }
 }
 
-void MP_FastMod_P256(DWORD *c, DWORD *a)
+void ota_MP_FastMod_P256(DWORD *c, DWORD *a)
 {
     DWORD A, B, C, D, E, F, G;
     UINT8 UA, UB, UC, UD, UE, UF, UG;
@@ -428,7 +428,7 @@ void MP_FastMod_P256(DWORD *c, DWORD *a)
     {
         while(U)
         {
-            MP_Add(c, c, modp);
+            ota_MP_Add(c, c, modp);
             U++;
         }
     }
@@ -436,195 +436,195 @@ void MP_FastMod_P256(DWORD *c, DWORD *a)
     {
         while(U)
         {
-            MP_Sub(c, c, modp);
+            ota_MP_Sub(c, c, modp);
             U--;
         }
     }
 
-    if(MP_CMP(c, modp)>=0)
-        MP_Sub(c, c, modp);
+    if(ota_MP_CMP(c, modp)>=0)
+        ota_MP_Sub(c, c, modp);
 
 }
 
-void MP_LShiftMod(DWORD * c, DWORD * a)
+void ota_MP_LShiftMod(DWORD * c, DWORD * a)
 {
-	DWORD carrier;
+    DWORD carrier;
 
-	carrier=MP_LShift(c, a);
-	if(carrier)
-        MP_Sub(c, c, modp);
-	else
+    carrier=ota_MP_LShift(c, a);
+    if(carrier)
+        ota_MP_Sub(c, c, modp);
+    else
     {
-        if(MP_CMP(c, modp)>=0)
-            MP_Sub(c, c, modp);
+        if(ota_MP_CMP(c, modp)>=0)
+            ota_MP_Sub(c, c, modp);
     }
 }
 
-DWORD MP_LShift(DWORD * c, DWORD * a)
+DWORD ota_MP_LShift(DWORD * c, DWORD * a)
 {
-	DWORD carrier;
-	int i, j;
-	DWORD temp;
+    DWORD carrier;
+    int i, j;
+    DWORD temp;
     UINT32 b = 1;
 
-	j=DWORD_BITS-b;
-	carrier=0;
+    j=DWORD_BITS-b;
+    carrier=0;
 
-	for(i=0; i<KEY_LENGTH_DWORDS; i++)
-	{
-		temp=a[i];								// in case c==a
-		c[i]=(temp<<b) | carrier;
-		carrier = temp >> j;
-	}
+    for(i=0; i<KEY_LENGTH_DWORDS; i++)
+    {
+        temp=a[i];                                // in case c==a
+        c[i]=(temp<<b) | carrier;
+        carrier = temp >> j;
+    }
 
-	return carrier;
+    return carrier;
 }
 
-void MP_RShift(DWORD * c, DWORD * a)
+void ota_MP_RShift(DWORD * c, DWORD * a)
 {
-	DWORD carrier;
-	int i, j;
-	DWORD temp;
-	int NumDWORDs=KEY_LENGTH_DWORDS;
-	DWORD b = 1;
+    DWORD carrier;
+    int i, j;
+    DWORD temp;
+    int NumDWORDs=KEY_LENGTH_DWORDS;
+    DWORD b = 1;
 
-	j=DWORD_BITS-b;
-	carrier=0;
+    j=DWORD_BITS-b;
+    carrier=0;
 
-	for(i=NumDWORDs-1; i>=0; i--)
-	{
-		temp=a[i];				// in case of c==a
-		c[i]=(temp>>b) | carrier;
-		carrier = temp << j;
-	}
+    for(i=NumDWORDs-1; i>=0; i--)
+    {
+        temp=a[i];                // in case of c==a
+        c[i]=(temp>>b) | carrier;
+        carrier = temp << j;
+    }
 }
 
 // Curve specific optimization when p is a pseudo-Mersenns prime, p=2^(KEY_LENGTH_BITS)-omega
-void MP_MersennsMultMod(DWORD *c, DWORD *a, DWORD *b)
+void ota_MP_MersennsMultMod(DWORD *c, DWORD *a, DWORD *b)
 {
-	DWORD cc[2*KEY_LENGTH_DWORDS];
+    DWORD cc[2*KEY_LENGTH_DWORDS];
 
-	MP_Mult(cc, a, b);
+    ota_MP_Mult(cc, a, b);
 
-	MP_FastMod_P256(c, cc);
+    ota_MP_FastMod_P256(c, cc);
 }
 
 
 
 // Curve specific optimization when p is a pseudo-Mersenns prime
-void MP_MersennsSquaMod(DWORD *c, DWORD *a)
+void ota_MP_MersennsSquaMod(DWORD *c, DWORD *a)
 {
-	MP_MersennsMultMod(c, a, a);
+    ota_MP_MersennsMultMod(c, a, a);
 }
 
-void MP_AddMod(DWORD *c, DWORD *a, DWORD *b)
+void ota_MP_AddMod(DWORD *c, DWORD *a, DWORD *b)
 {
-	DWORD carrier;
+    DWORD carrier;
 
-	carrier=MP_Add(c, a, b);
-	if(carrier)
+    carrier=ota_MP_Add(c, a, b);
+    if(carrier)
     {
-        MP_Sub(c, c, modp);
+        ota_MP_Sub(c, c, modp);
     }
-	else if(MP_CMP(c, modp)>=0)
+    else if(ota_MP_CMP(c, modp)>=0)
     {
-        MP_Sub(c, c, modp);
+        ota_MP_Sub(c, c, modp);
     }
 }
 
-void MP_SubMod(DWORD *c, DWORD *a, DWORD *b)
+void ota_MP_SubMod(DWORD *c, DWORD *a, DWORD *b)
 {
-	DWORD borrow;
+    DWORD borrow;
 
-	borrow=MP_Sub(c, a, b);
-	if(borrow)
-		MP_Add(c, c, modp);
+    borrow=ota_MP_Sub(c, a, b);
+    if(borrow)
+        ota_MP_Add(c, c, modp);
 }
 
-void MP_InvMod(DWORD *aminus, DWORD *u, const DWORD* modulus)
+void ota_MP_InvMod(DWORD *aminus, DWORD *u, const DWORD* modulus)
 {
-	DWORD v[KEY_LENGTH_DWORDS];
-	DWORD A[KEY_LENGTH_DWORDS+1], C[KEY_LENGTH_DWORDS+1];
+    DWORD v[KEY_LENGTH_DWORDS];
+    DWORD A[KEY_LENGTH_DWORDS+1], C[KEY_LENGTH_DWORDS+1];
 
-	MP_Copy(v, (DWORD*)modulus);
-	MP_Init(A);
-	MP_Init(C);
-	A[0]=1;
+    ota_MP_Copy(v, (DWORD*)modulus);
+    ota_MP_Init(A);
+    ota_MP_Init(C);
+    A[0]=1;
 
-	while(!MP_isZero(u))
-	{
-		while( !(u[0] & 0x01) )					// u is even
-		{
-			MP_RShift(u, u);
-			if( !(A[0] & 0x01) )					// A is even
-				MP_RShift(A, A);
-			else
-			{
-				A[KEY_LENGTH_DWORDS]=MP_Add(A, A, (DWORD*)modulus);	// A =A+p
-				MP_RShift(A, A);
-				A[KEY_LENGTH_DWORDS-1] |= (A[KEY_LENGTH_DWORDS]<<31);
-			}
-		}
-
-		while( !(v[0] & 0x01) )					// v is even
-		{
-			MP_RShift(v, v);
-			if( !(C[0] & 0x01) )					// C is even
-				MP_RShift(C, C);
-			else
-			{
-				C[KEY_LENGTH_DWORDS]=MP_Add(C, C, (DWORD*)modulus);	// C =C+p
-				MP_RShift(C, C);
-				C[KEY_LENGTH_DWORDS-1] |= (C[KEY_LENGTH_DWORDS]<<31);
-			}
-		}
-
-		if(MP_CMP(u, v)>=0)
-		{
-			MP_Sub(u, u, v);
-            if(MP_Sub(A, A, C))
-                MP_Add(A, A, (DWORD*)modulus);
+    while(!ota_MP_isZero(u))
+    {
+        while( !(u[0] & 0x01) )                    // u is even
+        {
+            ota_MP_RShift(u, u);
+            if( !(A[0] & 0x01) )                    // A is even
+                ota_MP_RShift(A, A);
+            else
+            {
+                A[KEY_LENGTH_DWORDS]=ota_MP_Add(A, A, (DWORD*)modulus);    // A =A+p
+                ota_MP_RShift(A, A);
+                A[KEY_LENGTH_DWORDS-1] |= (A[KEY_LENGTH_DWORDS]<<31);
+            }
         }
-		else
-		{
-			MP_Sub(v, v, u);
-            if(MP_Sub(C, C, A))
-                MP_Add(C, C, (DWORD*)modulus);
-		}
-	}
 
-	if(MP_CMP(C, (DWORD*)modulus)>=0)
-    {
-		MP_Sub(aminus, C, (DWORD*)modulus);
+        while( !(v[0] & 0x01) )                    // v is even
+        {
+            ota_MP_RShift(v, v);
+            if( !(C[0] & 0x01) )                    // C is even
+                ota_MP_RShift(C, C);
+            else
+            {
+                C[KEY_LENGTH_DWORDS]=ota_MP_Add(C, C, (DWORD*)modulus);    // C =C+p
+                ota_MP_RShift(C, C);
+                C[KEY_LENGTH_DWORDS-1] |= (C[KEY_LENGTH_DWORDS]<<31);
+            }
+        }
+
+        if(ota_MP_CMP(u, v)>=0)
+        {
+            ota_MP_Sub(u, u, v);
+            if(ota_MP_Sub(A, A, C))
+                ota_MP_Add(A, A, (DWORD*)modulus);
+        }
+        else
+        {
+            ota_MP_Sub(v, v, u);
+            if(ota_MP_Sub(C, C, A))
+                ota_MP_Add(C, C, (DWORD*)modulus);
+        }
     }
-	else
+
+    if(ota_MP_CMP(C, (DWORD*)modulus)>=0)
     {
-		MP_Copy(aminus, C);
+        ota_MP_Sub(aminus, C, (DWORD*)modulus);
+    }
+    else
+    {
+        ota_MP_Copy(aminus, C);
     }
 }
 
 
-DWORD MP_LAdd(DWORD *c, DWORD *a, DWORD *b)
+DWORD ota_MP_LAdd(DWORD *c, DWORD *a, DWORD *b)
 {
-	int i;
-	DWORD carrier;
-	DWORD temp;
+    int i;
+    DWORD carrier;
+    DWORD temp;
 
-	carrier=0;
-	for(i=0; i<KEY_LENGTH_DWORDS*2; i++)
-	{
-		temp=a[i]+carrier;
-		carrier = (temp<carrier);
-		temp += b[i];
-		carrier |= (temp<b[i]);
-		c[i]=temp;
-	}
+    carrier=0;
+    for(i=0; i<KEY_LENGTH_DWORDS*2; i++)
+    {
+        temp=a[i]+carrier;
+        carrier = (temp<carrier);
+        temp += b[i];
+        carrier |= (temp<b[i]);
+        c[i]=temp;
+    }
 
-	return carrier;
+    return carrier;
 }
 
 // Montgomery reduction
-void MP_MontReduction(DWORD *q, DWORD* c)
+void ota_MP_MontReduction(DWORD *q, DWORD* c)
 {
     UINT32 a[KEY_LENGTH_DWORDS*2];
     UINT32 y[KEY_LENGTH_DWORDS*2];
@@ -633,30 +633,30 @@ void MP_MontReduction(DWORD *q, DWORD* c)
     // q = c mod r
     memcpy(q, c, KEY_LENGTH_BYTES);
 
-    // y = (c mod r) * nprime
-	MP_Mult(y, q, (DWORD*)nprime);
+    // y = (c mod r) * ota_nprime
+    ota_MP_Mult(y, q, (DWORD*)ota_nprime);
 
     // q = ((c mod r ) * nprime) mod r
     memcpy(q, y, KEY_LENGTH_BYTES);
 
     // y = q * n
-	MP_Mult(y, q, modn);
+    ota_MP_Mult(y, q, modn);
 
     // a = c + q * n
-    if(MP_LAdd(a, c, y))
+    if(ota_MP_LAdd(a, c, y))
         carry = 1;
 
     // q = (c + qn) / r
     memcpy(q, a+KEY_LENGTH_DWORDS, KEY_LENGTH_BYTES);
 
     // if q > n then q -= n
-    if(carry || MP_CMP(q, modn) > 0)
-        MP_Sub(q, q, modn);
+    if(carry || ota_MP_CMP(q, modn) > 0)
+        ota_MP_Sub(q, q, modn);
 }
 
-void MP_MultMont(DWORD *c, DWORD *a, DWORD *b)
+void ota_MP_MultMont(DWORD *c, DWORD *a, DWORD *b)
 {
-	DWORD cc[2*KEY_LENGTH_DWORDS];
-	MP_Mult(cc, a, b);
-    MP_MontReduction(c, cc);
+    DWORD cc[2*KEY_LENGTH_DWORDS];
+    ota_MP_Mult(cc, a, b);
+    ota_MP_MontReduction(c, cc);
 }

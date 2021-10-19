@@ -31,7 +31,6 @@
 #include "cy_ota_internal.h"
 #include "cyabs_rtos.h"
 
-//#include "cy_iot_network_secured_socket.h"
 #include "cy_mqtt_api.h"
 #include "cy_json_parser.h"
 #include "cy_log.h"
@@ -193,27 +192,27 @@ static cy_rslt_t  cy_ota_modify_subscriptions(cy_ota_context_t *ctx,
  *
  **********************************************************************/
 
-void _print_connect_info(cy_mqtt_connect_info_t *connection)
+static void cy_ota_print_connect_info(cy_mqtt_connect_info_t *connection)
 {
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_connect_info_t:\n");
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   ID       : %.*s\n", connection->client_id_len, connection->client_id);
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   user     : %.*s\n", connection->username_len, connection->username);
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   pass     : %.*s\n", connection->password_len, connection->password);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   user     : %.*s\n", connection->username_len, (connection->username == NULL) ? "" : connection->username);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   pass     : %.*s\n", connection->password_len, (connection->password == NULL) ? "" : connection->password);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   clean    : %d\n", connection->clean_session);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "   WILL     : %p\n", connection->will_info);
     if (connection->will_info != NULL)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "          topic : %.*s\n", connection->will_info->topic_len, connection->will_info->topic);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "          topic : %.*s\n", connection->will_info->topic_len, (connection->will_info->topic == NULL) ? "" : connection->will_info->topic);
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "          qos   : %d\n", connection->will_info->qos);
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "         retain : %ld\n", connection->will_info->retain);
     }
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "keep alive  : %p\n", connection->keep_alive_sec);
 }
 
-void _print_broker_info(cy_mqtt_broker_info_t *broker)
+static void cy_ota_print_broker_info(cy_mqtt_broker_info_t *broker)
 {
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "cy_mqtt_broker_info_t:\n");
-    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "             server : %.*s\n", broker->hostname_len, broker->hostname);
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "             server : %.*s\n", broker->hostname_len, (broker->hostname == NULL) ? "" : broker->hostname);
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "             port   : %d\n", broker->port);
 }
 
@@ -224,7 +223,7 @@ void cy_ota_mqtt_timer_callback(cy_timer_callback_arg_t arg)
 
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%s() new event:%d\n", __func__, ctx->mqtt.mqtt_timer_event);
     /* yes, we set the ota_event as the mqtt get() function uses the same event var */
-    cy_rtos_setbits_event(&ctx->ota_event, ctx->mqtt.mqtt_timer_event, 0);
+    cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)ctx->mqtt.mqtt_timer_event, 0);
 }
 
 cy_rslt_t cy_ota_stop_mqtt_timer(cy_ota_context_t *ctx)
@@ -246,7 +245,7 @@ cy_rslt_t cy_ota_start_mqtt_timer(cy_ota_context_t *ctx, uint32_t secs, ota_even
     return result;
 }
 
-cy_rslt_t cy_ota_mqtt_create_json_request(cy_ota_context_t *ctx,
+static cy_rslt_t cy_ota_mqtt_create_json_request(cy_ota_context_t *ctx,
                                         const char *message_doc,
                                         const char *filename,
                                         uint32_t offset,
@@ -254,6 +253,7 @@ cy_rslt_t cy_ota_mqtt_create_json_request(cy_ota_context_t *ctx,
 {
     /* create json doc for get job */
     cy_rslt_t   result = CY_RSLT_SUCCESS;
+    uint32_t    needed_size;
 
     memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc) );
 
@@ -261,12 +261,23 @@ cy_rslt_t cy_ota_mqtt_create_json_request(cy_ota_context_t *ctx,
     /* Current default. Send one request for the entire file,
      * Publisher.py will chunk and send separate chunks.
      */
-    sprintf(ctx->mqtt.json_doc, message_doc,
-            APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic);
+    needed_size = snprintf(NULL, 0, message_doc, APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic);
+    if (needed_size > (sizeof(ctx->mqtt.json_doc)-1) )
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Need to increase size of job_doc from CY_OTA_JSON_DOC_BUFF_SIZE (%ld) to at least (%ld)\n", __func__, CY_OTA_JSON_DOC_BUFF_SIZE, needed_size);
+        return CY_RSLT_OTA_ERROR_OUT_OF_MEMORY;
+    }
+    sprintf(ctx->mqtt.json_doc, message_doc, APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic);
 #else
     /* This code is for requesting each chunk separately. */
-    sprintf(ctx->mqtt.json_doc, message_doc,
-            APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic,
+    needed_size = snprintf(NULL, 0, message_doc, APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic,
+            filename, offset, size);
+    if (needed_size > (sizeof(ctx->mqtt.json_doc)-1) )
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Need to increase size of job_doc from CY_OTA_JSON_DOC_BUFF_SIZE (%ld) to at least (%ld)\n", __func__, CY_OTA_JSON_DOC_BUFF_SIZE, needed_size);
+        return CY_RSLT_OTA_ERROR_OUT_OF_MEMORY;
+    }
+    sprintf(ctx->mqtt.json_doc, message_doc, APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD, ctx->mqtt.unique_topic,
             filename, offset, size);
 #endif
 
@@ -310,7 +321,7 @@ cy_rslt_t cy_ota_mqtt_publish_request(cy_ota_context_t *ctx, char *mqtt_topic, c
     return CY_RSLT_SUCCESS;
 }
 
-cy_rslt_t cy_ota_subscribe_to_unique_topic(cy_ota_context_t *ctx)
+static cy_rslt_t cy_ota_subscribe_to_unique_topic(cy_ota_context_t *ctx)
 {
     char        *unique_topic[1];
     cy_rslt_t   result = CY_RSLT_SUCCESS;
@@ -380,7 +391,7 @@ cy_rslt_t cy_ota_mqtt_parse_chunk(const uint8_t *buffer, uint32_t length, cy_ota
     cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "header->this_payload_index off:%d : %d\n", offsetof(cy_ota_mqtt_chunk_payload_header_t,this_payload_index), header->this_payload_index);
 
     /* test for magic */
-    if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
+    if (memcmp(header->magic, (const void *)CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
     {
         return CY_RSLT_OTA_ERROR_NOT_A_HEADER;
     }
@@ -470,7 +481,7 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
         if (result != CY_RSLT_SUCCESS)
         {
             cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() Write failed\n", __func__);
-            cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
+            cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_DATA_FAIL, 0);
             return result;
         }
         break;
@@ -525,11 +536,11 @@ cy_rslt_t cy_ota_mqtt_write_chunk_to_flash(cy_ota_context_t *ctx, cy_ota_storage
  * the MQTT library.
  */
 
+static cy_ota_storage_write_info_t mqtt_chunk_info;
 static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, void *user_data )
 {
     cy_rslt_t   result = CY_RSLT_SUCCESS;
     cy_ota_context_t *ctx = (cy_ota_context_t *)user_data;
-    cy_ota_storage_write_info_t chunk_info = { 0 };
 
     if ( (mqtt_handle == NULL) || (user_data == NULL) )
     {
@@ -553,7 +564,7 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
             {
                 cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() CY_OTA_EVENT_DROPPED_US Network MQTT disconnect reason:%d state:%d %s!\n",
                         __func__,  event.data.reason, ctx->curr_state, cy_ota_get_state_string(ctx->curr_state));
-                cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DROPPED_US, 0);
+                cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_DROPPED_US, 0);
             }
         }
     }
@@ -581,7 +592,7 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%() Received DATA.\n", __func__);
 
            header = (cy_ota_mqtt_chunk_payload_header_t *)event.data.pub_msg.received_message.payload;
-           if (memcmp(header->magic, CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
+           if (memcmp(header->magic, (const void *)CY_OTA_MQTT_MAGIC, strlen(CY_OTA_MQTT_MAGIC)) != 0 )
            {
                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() Received packet outside of downloading on topic %.*s.\n", __func__
                        , event.data.pub_msg.received_message.topic_len, event.data.pub_msg.received_message.topic);
@@ -590,8 +601,12 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
            /* return before we get the mutex */
            return;
        }
+       else
+       {
+           cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "%() Unknown packet.\n", __func__);
+       }
 
-       result = cy_rtos_get_mutex(&ctx->sub_callback_mutex, CY_OTA_WAIT_MQTT_MUTEX_MS);
+       result = cy_rtos_get_mutex(&ctx->sub_callback_mutex,(CY_OTA_WAIT_MQTT_MUTEX_MS) );
        if (result != CY_RSLT_SUCCESS)
        {
            /* we didn't get the mutex - something is wrong! */
@@ -657,25 +672,25 @@ static void cy_ota_mqtt_callback( cy_mqtt_t mqtt_handle, cy_mqtt_event_t event, 
        }
        else if (ctx->curr_state == CY_OTA_STATE_DATA_DOWNLOAD)
        {
-           result = cy_ota_mqtt_parse_chunk( (const uint8_t *)pub_msg->payload, (uint32_t)pub_msg->payload_len, &chunk_info);
+           result = cy_ota_mqtt_parse_chunk( (const uint8_t *)pub_msg->payload, (uint32_t)pub_msg->payload_len, &mqtt_chunk_info);
 
            if (result == CY_RSLT_SUCCESS)
            {
-               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Received packet %d of %d\n", chunk_info.packet_number, chunk_info.total_packets);
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Received packet %d of %d\n", mqtt_chunk_info.packet_number, mqtt_chunk_info.total_packets);
 
                /* update ctx with appropriate sizes */
                if (ctx->total_image_size == 0)
                {
-                   ctx->total_image_size = chunk_info.total_size;
+                   ctx->total_image_size = mqtt_chunk_info.total_size;
                }
 
                /* write the data */
-               result = cy_ota_mqtt_write_chunk_to_flash(ctx, &chunk_info);
+               result = cy_ota_mqtt_write_chunk_to_flash(ctx, &mqtt_chunk_info);
                /* Errors handled below in _callback_exit */
            }
            else
            {
-               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Packet %d had errors in header\n", chunk_info.packet_number);
+               cy_log_msg(CYLF_OTA, CY_LOG_DEBUG2, "Packet %d had errors in header\n", mqtt_chunk_info.packet_number);
            }
        }
 
@@ -685,32 +700,32 @@ _callback_exit:
        if (result == CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_RSLT_OTA_ERROR_MALFORMED_JOB_DOC !\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_MALFORMED_JOB_DOC, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_MALFORMED_JOB_DOC, 0);
        }
        else if (result == CY_RSLT_OTA_ERROR_WRITE_STORAGE)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_STORAGE_ERROR !\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_STORAGE_ERROR, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_STORAGE_ERROR, 0);
        }
        else if(result == CY_RSLT_OTA_ERROR_APP_RETURNED_STOP)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_APP_STOPPED_OTA !\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_APP_STOPPED_OTA, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_APP_STOPPED_OTA, 0);
        }
        else if (result == CY_RSLT_OTA_ERROR_INVALID_VERSION)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_INVALID_VERSION !\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_INVALID_VERSION, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_INVALID_VERSION, 0);
        }
        else if (result != CY_RSLT_SUCCESS)
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_DATA_FAIL !\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_DATA_FAIL, 0);
        }
        else
        {
            cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, " CY_OTA_EVENT_GOT_DATA!\n");
-           cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_GOT_DATA, 0);
+           cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_GOT_DATA, 0);
        }
        cy_rtos_set_mutex(&ctx->sub_callback_mutex);
     }
@@ -785,8 +800,8 @@ static cy_rslt_t cy_ota_establish_MQTT_connection(cy_ota_context_t *ctx,
     connect_info.will_info = &will_info;
 
     /* Print info for log_level DEBUG */
-    _print_connect_info(&connect_info);
-    _print_broker_info(&broker_info);
+    cy_ota_print_connect_info(&connect_info);
+    cy_ota_print_broker_info(&broker_info);
 
     result = cy_mqtt_create( buffer, buff_len,
                              security,
@@ -1081,7 +1096,7 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
         goto cleanup_and_exit;
     }
 
-    result = cy_ota_mqtt_publish_request(ctx, SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
+    result = cy_ota_mqtt_publish_request(ctx, (char *)SUBSCRIBER_PUBLISH_TOPIC, ctx->mqtt.json_doc);
     if (result != CY_RSLT_SUCCESS)
     {
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() cy_ota_mqtt_publish_request() failed\n", __func__);
@@ -1108,7 +1123,7 @@ cy_rslt_t cy_ota_mqtt_get_job(cy_ota_context_t *ctx)
         if (waitfor & CY_OTA_EVENT_SHUTDOWN_NOW)
         {
             /* Pass along to Agent thread */
-            cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_SHUTDOWN_NOW, 0);
+            cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_SHUTDOWN_NOW, 0);
             result = CY_RSLT_SUCCESS;
             break;
         }
@@ -1226,26 +1241,17 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
 
     /* Create json doc for the request */
     memset(ctx->mqtt.json_doc, 0x00, sizeof(ctx->mqtt.json_doc));
-    if (ctx->network_params.use_get_job_flow != 0)
-    {
 #ifdef CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
-        /* Current default. Send one request for the entire file,
-         * Publisher.py will chunk and send separate chunks.
-         */
-        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_REQUEST, "", 0, 0);
+    /* Current default. Send one request for the entire file,
+     * Publisher.py will chunk and send separate chunks.
+     */
+    result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_REQUEST, "", 0, 0);
 #else
-        /* This code is for requesting each chunk separately. */
-        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT Subscribe for CHUNK download DATA Messages..............\n");
-        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_CHUNK_REQUEST,
-                                                            ctx->parsed_job.file, 0, CY_OTA_CHUNK_SIZE);
+    /* This code is for requesting each chunk separately. */
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "MQTT Subscribe for CHUNK download DATA Messages..............\n");
+    result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_CHUNK_REQUEST,
+                                                        ctx->parsed_job.file, 0, CY_OTA_CHUNK_SIZE);
 #endif
-    }
-    else
-    {
-        /* Create the direct request */
-        result = cy_ota_mqtt_create_json_request(ctx, CY_OTA_DOWNLOAD_DIRECT_REQUEST, "", 0, 0);
-
-    }
 
     if (result != CY_RSLT_SUCCESS)
     {
@@ -1329,7 +1335,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
         if (waitfor & CY_OTA_EVENT_SHUTDOWN_NOW)
         {
             /* Pass along to Agent thread */
-            cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_SHUTDOWN_NOW, 0);
+            cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_SHUTDOWN_NOW, 0);
             result = CY_RSLT_SUCCESS;
             break;
         }
@@ -1373,7 +1379,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
                 cy_ota_stop_mqtt_timer(ctx);
 
                 cy_log_msg(CYLF_OTA, CY_LOG_INFO, "Done writing all data! %ld of %ld\n", ctx->total_bytes_written, ctx->total_image_size);
-                cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_DONE, 0);
+                cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_DATA_DONE, 0);
             }
 
 #ifndef CY_MQTT_GET_ALL_DATA_WITH_ONE_CALL
@@ -1422,7 +1428,7 @@ cy_rslt_t cy_ota_mqtt_get_data(cy_ota_context_t *ctx)
                 continue;
             }
             cy_log_msg(CYLF_OTA, CY_LOG_WARNING, "OTA Timeout waiting for a packet (%d seconds), fail\n", ctx->packet_timeout_sec);
-            cy_rtos_setbits_event(&ctx->ota_event, CY_OTA_EVENT_DATA_FAIL, 0);
+            cy_rtos_setbits_event(&ctx->ota_event, (uint32_t)CY_OTA_EVENT_DATA_FAIL, 0);
         }
 
         if (waitfor & CY_OTA_EVENT_DATA_DONE)

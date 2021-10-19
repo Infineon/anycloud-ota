@@ -73,8 +73,8 @@ extern "C" {
  */
 
 /*
- * To use Bluetooth, add this define to the makefile.
- * Note that application must provide Bluetooth initialization and callback handling.
+ * To use Bluetooth®, add this define to the makefile.
+ * Note that application must provide Bluetooth® initialization and callback handling.
  * Please see full documentation for code snippets.
  * COMPONENT+=OTA_BLUETOOTH
  */
@@ -92,7 +92,7 @@ extern "C" {
 #include "cy_mqtt_api.h"
 #endif
 
-/* We need another include for Bluetooth support */
+/* We need another include for Bluetooth® support */
 #ifdef COMPONENT_OTA_BLUETOOTH
 #include "wiced_bt_gatt.h"
 #endif
@@ -176,12 +176,12 @@ extern "C" {
 #define CY_RSLT_OTA_ERROR_SENDING_RESULT        (CY_RSLT_OTA_ERROR_BASE + 25) /**< Sending result failed.                */
 #define CY_RSLT_OTA_ERROR_APP_RETURNED_STOP     (CY_RSLT_OTA_ERROR_BASE + 26) /**< Callback returned Stop OTA download.  */
 #define CY_RSLT_OTA_ERROR_APP_EXCEEDED_RETRIES  (CY_RSLT_OTA_ERROR_BASE + 27) /**< Number of retries exceeded.           */
-#define CY_RSLT_OTA_ERROR_TRANSPORT_UNSUPPORTED (CY_RSLT_OTA_ERROR_BASE + 28) /**< HTTP, MQTT or Bluetooth not supported in this build. */
+#define CY_RSLT_OTA_ERROR_TRANSPORT_UNSUPPORTED (CY_RSLT_OTA_ERROR_BASE + 28) /**< HTTP, MQTT or Bluetooth® not supported in this build. */
 
 #if defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN)
-#define CY_RSLT_OTA_ERROR_BLE_GENERAL           (CY_RSLT_OTA_ERROR_BASE + 32) /**< General Bluetooth error.                     */
-#define CY_RSLT_OTA_ERROR_BLE_VERIFY            (CY_RSLT_OTA_ERROR_BASE + 33) /**< Bluetooth Verification of download error.    */
-#define CY_RSLT_OTA_ERROR_BLE_GATT              (CY_RSLT_OTA_ERROR_BASE + 34) /**< Bluetooth GATT event error.                  */
+#define CY_RSLT_OTA_ERROR_BLE_GENERAL           (CY_RSLT_OTA_ERROR_BASE + 32) /**< General Bluetooth® error.                     */
+#define CY_RSLT_OTA_ERROR_BLE_VERIFY            (CY_RSLT_OTA_ERROR_BASE + 33) /**< Bluetooth® Verification of download error.    */
+#define CY_RSLT_OTA_ERROR_BLE_GATT              (CY_RSLT_OTA_ERROR_BASE + 34) /**< Bluetooth® GATT event error.                  */
 #endif
 
 #define CY_RSLT_OTA_INFO_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_INFO, CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE, 0)   /**< Base for informational results. */
@@ -578,7 +578,7 @@ typedef enum
     CY_OTA_CONNECTION_MQTT,             /**< Use MQTT connection.           */
     CY_OTA_CONNECTION_HTTP,             /**< Use HTTP connection.           */
     CY_OTA_CONNECTION_HTTPS,            /**< Use HTTPS connection.          */
-    CY_OTA_CONNECTION_BLE,              /**< Use Bluetooth connection       */
+    CY_OTA_CONNECTION_BLE,              /**< Use Bluetooth® connection       */
 } cy_ota_connection_t;
 
 /**
@@ -992,23 +992,23 @@ cy_rslt_t cy_ota_get_update_now(cy_ota_context_ptr ota_ptr);
  *
  * NOTE: Typically, this erases the secondary slot.
  *
- * @param[in]   ctx             Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   ota_ptr         Pointer to the OTA agent context @ref cy_ota_context_ptr.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_OPEN_STORAGE
  */
-cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ctx);
+cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ota_ptr);
 
 /**
  * @brief Read from storage area
  *
- * @param[in]       ctx         Pointer to OTA agent context @ref cy_ota_context_t
+ * @param[in]       ota_ptr     Pointer to OTA agent context @ref cy_ota_context_t
  * @param[in][out]  chunk_info  Pointer to chunk information, buffer pointer used for the read
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_READ_STORAGE
  */
-cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx, cy_ota_storage_write_info_t *chunk_info);
+cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_info_t *chunk_info);
 
 /**
  * @brief Write data into the storage area.
@@ -1017,13 +1017,13 @@ cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx, cy_ota_storage_write_info_
  *       For writing data from a TAR archive, use cy_ota_write_incoming_data_block(),
  *       which checks for TAR archives and separates the data properly.
  *
- * @param[in]   ctx             Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   ota_ptr         Pointer to the OTA agent context @ref cy_ota_context_ptr.
  * @param[in]   chunk_info      Pointer to the chunk information.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_WRITE_STORAGE
  */
-cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx, cy_ota_storage_write_info_t *chunk_info);
+cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_info_t *chunk_info);
 
 /**
  * @brief Determine if tar or non-tar and call correct write function
@@ -1031,94 +1031,94 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx, cy_ota_storage_write_info
  * NOTE: This function handles both TAR archive and non-TAR archive files.
  *       This function is used by Pull Mode for MQTT and HTTP
  *
- * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   ota_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   chunk_info              Pointer to chunk information
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_GENERAL
  */
-cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info);
+cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_info_t *chunk_info);
 
 #if defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN)
 
 /**
- * @brief Prepare for Bluetooth OTA Download
+ * @brief Prepare for Bluetooth® OTA Download
  *
- * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
- * @param[in]   bt_conn_id              BT Connection id
- * @param[in]   bt_config_descriptor    BT configuration (notification vs. indication )
+ * @param[in]   ota_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   bt_conn_id              Bluetooth® Connection id
+ * @param[in]   bt_config_descriptor    Bluetooth® configuration (notification vs. indication )
  *
  * @return      CY_RSLT_SUCCESS
  *              CY_RSLT_OTA_ERROR_BLE_GATT
  */
-cy_rslt_t cy_ota_ble_download_prepare(cy_ota_context_ptr ctx_ptr, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
+cy_rslt_t cy_ota_ble_download_prepare(cy_ota_context_ptr ota_ptr, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
 
 /**
- * @brief Bluetooth OTA Download starting
+ * @brief Bluetooth® OTA Download starting
  *
- * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   ota_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   p_req                   Pointer to gatt event data structure
- * @param[in]   bt_conn_id              BT Connection id
- * @param[in]   bt_config_descriptor    BT configuration (notification vs. indication )
+ * @param[in]   bt_conn_id              Bluetooth® Connection id
+ * @param[in]   bt_config_descriptor    Bluetooth® configuration (notification vs. indication )
  *
  * @return      CY_RSLT_SUCCESS
  *              CY_RSLT_OTA_ERROR_BLE_GATT
  */
-cy_rslt_t cy_ota_ble_download(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
+cy_rslt_t cy_ota_ble_download(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id, uint16_t bt_config_descriptor);
 
 /**
- * @brief Bluetooth OTA data write
+ * @brief Bluetooth® OTA data write
  *
- * @param[in]   ctx_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   ota_ptr                 Pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   p_req                   Pointer to gatt event data structure
  *
  * @return      CY_RSLT_SUCCESS
  *              CY_RSLT_OTA_ERROR_BLE_GATT
  */
-cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req);
+cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_event_data_t *p_req);
 
 /**
- * @brief Bluetooth OTA Verify download
+ * @brief Bluetooth® OTA Verify download
  *
- * @param[in]   ctx_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   ota_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
  * @param[in]   p_req       Pointer to gatt event data structure
- * @param[in]   bt_conn_id              BT Connection id
+ * @param[in]   bt_conn_id              Bluetooth® Connection id
  *
  * @return      CY_RSLT_SUCCESS
  *              CY_RSLT_OTA_ERROR_BLE_GATT
  */
-cy_rslt_t cy_ota_ble_download_verify(cy_ota_context_ptr ctx_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id);
+cy_rslt_t cy_ota_ble_download_verify(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_event_data_t *p_req, uint16_t bt_conn_id);
 
 /**
- * @brief Abort Bluetooth OTA download
+ * @brief Abort Bluetooth® OTA download
  *
- * @param[in]   ctx_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
+ * @param[in]   ota_ptr     Pointer to OTA agent context @ref cy_ota_context_ptr
  *
  * @return      CY_RSLT_SUCCESS
  */
-cy_rslt_t cy_ota_ble_download_abort(cy_ota_context_ptr ctx_ptr);
+cy_rslt_t cy_ota_ble_download_abort(cy_ota_context_ptr ota_ptr);
 
 #endif  /* defined(COMPONENT_OTA_BLUETOOTH) || defined(CY_DOXYGEN) */
 
 /**
  * @brief Close the storage area for download.
  *
- * @param[in]   ctx - Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   ota_ptr - Pointer to the OTA agent context @ref cy_ota_context_ptr.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_CLOSE_STORAGE
  */
-cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ctx);
+cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ota_ptr);
 
 /**
  * @brief Verify the download signature on the whole OTA image.
  *
- * @param[in]   ctx - Pointer to the OTA agent context @ref cy_ota_context_ptr.
+ * @param[in]   ota_ptr - Pointer to the OTA agent context @ref cy_ota_context_ptr.
  *
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_VERIFY
  */
-cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx);
+cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ota_ptr);
 
 /**
  * @brief The application has validated the new OTA image.
