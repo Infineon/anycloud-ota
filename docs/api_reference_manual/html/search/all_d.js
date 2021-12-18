@@ -6,7 +6,7 @@ var searchData=
   ['ota_20macros',['OTA Macros',['../group__group__ota__macros.html',1,'']]],
   ['ota_20structures',['OTA Structures',['../group__group__ota__structures.html',1,'']]],
   ['ota_20typedefs',['OTA Typedefs',['../group__group__ota__typedefs.html',1,'']]],
-  ['over_20the_20air_20v4_2e1_2e0_20overview',['Over The Air v4.1.0 Overview',['../index.html',1,'']]],
+  ['over_20the_20air_20v4_2e2_2e0_20overview',['Over The Air v4.2.0 Overview',['../index.html',1,'']]],
   ['offset',['offset',['../structcy__ota__storage__write__info__t.html#a0405b3806c0de934f5f5f55ac693c184',1,'cy_ota_storage_write_info_t']]],
   ['ota_5fec',['ota_EC',['../structota___e_c.html',1,'']]]
 ];

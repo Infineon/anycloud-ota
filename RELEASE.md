@@ -6,6 +6,10 @@ See the [README.md](./README.md) for a complete description of the OTA library.
 
 ## Changelog
 
+### v4.2.0
+
+ - Add support for CY8CEVAL-062S2-MUR-43439M2
+
 ### v4.1.0
 
  - Fixed Bluetooth build issues with ARM and IAR compilers.

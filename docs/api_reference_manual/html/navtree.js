@@ -1,7 +1,7 @@
 var NAVTREE =
 [
   [ "Over The Air (OTA) Update Library", "index.html", [
-    [ "Over The Air v4.1.0 Overview", "index.html", null ],
+    [ "Over The Air v4.2.0 Overview", "index.html", null ],
     [ "API Reference", "modules.html", "modules" ]
   ] ]
 ];
