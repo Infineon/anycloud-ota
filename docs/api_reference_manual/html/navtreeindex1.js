@@ -1,5 +1,6 @@
 var NAVTREEINDEX1 =
 {
+"structcy__ota__network__params__t.html#abcc290be8049d49f332165ac7aafb3e0":[1,0,4,2,0],
 "structcy__ota__storage__write__info__t.html":[1,0,4,0],
 "structcy__ota__storage__write__info__t.html#a0405b3806c0de934f5f5f55ac693c184":[1,0,4,0,1],
 "structcy__ota__storage__write__info__t.html#a20c92fe4a9bba891efd3319efbd05060":[1,0,4,0,3],

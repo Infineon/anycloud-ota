@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -183,6 +183,8 @@ extern "C" {
 #define CY_RSLT_OTA_ERROR_BLE_VERIFY            (CY_RSLT_OTA_ERROR_BASE + 33) /**< Bluetooth® Verification of download error.    */
 #define CY_RSLT_OTA_ERROR_BLE_GATT              (CY_RSLT_OTA_ERROR_BASE + 34) /**< Bluetooth® GATT event error.                  */
 #endif
+
+#define CY_RSLT_OTA_ERROR_SMIF_TIMEOUT          (CY_RSLT_OTA_ERROR_BASE + 64) /**< SMIF timeout.             */
 
 #define CY_RSLT_OTA_INFO_BASE    CY_RSLT_CREATE(CY_RSLT_TYPE_INFO, CY_RSLT_MODULE_MIDDLEWARE_OTA_UPDATE, 0)   /**< Base for informational results. */
 #define CY_RSLT_OTA_EXITING                     (CY_RSLT_OTA_INFO_BASE + 1) /**< OTA Agent exiting.                         */
@@ -1131,6 +1133,134 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ota_ptr);
  */
 cy_rslt_t cy_ota_storage_validated(void);
 
+#ifdef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
+
+#define FW_DATA_block_header_info_MAGIC    "InfineonFWData  "           /* 16 bytes */
+#define FW_DATA_block_header_info_VERSION  1
+#define MCUBOOT_HEADER_OFFSET              CY_FW_MCUBOOT_HEADER_SIZE    /* offset to start of actual data in the slot */
+
+typedef struct  cy_ota_fw_data_block_header_s
+{
+    uint8_t     magic[16];          /* Magic value                                  */
+    uint32_t    crc;                /* CRC of FW Data Block (not yet implemented)   */
+    uint32_t    FWDB_version;       /* FW Data Block version (this structure)       */
+
+    uint16_t    WiFi_FW_version[4]; /* WiFi FW version                              */
+    uint32_t    WiFi_FW_offset;     /* Offset to start of WiFi FW                   */
+    uint32_t    WiFi_FW_size;       /* Size of WiFi FW                              */
+
+    uint32_t    CLM_blob_offset;    /* Offset to start of CLM Blob                  */
+    uint32_t    CLM_blob_size;      /* Size of CLM Blob                             */
+
+    uint8_t     BT_FW_version[128]; /* BT FW version                                */
+    uint32_t    BT_FW_offset;       /* Offset to start of BT FW                     */
+    uint32_t    BT_FW_size;         /* Size of BT FW                                */
+} cy_ota_fw_data_block_header_t;
+
+typedef struct cy_ota_fwdb_wifi_fw_info_s
+{
+    uint16_t    WiFi_FW_version[4]; /* WiFi FW version                              */
+    uint32_t    WiFi_FW_addr;       /* External Flash Addr of WiFi FW               */
+    uint32_t    WiFi_FW_size;       /* Size of WiFi FW                              */
+} cy_ota_fwdb_wifi_fw_info_t;
+
+typedef struct cy_ota_fwdb_clm_blob_info_s
+{
+    uint32_t    CLM_blob_addr;      /* External Flash Addr of WiFi FW               */
+    uint32_t    CLM_blob_size;      /* Size of CLM Blob                             */
+} cy_ota_fwdb_clm_blob_info_t;
+
+typedef struct cy_ota_fwdb_bt_fw_info_s
+{
+    uint8_t     *BT_FW_version;     /* ptr to BT FW version                         */
+    uint32_t    BT_FW_addr;         /* External Flash Addr of BT FW                 */
+    uint32_t    BT_FW_size;         /* Size of BT FW                                */
+} cy_ota_fwdb_bt_fw_info_t;
+
+typedef struct cy_ota_fwdb_bt_fw_s
+{
+    uint8_t     *BT_FW_version;     /* ptr to BT FW version                         */
+    uint8_t     *BT_FW_buffer;       /* Offset to start of BT FW                     */
+    uint32_t    BT_FW_size;         /* Size of BT FW                                */
+} cy_ota_fwdb_bt_fw_t;
+
+/**
+ * @brief When FW is stored in a separate Data Block, get WiFi FW info
+ *
+ * Use this call to get the external flash WiFi info
+ *
+ * @param   wifi_fw_info   - ptr to cy_ota_fwdb_wifi_fw_info
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_wifi_fw_info(cy_ota_fwdb_wifi_fw_info_t *wifi_fw_info);
+
+/**
+ * @brief Read WiFi FW from FW DataBlock
+ *
+ * @param[in]   offset - offset into data
+ * @param[in]   size   - amount to copy
+ * @param[in]   dest   - destination buffer for the read
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_READ_STORAGE
+ */
+cy_rslt_t cy_ota_fwdb_get_wifi_fw_data(uint32_t offset, uint32_t size, uint8_t *dest);
+
+/**
+ * @brief When FW is stored in a separate Data Block, get WiFi CLM blob info
+ *
+ * Use this call to get the external flash WiFi CLM blob info
+ *
+ * @param   clm_blob_info   - ptr to cy_ota_fwdb_clm_blob_info
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_clm_blob_info(cy_ota_fwdb_clm_blob_info_t *clm_blob_info);
+
+
+/**
+ * @brief When FW is stored in a separate Data Block, get the BT FW Patch
+ *
+ * Use this call to get the external flash BT FW info
+ *
+ * @param   bt_fw_info   - ptr to cy_ota_fwdb_bt_fw_info_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_bt_fw_info(cy_ota_fwdb_bt_fw_info_t *bt_fw_info);
+
+/**
+ * @brief Get BT FW for transfer to BT module
+ *
+ * Use this call to get the external flash BT FW Patch info
+ * NOTES: This allocates RAM, Expected to be < 48k
+ *        The User must call cy_ota_fwdb_free_bt_fw() after use.
+ *
+ * @param   bt_fw   - ptr to cy_ota_fwdb_bt_fw_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_bt_fw(cy_ota_fwdb_bt_fw_t *bt_fw);
+
+/**
+ * @brief Free BT FW for transfer to BT module
+ *
+ * Use this call to free the external flash BT FW Patch info
+ * NOTES: This frees RAM, Expected to be < 48k
+ *
+ * @param   bt_fw   - ptr to cy_ota_fwdb_bt_fw_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_free_bt_fw(cy_ota_fwdb_bt_fw_t *bt_fw);
+
+#endif
 /**
  * @brief Set the OTA log output level.
  *

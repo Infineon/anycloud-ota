@@ -33,6 +33,7 @@ var group__group__ota__macros =
     [ "CY_RSLT_OTA_ERROR_BLE_GENERAL", "group__group__ota__macros.html#gab1865224e6f8786ef834d8222b1d80f4", null ],
     [ "CY_RSLT_OTA_ERROR_BLE_VERIFY", "group__group__ota__macros.html#ga4fb4289e114ccd9c3a11bb8602544ce8", null ],
     [ "CY_RSLT_OTA_ERROR_BLE_GATT", "group__group__ota__macros.html#gacf48290176e311452a60ac12c9a67c83", null ],
+    [ "CY_RSLT_OTA_ERROR_SMIF_TIMEOUT", "group__group__ota__macros.html#gac9f0157c245803a2cc7fa006b5d8cbdf", null ],
     [ "CY_RSLT_OTA_INFO_BASE", "group__group__ota__macros.html#gac1db017f6ca01321a0d0427a26e4eb5d", null ],
     [ "CY_RSLT_OTA_EXITING", "group__group__ota__macros.html#ga442089df28bff420f4c6c807104c36cf", null ],
     [ "CY_RSLT_OTA_ALREADY_CONNECTED", "group__group__ota__macros.html#ga5855d176295aea93b87f4f5b701a2c3b", null ],

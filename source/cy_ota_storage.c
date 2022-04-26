@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,9 +28,8 @@
 #include "cy_ota_api.h"
 #include "cy_ota_internal.h"
 
-#include "bootutil/bootutil.h"
-#include "sysflash/sysflash.h"
-#include "flash_map_backend/flash_map_backend.h"
+#include "flash_map_backend.h"
+#include "sysflash.h"
 
 #include "cy_log.h"
 
@@ -38,7 +37,54 @@
  *
  * defines & enums
  *
+ * For more info on locations within slots, please see MCUBootApp
+ * bootutils_misc.c, bootutils_private.h, bootutils.h
+ *
  **********************************************************************/
+
+/* multi-image ? */
+#if (MCUBOOT_IMAGE_NUMBER == 1)
+
+#define FLASH_AREA_IMAGE_PRIMARY(x)    (((x) == 0) ?          \
+                                         FLASH_AREA_IMAGE_0 : \
+                                         FLASH_AREA_IMAGE_0)
+
+#define FLASH_AREA_IMAGE_SECONDARY(x)  (((x) == 0) ?          \
+                                         FLASH_AREA_IMAGE_1 : \
+                                         FLASH_AREA_IMAGE_1)
+
+#elif (MCUBOOT_IMAGE_NUMBER == 2)
+
+#define FLASH_AREA_IMAGE_PRIMARY(x)    (((x) == 0) ?          \
+                                         FLASH_AREA_IMAGE_0 : \
+                                        ((x) == 1) ?          \
+                                         FLASH_AREA_IMAGE_2 : \
+                                         255)
+#define FLASH_AREA_IMAGE_SECONDARY(x)  (((x) == 0) ?          \
+                                         FLASH_AREA_IMAGE_1 : \
+                                        ((x) == 1) ?          \
+                                         FLASH_AREA_IMAGE_3 : \
+                                         255)
+
+#else
+#warning "Image slot and flash area mapping is not defined"
+#endif
+
+#define BOOT_FLAG_SET       1
+
+#define BOOT_MAX_ALIGN          8
+
+static const uint32_t boot_img_magic[] = {
+    0xf395c277,
+    0x7fefd260,
+    0x0f505235,
+    0x8079b62c,
+};
+#define BOOT_MAGIC_SZ (sizeof boot_img_magic)
+
+#define BOOT_MAGIC_OFFSET(fap)  (fap->fa_size - BOOT_MAGIC_SZ)
+
+#define BOOT_IMAGE_OK_OFFSET(fap)   (BOOT_MAGIC_OFFSET(fap) - BOOT_MAX_ALIGN)
 
 
 /***********************************************************************
@@ -70,35 +116,6 @@
  * functions
  *
  **********************************************************************/
-
-/**
- * @brief erase the second slot to prepare for writing OTA'ed application
- *
- * @param   N/A
- *
- * @return   0 on success
- *          -1 on error
- */
-static int eraseSlotTwo(void)
-{
-    const struct flash_area *fap;
-
-    if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
-    {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\n", __func__);
-        return -1;
-    }
-    if (flash_area_erase(fap, 0, fap->fa_size) != 0)
-    {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_erase(fap, 0) failed\r\n", __func__);
-        return -1;
-    }
-
-    flash_area_close(fap);
-
-    return 0;
-}
-
 /**
  * @brief Open Storage area for download
  *
@@ -123,16 +140,19 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ota_ptr)
     ctx->last_size           = 0;
     ctx->storage_loc         = NULL;
 
-    /* erase secondary slot */
-    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Erasing Secondary Slot...\n");
-    eraseSlotTwo();
-    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Erasing Secondary Slot Done.\n");
-
     if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\n", __func__);
         return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
     }
+
+    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "Erase secondary image slot fap->fa_off: 0x%08lx, size: 0x%08lx\n", fap->fa_off, fap->fa_size);
+    if (flash_area_erase(fap, 0, fap->fa_size) != 0)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_erase(fap, 0) failed\r\n", __func__);
+        return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
+    }
+
     ctx->storage_loc = (void *)fap;
 
     return CY_RSLT_SUCCESS;
@@ -147,33 +167,31 @@ cy_rslt_t cy_ota_storage_open(cy_ota_context_ptr ota_ptr)
  * @return  CY_RSLT_SUCCESS
  *          CY_RSLT_OTA_ERROR_READ_STORAGE
  */
-cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_info_t *chunk_info)
+cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
 {
-    int                         rc;
-    cy_rslt_t                   result = CY_RSLT_SUCCESS;
     const struct flash_area     *fap;
+    cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
+    CY_OTA_CONTEXT_ASSERT(ctx);
 
     cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() buf:%p len:%ld off: 0x%lx (%ld)\n", __func__,
                              chunk_info->buffer, chunk_info->size,
                              chunk_info->offset, chunk_info->offset);
 
     /* Always read from secondary slot */
-    if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
+    fap = (const struct flash_area *)ctx->storage_loc;
+    if (fap != NULL)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0) ) failed\r\n", __func__);
-        return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
+        /* read into the chunk_info buffer */
+        if (flash_area_read(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "flash_area_read() failed \n");
+            return CY_RSLT_OTA_ERROR_READ_STORAGE;
+        }
+        return CY_RSLT_SUCCESS;
     }
 
-    /* read into the chunk_info buffer */
-    rc = flash_area_read(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size);
-    if (rc != 0)
-    {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read() failed result:%d\n", __func__, rc);
-        result = CY_RSLT_OTA_ERROR_READ_STORAGE;
-    }
-
-    flash_area_close(fap);
-    return result;
+    cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area invalid\r\n", __func__);
+    return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
 }
 
 /**
@@ -187,7 +205,6 @@ cy_rslt_t cy_ota_storage_read(cy_ota_context_ptr ota_ptr, cy_ota_storage_write_i
  */
 cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_info_t *chunk_info)
 {
-    int rc;
     const struct flash_area *fap;
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
@@ -198,20 +215,18 @@ cy_rslt_t cy_ota_storage_write(cy_ota_context_ptr ctx_ptr, cy_ota_storage_write_
 
     /* write to secondary slot */
     fap = (const struct flash_area *)ctx->storage_loc;
-    if (fap == NULL)
+    if (fap != NULL)
     {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() no fap!\n", __func__);
-        return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
+        if (flash_area_write(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "flash_area_write() failed\n");
+            return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
+        }
+        return CY_RSLT_SUCCESS;
     }
 
-    rc = flash_area_write(fap, chunk_info->offset, chunk_info->buffer, chunk_info->size);
-    if (rc != 0)
-    {
-        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_write() failed result:%d\n", __func__, rc);
-        return CY_RSLT_OTA_ERROR_WRITE_STORAGE;
-    }
-
-    return CY_RSLT_SUCCESS;
+    cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() no fap!\n", __func__);
+    return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
 }
 
 /**
@@ -227,6 +242,7 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ctx_ptr)
     const struct flash_area *fap;
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
+
     cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s()\n", __func__);
 
     /* close secondary slot */
@@ -250,42 +266,56 @@ cy_rslt_t cy_ota_storage_close(cy_ota_context_ptr ctx_ptr)
  */
 cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx_ptr)
 {
-    int boot_ret;
-    int boot_pending;
+    const struct flash_area *fap;
+    uint32_t                off;
+    uint8_t                 buffer[BOOT_MAGIC_SZ];
     cy_ota_context_t *ctx = (cy_ota_context_t *)ctx_ptr;
     CY_OTA_CONTEXT_ASSERT(ctx);
+    (void)ctx;
 
-    /* We do not verify the slot - we expect that the Application
-     * will do verification in the callback.
-     */
+    cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s()\n", __func__);
 
-    boot_pending = 1;
-    if (ctx->agent_params.validate_after_reboot == 1)
+    /* we copy this to a RAM buffer so that if we are running in XIP from external flash, the write routine won't fail */
+    memcpy(buffer, boot_img_magic, BOOT_MAGIC_SZ);
+    if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) == 0)
     {
-        boot_pending = 0;
-    }
-    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() boot_pending:%d\n", __func__, boot_pending);
+        off = BOOT_MAGIC_OFFSET(fap);
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "VERIFY flash_area_write( fa_off: 0x%lx  sz: 0x%lx off: 0x%lx) 2\n", fap->fa_off, fap->fa_size, off);
+        if (flash_area_write(fap, off, buffer, BOOT_MAGIC_SZ) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "VERIFY flash_area_write( MAGIC ) Failed \n");
+        }
+        else
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "VERIFY flash_area_write( MAGIC ) Success\n");
+        }
 
-    /*
-     * boot_set_pending(x)
-     *
-     * 0 - We want the New Application to call cy_ota_storage_validated() on boot.
-     * 1 - We believe this to be good and ready to move to Primary Slot
-     *     without having to test on re-boot
-     * */
-    boot_ret = boot_set_pending(0, boot_pending);
-    if (boot_ret != 0)
-    {
-#if (OTA_USE_EXTERNAL_FLASH != 0)
-        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() boot_set_pending() External Failed ret:%d\n", __func__, boot_ret);
-        /* [stde] Internal FLASH always returns failure due to internal flash alignment issues in boot_write_trailer().
-         * We will re-visit after MW-3630. The call sets the proper "magic" value and mcuboot
-         * does do the update as expected.
-         */
-        return CY_RSLT_OTA_ERROR_VERIFY;
+#if 0 //def CY_BOOT_USE_EXTERNAL_FLASH
+        if (ctx->agent_params.validate_after_reboot == 0)
+        {
+            /*
+             * Writing trailer flags doesn't work properly for internal flash. That's OK.
+             * Writing the magic is enough for our  needs as that's enough to trigger the update.
+             *
+             * It turns out that it works fine without this from external flash as well.
+             */
+            uint8_t swap_type;
+            if (rc == 0 && permanent) {
+                rc = boot_write_image_ok(fap);
+            }
+
+            if (rc == 0) {
+                if (permanent) {
+                    swap_type = BOOT_SWAP_TYPE_PERM;
+                } else {
+                    swap_type = BOOT_SWAP_TYPE_TEST;
+                }
+                rc = boot_write_swap_info(fap, swap_type, 0);
+            }
+        }
 #endif
+        flash_area_close(fap);
     }
-
     return CY_RSLT_SUCCESS;
 }
 
@@ -302,15 +332,390 @@ cy_rslt_t cy_ota_storage_verify(cy_ota_context_ptr ctx_ptr)
  */
 cy_rslt_t cy_ota_storage_validated(void)
 {
-    int16_t boot_result;
-    /* Mark Image in Primary Slot as valid
-     * For AWS, there is a separate callback after a re-boot "self-test"
-     */
-    boot_result = boot_set_confirmed();
-    if (boot_result != 0)
+    /* Mark Image in Primary Slot as valid */
+    cy_rslt_t               result = CY_RSLT_SUCCESS;
+    const struct flash_area *fap;
+    uint32_t                off;
+    uint8_t                 buffer[BOOT_MAGIC_SZ];
+
+    /* we copy this to a RAM buffer so that if we are running in XIP from external flash, the write routine won't fail */
+    memcpy(buffer, boot_img_magic, BOOT_MAGIC_SZ);
+    if (flash_area_open(FLASH_AREA_IMAGE_PRIMARY(0), &fap) == 0)
+    {
+        off = BOOT_MAGIC_OFFSET(fap);
+        if (flash_area_write(fap, off, buffer, BOOT_MAGIC_SZ) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_write( magic ) Failed \n", __func__);
+            result = CY_RSLT_OTA_ERROR_VERIFY;
+        }
+        else
+        {
+            off = BOOT_IMAGE_OK_OFFSET(fap);
+            buffer[0] = BOOT_FLAG_SET;
+            if (flash_area_write(fap, off, buffer, 1) != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_write( img_ok ) Failed \n", __func__);
+                result = CY_RSLT_OTA_ERROR_VERIFY;
+            }
+        }
+        flash_area_close(fap);
+    }
+
+    return result;
+}
+
+#ifdef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
+
+#define CY_OTA_IMGTOOL_HEADER_SIZE              0x100
+#define CY_OTA_SEPARATE_INTERNAL_HEADER_SIZE    0x100
+
+static cy_ota_fw_data_block_header_t cy_ota_fwdb_info;
+
+static cy_ota_fw_data_block_header_t *cy_ota_fwdb_get_base_info( void )
+{
+    const struct flash_area         *fap;
+    cy_ota_fw_data_block_header_t   *info = &cy_ota_fwdb_info;
+    uint32_t                        read_offset;
+
+    cy_log_set_facility_level(CYLF_OTA, CY_LOG_INFO);
+
+    /* Always read from secondary slot */
+    if (flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap) != 0)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1) ) failed\n", __func__);
+        return NULL;
+    }
+
+    read_offset = CY_OTA_IMGTOOL_HEADER_SIZE;
+    /* read into the info buffer */
+    if (flash_area_read(fap, read_offset, (uint8_t *)info, sizeof(cy_ota_fw_data_block_header_t)) != CY_RSLT_SUCCESS)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read(info) failed \n", __func__);
+        flash_area_close(fap);
+        info = NULL;
+    }
+
+    flash_area_close(fap);
+
+    if ( (info->WiFi_FW_offset == 0xFFFF) && (info->BT_FW_offset == 0xFFFF) )
+    {
+        info = NULL;
+    }
+
+    if (info != NULL)
+    {
+        /* Add base address */
+        if (info->WiFi_FW_offset != 0)
+        {
+            info->WiFi_FW_offset += CY_OTA_SEPARATE_INTERNAL_HEADER_SIZE;
+        }
+        if (info->CLM_blob_offset != 0)
+        {
+            info->CLM_blob_offset += CY_OTA_SEPARATE_INTERNAL_HEADER_SIZE;
+        }
+        if (info->BT_FW_offset != 0)
+        {
+            info->BT_FW_offset += CY_OTA_SEPARATE_INTERNAL_HEADER_SIZE;
+        }
+
+        /* For debugging */
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:WiFi_FW_version: %d %d %d %d\n", __func__,
+                                          info->WiFi_FW_version[0], info->WiFi_FW_version[1], info->WiFi_FW_version[2], info->WiFi_FW_version[3] );
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:WiFi_FW_offset : 0x%x\n", __func__, info->WiFi_FW_offset);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:WiFi_FW_size   : 0x%x\n", __func__, info->WiFi_FW_size);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:CLM_blob_offset: 0x%x\n", __func__, info->CLM_blob_offset);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:CLM_blob_size  : 0x%x\n", __func__, info->CLM_blob_size);
+
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:BT_FW_version  : >%s<\n", __func__, info->BT_FW_version);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:BT_FW_offset   : 0x%x\n", __func__, info->BT_FW_offset);
+        cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() info:BT_FW_size     : 0x%x\n", __func__, info->BT_FW_size);
+
+    }
+
+    return info;
+}
+
+
+/**
+ * @brief When FW is stored in a separate Data Block, get WiFi FW info
+ *
+ * Use this call to get the external flash WiFi info
+ *
+ * @param   wifi_fw_info   - ptr to cy_ota_fwdb_wifi_fw_info_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_wifi_fw_info(cy_ota_fwdb_wifi_fw_info_t *wifi_fw_info)
+{
+    cy_ota_fw_data_block_header_t *fwdb_header;
+
+    if (wifi_fw_info == NULL)
     {
         return CY_RSLT_OTA_ERROR_GENERAL;
     }
 
+    fwdb_header = cy_ota_fwdb_get_base_info();
+    if (fwdb_header != NULL)
+    {
+        const struct flash_area *fap;
+        int rc;
+
+        memcpy( &wifi_fw_info->WiFi_FW_version, &fwdb_header->WiFi_FW_version, sizeof(wifi_fw_info->WiFi_FW_version));
+        wifi_fw_info->WiFi_FW_addr = fwdb_header->WiFi_FW_offset;
+        wifi_fw_info->WiFi_FW_size = fwdb_header->WiFi_FW_size;
+        rc = flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap);
+        if (rc == 0)
+        {
+            flash_area_close(fap);
+        }
+
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() wifi_fw_info:WIFI_FW_version: >%s<\n", __func__, wifi_fw_info->WiFi_FW_version);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() wifi_fw_info:WIFI_FW_addr   : 0x%x\n", __func__, wifi_fw_info->WiFi_FW_addr);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() wifi_fw_info:WIFI_FW_size   : 0x%x\n\n", __func__, wifi_fw_info->WiFi_FW_size);
+    }
+
     return CY_RSLT_SUCCESS;
 }
+
+
+/**
+ * @brief Read WiFi FW from FW DataBlock
+ *
+ * @param[in]   offset - offset into data
+ * @param[in]   size   - amount to copy
+ * @param[in]   dest   - destination buffer for the read
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_READ_STORAGE
+ */
+cy_rslt_t cy_ota_fwdb_get_wifi_fw_data(uint32_t offset, uint32_t size, uint8_t *dest)
+{
+    cy_rslt_t                   result = CY_RSLT_SUCCESS;
+    cy_ota_fwdb_wifi_fw_info_t  wifi_fw_info;
+    const struct flash_area     *fap;
+
+
+    result = cy_ota_fwdb_get_wifi_fw_info(&wifi_fw_info);
+    if (result == CY_RSLT_SUCCESS)
+    {
+        /* Always read from secondary image of primary slot */
+        if (flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap) != 0)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1) failed\r\n", __func__);
+            return CY_RSLT_OTA_ERROR_OPEN_STORAGE;
+        }
+
+        /* read into the chunk_info buffer */
+        if (flash_area_read(fap, offset, dest, size) != CY_RSLT_SUCCESS)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read() failed \n", __func__);
+            result = CY_RSLT_OTA_ERROR_READ_STORAGE;
+        }
+        flash_area_close(fap);
+    }
+    return result;
+}
+/**
+ * @brief When FW is stored in a separate Data Block, get WiFi CLM blob info
+ *
+ * Use this call to get the external flash WiFi CLM blob info
+ *
+ * @param   clm_blob_info   - ptr to cy_ota_fwdb_clm_blob_info
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_clm_blob_info(cy_ota_fwdb_clm_blob_info_t *clm_blob_info)
+{
+    cy_ota_fw_data_block_header_t *fwdb_header;
+
+    if (clm_blob_info == NULL)
+    {
+        return CY_RSLT_OTA_ERROR_GENERAL;
+    }
+
+    fwdb_header = cy_ota_fwdb_get_base_info();
+    if (fwdb_header != NULL)
+    {
+        const struct flash_area *fap;
+        int rc;
+
+        clm_blob_info->CLM_blob_addr = fwdb_header->CLM_blob_offset;
+        clm_blob_info->CLM_blob_size = fwdb_header->CLM_blob_size;
+        rc = flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap);
+        if (rc == 0)
+        {
+            flash_area_close(fap);
+        }
+
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() clm_blob_info:CLM_blob_addr   : 0x%x\n", __func__, clm_blob_info->CLM_blob_addr);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() clm_blob_info:CLM_blob_size   : 0x%x\n\n", __func__, clm_blob_info->CLM_blob_size);
+    }
+
+    return CY_RSLT_SUCCESS;
+
+    return CY_RSLT_OTA_ERROR_GENERAL;
+}
+
+/**
+ * @brief When FW is stored in a separate Data Block, get the BT FW Patch
+ *
+ * Use this call to get the external flash BT FW info
+ *
+ * @param   bt_fw_info   - ptr to cy_ota_fwdb_bt_fw_info_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_bt_fw_info(cy_ota_fwdb_bt_fw_info_t *bt_fw_info)
+{
+    cy_ota_fw_data_block_header_t *fwdb_header;
+
+    if (bt_fw_info == NULL)
+    {
+        return CY_RSLT_OTA_ERROR_GENERAL;
+    }
+
+    fwdb_header = cy_ota_fwdb_get_base_info();
+    if (fwdb_header != NULL)
+    {
+        const struct flash_area *fap;
+        int rc;
+
+        bt_fw_info->BT_FW_version = fwdb_header->BT_FW_version;
+        bt_fw_info->BT_FW_addr = fwdb_header->BT_FW_offset;
+        bt_fw_info->BT_FW_size = fwdb_header->BT_FW_size;
+        rc = flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap);
+        if (rc == 0)
+        {
+            bt_fw_info->BT_FW_addr += fap->fa_off;
+            flash_area_close(fap);
+        }
+
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() bt_fw_info:BT_FW_version: >%s<\n", __func__, bt_fw_info->BT_FW_version);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() bt_fw_info:BT_FW_addr    : 0x%x\n", __func__, bt_fw_info->BT_FW_addr);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() bt_fw_info:BT_FW_size   : 0x%x\n\n", __func__, bt_fw_info->BT_FW_size);
+    }
+
+    return CY_RSLT_SUCCESS;
+}
+
+/**
+ * @brief Get BT FW for transfer to BT module
+ *
+ * Use this call to get the external flash BT FW Patch info
+ * NOTES: This allocates RAM, Expected to be < 48k
+ *        The User must call cy_ota_fwdb_free_bt_fw() after use.
+ *
+ * @param   bt_fw   - ptr to cy_ota_fwdb_bt_fw_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_get_bt_fw(cy_ota_fwdb_bt_fw_t *bt_fw)
+{
+    cy_rslt_t result = CY_RSLT_OTA_ERROR_GENERAL;
+    uint32_t  fw_buffer = 0x00;
+
+    cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() bt_fw:%p\n", __func__, bt_fw);
+
+    if (bt_fw == 0x00)
+    {
+        return CY_RSLT_OTA_ERROR_GENERAL;
+    }
+    memset(bt_fw, 0x00, sizeof(cy_ota_fwdb_bt_fw_t));
+
+    cy_ota_fw_data_block_header_t *fwdb_header;
+    fwdb_header = cy_ota_fwdb_get_base_info();
+    if ( (fwdb_header != 0x00) && (fwdb_header->BT_FW_offset != 0x00) && (fwdb_header->BT_FW_size > 0) &&
+         (fwdb_header->BT_FW_offset != 0xFF) && (fwdb_header->BT_FW_size != 0xffffffff) )
+    {
+        uint32_t                    malloc_size;
+        const struct flash_area     *fap;
+        uint32_t                    read_offset;
+
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() fwdb_header:BT_FW_offset : 0x%x\n", __func__, fwdb_header->BT_FW_offset);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() fwdb_header:BT_FW_size   : 0x%x\n", __func__, fwdb_header->BT_FW_size);
+
+        /* Round up size a bit */
+        malloc_size = fwdb_header->BT_FW_size + (4 - (fwdb_header->BT_FW_size & 3));
+        fw_buffer  =(uint32_t)mlloc(malloc_size);
+        if (fw_buffer == 0x00)
+        {
+            return CY_RSLT_OTA_ERROR_OUT_OF_MEMORY;
+        }
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%d:%s() buf:%p\n", __LINE__, __func__, fw_buffer);
+        cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "        off:0x%x malloc:0x%x sz:0x%lx\n", fwdb_header->BT_FW_offset, malloc_size, fwdb_header->BT_FW_size);
+
+        memset( (char *)fw_buffer, 0xDE, malloc_size);
+
+        read_offset = fwdb_header->BT_FW_offset;
+
+        /* Always read from secondary slot */
+        if (flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1), &fap) != 0)
+        {
+            cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_open(FLASH_AREA_IMAGE_PRIMARY(1) ) failed\r\n", __func__);
+            result = CY_RSLT_OTA_ERROR_GENERAL;
+        }
+        else
+        {
+            /* read the bt fw patch into the buffer */
+            if (flash_areaf_read(fap, read_offset, (uint8_t *)fw_buffer, fwdb_header->BT_FW_size) != CY_RSLT_SUCCESS)
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read() failed \n", __func__);
+                result = CY_RSLT_OTA_ERROR_GENERAL;
+            }
+            else
+            {
+                cy_log_msg(CYLF_OTA, CY_LOG_DEBUG4, "%s() flash_area_read() success\n", __func__);
+                result = CY_RSLT_SUCCESS;
+            }
+            flash_area_close(fap);
+        }
+    }
+
+    if (result == CY_RSLT_SUCCESS)
+    {
+        bt_fw->BT_FW_version = fwdb_header->BT_FW_version;
+        bt_fw->BT_FW_buffer  = (uint8_t *)fw_buffer;
+        bt_fw->BT_FW_size    = fwdb_header->BT_FW_size;
+    }
+    else
+    {
+        if (fw_buffer != 0x00)
+        {
+            vPortFree((uint8_t *)fw_buffer);
+        }
+    }
+    return result;
+}
+
+/**
+ * @brief Free BT FW for transfer to BT module
+ *
+ * Use this call to free the external flash BT FW Patch info
+ * NOTES: This frees RAM, Expected to be < 48k
+ *
+ * @param   bt_fw   - ptr to cy_ota_fwdb_bt_fw_t
+ *
+ * @return  CY_RSLT_SUCCESS
+ *          CY_RSLT_OTA_ERROR_GENERAL
+ */
+cy_rslt_t cy_ota_fwdb_free_bt_fw(cy_ota_fwdb_bt_fw_t *bt_fw)
+{
+    if (bt_fw == NULL)
+    {
+        return CY_RSLT_OTA_ERROR_GENERAL;
+    }
+    if (bt_fw->BT_FW_buffer != 0x00)
+    {
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%d:%s() free :%p\n", __LINE__, __func__, bt_fw->BT_FW_buffer);
+        vPortFree(bt_fw->BT_FW_buffer);
+        bt_fw->BT_FW_buffer = 0x00;
+    }
+
+    return CY_RSLT_SUCCESS;
+}
+
+#endif

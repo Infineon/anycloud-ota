@@ -1,6 +1,6 @@
-﻿# Over-the-Air (OTA) Update Middleware Library
+﻿﻿﻿﻿﻿﻿﻿﻿﻿# Over-the-Air (OTA) Update Middleware Library
 
-The OTA library provides support for Over-The-Air update of the application code running on a PSoC™ 6 MCU with AIROC™ CYW4343W or CYW43012 Wi-Fi & Bluetooth® combo chip, using Wi-Fi or Bluetooth.
+The OTA library provides support for Over-The-Air update of the application code running on a PSoC™ 6 MCU with AIROC™ CYW4343W or CYW43012 Wi-Fi & Bluetooth® combo chip, or the CYW920829M2EVB-01 evaluation board. Device communication using Wi-Fi or Bluetooth®.
 
 ## 1. WiFi Update Flows
 
@@ -8,7 +8,7 @@ There are two "update flows" that you can designate. Update Flows use a Pull Mod
 
 #### 1.1 Get the OTA Update Image Directly
 
-This is the only flow that was available in the initial public release. It is still supported in this release. Note that there are some API changes that require modification of the network parameters.
+This is the only flow that was available in the initial public release. It is still supported in this release.
 
 This is the simplest means of getting an OTA update image.
 
@@ -29,7 +29,9 @@ The device then stores the update in the secondary slot (Slot 1) in the flash.
 
 When rebooted, MCUboot will verify the update in the secondary slot (Slot 1) and copy or swap it to the primary slot (Slot 0), and run the new application.
 
-The ModusToolbox OTA code examples import this library automatically.
+#### 1.3 Inclusion of the anycloud-ota library in ModusToolbox applications.
+
+The ModusToolbox OTA code examples import the anycloud-ota library automatically.
 
 ## 2. Features and Functionality
 
@@ -47,15 +49,28 @@ This library utilizes MQTT or HTTP and TLS to securely connect to an MQTT Broker
 
 Once the application starts the OTA agent, the OTA agent will contact the MQTT Broker/HTTP server at the defined intervals to check whether an update is available. If available, the update it will be downloaded. If the `reset_after_complete` flag was set in the agent parameters, the OTA Agent will automatically reset the device. If not set, on the next manual reset, MCUboot will perform the update.
 
-### 2.2 Features in v4.0.0
+### 2.2 New Features in v5.0.0
 
-#### 2.2.1 Bluetooth Support
+#### 2.2.1 New Target Platforms
 
-Support for Bluetooth transport in the Application has been added to the AnyCloud-OTA Library. The application is expected to initialize the Bluetooth connection, including setting up the GATT database correctly in order to accept a Bluetooth connection and send the OTA Image data to the anycloud-ota library for saving to FLASH, and setting the proper flags for MCUBoot to update the executable on the next system reset.
+We have added support for 2 new platforms in limited configurations.
 
-Note that all of the COPY / SWAP  / REVERT functionality applies equally to Bluetooth Support.
+- CYW920829M2EVB-01
+- [CY8CPROTO-062S3-4343W](https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062s3-4343w/)
 
-#### 2.2.2 Bluetooth Host Support Application
+#### 2.2.2 Cypress Bootloader  v1.8.1
+
+See "MCUBoot Instructions" below.
+
+### 2.3 New Features in v4.0.0
+
+#### 2.3.1 Bluetooth® Support
+
+Support for Bluetooth® transport in the Application has been added to the AnyCloud-OTA Library. The application is expected to initialize the Bluetooth® connection, including setting up the GATT database correctly in order to accept a Bluetooth® connection and send the OTA Image data to the anycloud-ota library for saving to FLASH, and setting the proper flags for MCUBoot to update the executable on the next system reset.
+
+Note that all of the COPY / SWAP  / REVERT functionality applies equally to Bluetooth® Support.
+
+#### 2.3.2 Bluetooth® Host Support Application
 
 For testing, there is an example Host-side tool that can be obtained here:
 
@@ -69,66 +84,25 @@ git clone https://github.com/cypresssemiconductorco/btsdk-peer-apps-ota.git
 
 For usage information, please see the README.md in the btsdk-peer-apps-ota repo.
 
-#### 2.2.3 Bootloader MCUBoot v1.7.2-cypress
+### 2.4 New Features in v3.0.0
 
-Obtain the MCUBoot repo here:
-
-https://github.com/mcu-tools/mcuboot
-
-This revision requires an update to the Bootloader. Changes needed in the bootloader before building:
-
-boot/cypress/MCUBootApp/MCUBootApp.mk
-
-Add at line 71:
-
-```
-ifneq ((CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET),)
-DEFINES_APP += -DCY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET=$(CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET)
-endif
-```
-
-Change MAX_IMG_SECTORS at line 81:
-
-```
-# MAX_IMG_SECTORS = 1536
-MAX_IMG_SECTORS = 3584
-```
-
-boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h
-
-Comment out line 79
-
-```
-/* #define MCUBOOT_VALIDATE_PRIMARY_SLOT */
-```
-
-To build:
-
-```
-make app APP_NAME=MCUBootApp PLATFORM=PSOC_062_2M BUILDCFG=Debug MCUBOOT_IMAGE_NUMBER=1 USE_EXTERNAL_FLASH=1 IMAGE_1_SLOT_SIZE=0x001C0000 CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET=0x00024400
-```
-
-
-
-### 2.3 New Features in v3.0.0
-
-#### 2.3.1 SWAP/REVERT Support with MCUboot v1.7.0-cypress
+#### 2.4.1 SWAP/REVERT Support with MCUboot v1.7.0-cypress
 
 The updated version of MCUboot supports a SWAP mode (default). Rather than copy the new OTA application from the secondary slot to the primary slot, the two applications are swapped. That is, the downloaded application that was stored in the secondary slot is moved to the primary slot; the image in the primary slot (original application) is moved to the secondary slot. This allows for a REVERT to the previous version if there is an issue with the newly downloaded application. This provides a restoration of a "last known good" application.
 
 If SWAP and REVERT is not desired, you can build mcuboot with COPY so that the OTA application is copied from the secondary slot to the primary slot, which leaves no "last known good" application. This process is much quicker than SWAP.
 
-#### 2.3.2 Enhanced Callback Functionality
+#### 2.4.2 Enhanced Callback Functionality
 
 The OTA Agent calls back to the application with status updates on the OTA download session. The callback now has the ability to change some aspects of the OTA process, and can stop the OTA session if required.
 
-#### 2.3.3 HTTP OTA Update Image Transfer
+#### 2.4.3 HTTP OTA Update Image Transfer
 
 The OTA Agent now requests a "range" for each `GET` request when transferring the OTA update image over HTTP, rather than a single `GET` request for the whole file.
 
-### 2.4 New Features in v2.0.0
+### 2.5 New Features in v2.0.0
 
-#### 2.4.1 Job Document
+#### 2.5.1 Job Document
 
 This release adds a message exchange between the device and the Publisher. The JSON-formatted "Job document" contains information where the OTA update image is located. This allows for the Job document to reside in one place, while the OTA update image can reside in another.
 
@@ -136,7 +110,7 @@ For MQTT transport, this allows a Publisher Python script to be subscribed to a 
 
 For HTTP transport, the device will `GET` the Job document (for example:*ota_update.json*) which contains the same information as if it was served from an MQTT Broker.
 
-#### 2.4.2 Example Update Sequences
+#### 2.5.2 Example Update Sequences
 
 Example Using BLE
 
@@ -163,7 +137,7 @@ Example Using BLE
 
 Please check README.md for you application for more information.
 
-#### 2.4.3 Example Update Sequence Using MQTT
+#### 2.5.3 Example Update Sequence Using MQTT
 
 1. The Publisher Python script (*libs/anycloud-ota/scripts/publisher.py*) subscribes to a known topic (for example: *anycloud/CY8CPROTO_062_4343W/publish_notify*) on the specified MQTT Broker.
 
@@ -177,7 +151,7 @@ Please check README.md for you application for more information.
 
 6. If the OTA update image is located on an HTTP server, the device will connect to the HTTP server and download the OTA update image using an HTTP `GET` request, for a range of data sequentially until all data is transferred.
 
-#### 2.4.4 Example Update Sequence Using HTTP
+#### 2.5.4 Example Update Sequence Using HTTP
 
 1. The device connects to the HTTP server and uses the HTTP `GET` request to obtain the Job document (for example: *ota_update.json*).
 
@@ -396,23 +370,248 @@ Usage:
 
 ## 5. Migrating OTA Version
 
-### 5.1 Migrating from OTA 3.x to OTA 4.x
+### 5.1 Migrating from OTA 4.x to OTA 5.x
 
-The OTA 4.x release has changes for supporting Bluetooth transport.
+The OTA 5.x release has support for 2 new platforms. Please refer to section `16. Prepare for Building Your OTA Application` after following this section.
+
+#### 5.1.1 General Changes
+
+- Use of MCUBoot v1.8.1-cypress
+  - No longer using MCUBoot v1.7.2-cypress
+  - Please see section **14 MCUBoot Instructions** below for access and migration changes.
+- Support for 2 new platforms
+  - CYW920829M2EVB-01
+    - BT Only, GCC only support
+    - Uses external flash only
+  - CY8CPROTO-062S3-4343W
+    - 1M internal flash part
+    - BT Only
+    - Uses internal flash only
+- [OTA API reference guide](https://cypresssemiconductorco.github.io/anycloud-ota/api_reference_manual/html/index.html)
+
+#### 5.1.2 Changes due to underlying library changes
+
+- Coding Changes
+
+  - If you use the command console utility, make sure you add the thread_priority field in the configuration structure.
+
+        + console_cfg.thread_priority    = CY_RTOS_PRIORITY_LOW;
+        cy_command_console_init(&console_cfg);
+
+#### 5.1.3 Required Application Changes
+
+- Serial Flash Interface changes (external flash)
+
+  To support new targets, we have combined serial flash access. This required a new interface.
+
+  - Initialization
+
+    - replace
+
+      ```
+      - #include "cy_smif_psoc6.h"
+
+      + #include "ota_serial_flash.h"
+      ```
+
+
+
+    - and
+
+      ```
+      - if (psoc6_qspi_init() != 0)
+
+      + if (ota_smif_initialize() != CY_RSLT_SUCCESS)
+      ```
+
+
+
+- UART changes for CYW920829M2EVB-01
+
+  - UART Rx and Tx pins are different for CYW920829M2EVB-01
+
+    ```
+    #if defined (CYW20829A0LKML)
+    #if !defined (CYBSP_DEBUG_UART_CTS)
+    #define CYBSP_DEBUG_UART_CTS  (P4_0)
+    #endif
+
+    #if !defined (CYBSP_DEBUG_UART_RTS)
+    #define CYBSP_DEBUG_UART_RTS  (P3_1)
+    #endif
+    #endif
+    ```
+
+  - After cy_retarget_io_init() call
+
+    ```
+    #if defined (CYW20829A0LKML)
+        {
+            /*
+             * Workaround for 20829 UART RX issue. See PROGTOOLS-3415.
+             */
+
+            cyhal_gpio_init((cyhal_gpio_t)CYBSP_DEBUG_UART_RTS, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+        }
+
+    #endif
+    ```
+
+#### 5.1.4 Makefile changes
+
+##### 5.1.4.1 Linker Script Argument changes
+
+Now using CY_BOOT_PRIMARY_1_START instead of MCUBOOT_BOOTLOADER_SIZE for GCC_ARM builds. For IAR and ARM, we need both for this release.
+
+​	From:
+
+```
+ifeq ($(TOOLCHAIN),GCC_ARM)
+    LDFLAGS+="-Wl,--defsym,MCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE),--defsym,MCUBOOT_BOOTLOADER_SIZE=$(MCUBOOT_BOOTLOADER_SIZE),--defsym,CY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)"
+else
+ifeq ($(TOOLCHAIN),IAR)
+    LDFLAGS+=--config_def MCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE) --config_def MCUBOOT_BOOTLOADER_SIZE=$(MCUBOOT_BOOTLOADER_SIZE) --config_def CY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)
+else
+ifeq ($(TOOLCHAIN),ARM)
+    LDFLAGS+=--pd=-DMCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE) --pd=-DMCUBOOT_BOOTLOADER_SIZE=$(MCUBOOT_BOOTLOADER_SIZE) --pd=-DCY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)
+endif #ARM
+endif #IAR
+endif #GCC_ARM
+```
+
+To:
+
+    ifeq ($(TOOLCHAIN),GCC_ARM)
+        LDFLAGS+="-Wl,--defsym,MCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE),--defsym,CY_BOOT_PRIMARY_1_START=$(CY_BOOT_PRIMARY_1_START),--defsym,CY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)"
+    else
+    ifeq ($(TOOLCHAIN),IAR)
+        LDFLAGS+=--config_def MCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE) --config_def MCUBOOT_BOOTLOADER_SIZE=$(MCUBOOT_BOOTLOADER_SIZE) --config_def CY_BOOT_PRIMARY_1_START=$(CY_BOOT_PRIMARY_1_START) --config_def CY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)
+    else
+    ifeq ($(TOOLCHAIN),ARM)
+        LDFLAGS+=--pd=-DMCUBOOT_HEADER_SIZE=$(MCUBOOT_HEADER_SIZE) --pd=-DMCUBOOT_BOOTLOADER_SIZE=$(MCUBOOT_BOOTLOADER_SIZE) --pd=-DCY_BOOT_PRIMARY_1_START=$(CY_BOOT_PRIMARY_1_START) --pd=-DCY_BOOT_PRIMARY_1_SIZE=$(CY_BOOT_PRIMARY_1_SIZE)
+    endif #ARM
+    endif #IAR
+    endif #GCC_ARM
+
+
+##### 5.1.4.2 Linker Script Location Addition
+
+We have a different linker script for the CYW920829M2EVB-01 target, which will also be used for other target builds in the future.
+
+From:
+
+```
+LINKER_SCRIPT_WILDCARD:=libs/anycloud-ota/$(TARGET_UNDERSCORE)/COMPONENT_$(CORE)/TOOLCHAIN_$(TOOLCHAIN)/ota/*_ota_int.$(CY_TOOLCHAIN_LS_EXT)
+
+```
+
+To:
+
+```
+ifeq ($(TARGET), CYW920829M2EVB-01)
+    LINKER_SCRIPT_WILDCARD:=./$(TARGET_UNDERSCORE)/COMPONENT_$(CORE)/TOOLCHAIN_$(TOOLCHAIN)/ota/*_ota_ext.$(CY_TOOLCHAIN_LS_EXT)
+else
+    LINKER_SCRIPT_WILDCARD:=./$(TARGET_UNDERSCORE)/COMPONENT_$(CORE)/TOOLCHAIN_$(TOOLCHAIN)/ota/*_ota_int.$(CY_TOOLCHAIN_LS_EXT)
+endif
+
+```
+
+##### 5.1.4.3 MCUBoot Support Code Location In Anycloud-OTA Library
+
+Adding the SMIF support for CYW920829M2EVB-01, which is different from PSoC™ 6 targets, required separate directories in the library.
+
+From:
+
+```
+MCUBOOT_DIR=./source/mcuboot
+```
+
+To:
+
+```
+ifeq ($(TARGET), CYW920829M2EVB-01)
+    MCUBOOT_DIR=./source/COMPONENT_OTA_MCUBOOT_20829/mcuboot
+else
+    MCUBOOT_DIR=./source/COMPONENT_OTA_MCUBOOT_PSOC/mcuboot
+endif
+```
+
+##### 5.1.4.4 Post Build changes
+
+```
+ifeq ($(TARGET), CYW920829M2EVB-01)
+    MCUBOOT_SCRIPT_FILE_DIR=$(MCUBOOT_DIR)/scripts
+    MCUBOOT_SCRIPT_FILE_PATH?=./scripts/mcuboot_script_20829.bash
+    MCUBOOT_KEY_DIR=$(MCUBOOT_DIR)/keys
+    MCUBOOT_KEY_FILE=cypress-test-ec-p256.pem
+    IMGTOOL_SCRIPT_NAME=imgtool_v1.7.0/imgtool.py
+    CY_ELF_TO_HEX=$(CY_HEX_TO_BIN)
+
+    # Necessary for external flash access
+    CY_TOC2_GENERATOR = ./libs/recipe-make-cat1b/make/scripts/20829/run_toc2_generator.sh
+
+    ifeq ($(TOOLCHAIN),ARM)
+        POSTBUILD=$(CY_CROSSPATH)/bin/fromelf "$(CY_CONFIG_DIR)/$(APPNAME).elf" --bin --output="$(CY_CONFIG_DIR)/$(APPNAME).bin";
+    else
+    ifeq ($(TOOLCHAIN),IAR)
+        ifeq ($(APPTYPE),flash)
+            OTA_POSTBUILD_PARAM=--bin-multi
+        else
+            OTA_POSTBUILD_PARAM=--bin
+        endif
+        POSTBUILD="$(CY_CROSSPATH)/bin/ielftool" "$(CY_CONFIG_DIR)/$(APPNAME).elf" $(CY_BSP_POSTBUILD_PARAM) "$(CY_CONFIG_DIR)/$(APPNAME).bin";
+    else
+    ifeq ($(TOOLCHAIN),GCC_ARM)
+        POSTBUILD="$(CY_TOOLCHAIN_ELF2BIN)" "$(CY_CONFIG_DIR)/$(APPNAME).elf" -S -O binary "$(CY_CONFIG_DIR)/$(APPNAME).bin";
+    endif # GCC_ARM
+    endif # IAR
+    endif # ARM
+
+    POSTBUILD+=$(MCUBOOT_SCRIPT_FILE_PATH) $(CY_CROSSPATH) $(CY_PYTHON_PATH) $(OUTPUT_FILE_PATH) $(APPNAME) \
+               $(CY_ELF_TO_HEX) $(CY_ELF_TO_HEX_OPTIONS) $(CY_ELF_TO_HEX_FILE_ORDER) $(CY_HEX_TO_BIN) \
+               $(MCUBOOT_SCRIPT_FILE_DIR) $(IMGTOOL_SCRIPT_NAME) $(CY_FLASH_ERASE_VALUE) $(MCUBOOT_HEADER_SIZE) \
+               $(CY_BUILD_VERSION) $(CY_BOOT_PRIMARY_1_START) $(CY_BOOT_PRIMARY_1_SIZE) $(CY_BOOT_SECONDARY_1_START) \
+               $(CY_TOC2_GENERATOR) $(CY_LCS) $(APPTYPE) $(MCUBOOT_KEY_DIR) $(MCUBOOT_KEY_FILE) $(SMIF_CRYPTO_CONFIG);
+    POSTBUILD+=rm -rf $(CY_CONFIG_DIR)/$(APPNAME).bin;
+
+else
+    # NON-CYW920829M2EVB-01
+    # signing scripts and keys from MCUBoot
+    # Defaults for 062 non-secure boards
+    MCUBOOT_SCRIPT_FILE_DIR=$(MCUBOOT_DIR)/scripts
+    SIGN_SCRIPT_FILE_PATH=./scripts/sign_script.bash
+    MCUBOOT_KEY_DIR=$(MCUBOOT_DIR)/keys
+    MCUBOOT_KEY_FILE=$(MCUBOOT_KEY_DIR)/cypress-test-ec-p256.pem
+    IMGTOOL_SCRIPT_NAME=imgtool_v1.7.0/imgtool.py
+    IMGTOOL_COMMAND_ARG=sign
+    CY_SIGNING_KEY_ARG="-k $(MCUBOOT_KEY_FILE)"
+
+    ifeq ($(TARGET),CY8CKIT-064B0S2-4343W)
+        # values changed for 064B0S2 board
+        IMGTOOL_COMMAND_ARG=do_not_sign
+    endif
+endif
+```
+
+
+
+### 5.2 Migrating from OTA 3.x to OTA 4.x
+
+The OTA 4.x release has changes for supporting Bluetooth® transport.
 
 Changes:
 
 - Use of MCUBoot v1.7.2-cypress
 
 - Support for ARM C compiler
-  - All 062 based boards, WiFi and Bluetooth support
-  - CY8CKIT-064B0S2-4343W board, WiFi suppport
+  - All 062 based boards, WiFi and Bluetooth® support
+  - CY8CKIT-064B0S2-4343W board, WiFi support
 
 - Use of COMPONENT system for specifying transport support, allowing for smaller code and RAM footprint when supporting individual transports.
   - COMPONENTS+=OTA_HTTP
   - COMPONENTS+=OTA_MQTT
   - COMPONENTS+=OTA_BLUETOOTH
-    - For secure Bluetooth, add this define to the build.
+    - For secure Bluetooth®, add this define to the build.
       - DEFINES+=CY_OTA_BLE_SECURE_SUPPORT=1
 
 - Exposed defines for customer over-rides
@@ -428,7 +627,7 @@ Changes:
 
 
 
-### 5.2 Migrating from OTA 2.x to OTA 3.x
+### 5.3 Migrating from OTA 2.x to OTA 3.x
 
 The OTA 3.x release has new structure defines because of the changes in mqtt and http-client libraries.
 
@@ -488,7 +687,7 @@ You need to change the following when migrating from v1.x to v2.x:
 
 - [ModusToolbox® software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3.1 or higher
 
-- [MCUboot](https://juullabs-oss.github.io/mcuboot/) v1.7.2
+- [MCUboot](https://juullabs-oss.github.io/mcuboot/) v1.8.1
 
 - Programming Language: C
 
@@ -526,10 +725,12 @@ Please refer to RELEASE.md for latest information.
 
 - [PSoC™ 6 Wi-Fi BT Prototyping Kit](https://www.cypress.com/CY8CPROTO-062-4343W) (CY8CPROTO-062-4343W)
 - [PSoC™ 62S2 Wi-Fi BT Pioneer Kit](https://www.cypress.com/CY8CKIT-062S2-43012) (CY8CKIT-062S2-43012)
+- [PSoC™ 62S3 Wi-Fi BT Prototyping Kit ](https://www.infineon.com/cms/en/product/evaluation-boards/cy8cproto-062s3-4343w/)(CY8CPROTO-062S3-4343W)
 - [PSoC™ 64 Secure Boot Wi-Fi BT Pioneer Kit](https://www.cypress.com/documentation/development-kitsboards/psoc-64-secure-boot-wi-fi-bt-pioneer-kit-cy8ckit-064b0s2-4343w) (CY8CKIT-064B0S2-4343W)
 - [CY8CEVAL-062S2 Evaluation Kit][https://www.cypress.com/part/cy8ceval-062s2] (CY8CEVAL-062S2-LAI-4373M2 and CY8CEVAL-062S2-MUR-43439M2)
+- CYW920829M2EVB-01
 
-Only kits with 2M of internal flash and external flash are supported at this time. You will need to change the flash locations and sizes for the bootloader, primary slot (Slot 0) and secondary slot (Slot 1). See the Prepare MCUboot section below.
+You will need to change the flash locations and sizes for the bootloader, primary slot (Slot 0) and secondary slot (Slot 1). See the Prepare MCUboot section below.
 
 ## 11. Hardware Setup
 
@@ -571,11 +772,12 @@ In *libs/anycloud-ota/include/cy_ota_api.h*, define `LIBRARY_LOG_LEVEL` to one o
 
 ### 14.1 Clone MCUboot
 
-The CY8CKIT-064B0S2-4343W is a special kit that uses cysecurebboot to install the bootloader. See CY8CKIT-064B0S2-4343W information below.
+The CY8CKIT-064B0S2-4343W is a special kit that uses cysecureboot. See "cysecuretools for CY8CKIT-064B0S2-4343W" information below.
 
-You need to first build and program the bootloader app *MCUBootApp* that is available in the MCUboot GitHub repo before programming this OTA app. The bootloader app is run by the CM0+ CPU while this OTA app is run by CM4. Clone the MCUboot repository onto your local machine, **outside of your application directory.**
+You need to first build and program the bootloader app *MCUBootApp* that is available in the MCUboot GitHub repo before programming this OTA app. The bootloader app is run by the CM0+ CPU while any OTA application is run by CM4. Clone the MCUboot repository onto your local machine, **outside of your application directory.**
 
 1. Run the following command:
+
    ```
    git clone https://github.com/JuulLabs-OSS/mcuboot.git
    ```
@@ -587,19 +789,12 @@ You need to first build and program the bootloader app *MCUBootApp* that is avai
 
 3. Change the branch to get the Cypress version:
 
-   1. For ***pre*** anycloud-ota v4.X:
-
-      ```
-      git checkout v1.7.0-cypress
-      ```
-
-      2. For anycloud-ota v4.x and higher:
-
-         ```
-         git checkout v1.7.2-cypress
-         ```
+   ```
+   git checkout v1.8.1-cypress
+   ```
 
 4. Pull in MCUboot sub-modules to build mcuboot:
+
    ```
    git submodule update --init --recursive
    ```
@@ -611,365 +806,54 @@ You need to first build and program the bootloader app *MCUBootApp* that is avai
    pip install -r requirements.txt
    ```
 
+### 14.2 Build MCUboot
 
+MCUBootApp now supports using a JSON document to define the flash regions used for updating the application.
 
-### 14.2 MCUBootApp Using the SWAP Functionality
+Read **"libs/anycloud-ota/configs/flashmap/MCUBoot_Build_Commands.md"** to build MCUBoot.
 
-Starting with MCUboot v1.7.0, "SWAP" support has been added. When copying the downloaded application to the primary slot (execution location), MCUboot will swap (exchange) the two applications rather than copy over the resident application. This allows mcuboot to revert to the application version before the download.
+CyBootloader is used for CYW920829M2EVB-01 and PSoC™ 6 MCU targets, please also see section **15. cysecuretools for CY8CKIT-064B0S2-4343W**
 
-MCUBootApp also starts the watchdog timer. If the watchdog timer completes without being cleared, the system will automatically reboot and revert the application to the previous app; this is because the new application failed in some way.
+NOTES:
 
-### 14.3 Configure MCUBootApp v1.7.2-cypress
+- The addresses in the JSON file are ABSOLUTE addresses. In OTA v5.0.0 we use RELATIVE addresses.
 
-#### 14.3.1 Decide on COPY vs. SWAP
+- Take the ABSOLUTE addresses in the JSON file and set the upper 2 hex digits to 0x00 to get the RELATIVE address.
 
-MCUBoot can support OTA in two ways: by copying the new application over the current application, or by swapping the new application with the current applciation.
+  ```
+  ex: 0x18028000 becomes: 0x00028000
+  ```
 
-##### 14.3.1.1 COPY
 
-MCUBoot copies over the downloaded (new) application in the Secondary slot over the current application in the Primary slot. This is a faster update method, but does not allow for reverting to the previous version if there is a problem.
 
-To use COPY, set this flag in boot/cypress/MCUBootApp/MCUBootApp.mk:
+- Watch the MCUBootApp build output. If the python script flashmap.py detects errors in the flash layout, it will report them to stderr and stop the build.
 
-Line 34:
+- The naming conventions in the JSON files are different from the actual DEFINES used in the code, here’s a quick reference:
 
-```
-USE_OVERWRITE ?= 1
-```
 
-##### 14.3.1.2 SWAP
 
-MCUBoot swaps the applications in the Primary and Secondary slots. This allows for reverting the change to the previous version (last known good). This operation takes longer than the copy option.
+| JSON File                 | Description                          | Makefile DEFINE           | Notes                                  |
+| ------------------------- | ------------------------------------ | ------------------------- | -------------------------------------- |
+| "bootloader" "address"    | Bootloader start address             |                           |                                        |
+| "size"                    | Bootloader size                      | MCUBOOT_BOOTLOADER_SIZE   |                                        |
+| "scratch_address"         | Swap/Overwrite scratch start address | CY_BOOT_SCRATCH_START     | Used during upgrade process by MCUBoot |
+| "scratch_size"            | Swap/Overwrite scratch size          | CY_BOOT_SCRATCH_SIZE      |                                        |
+| "status_address"          | Swap/Overwrite status start address  | CY_BOOT_STATUS_START      | Used during upgrade process by MCUBoot |
+| "status_size"             | Swap/Overwrite status size           | CY_BOOT_STATUS_SIZE       |                                        |
+|                           |                                      |                           |                                        |
+| “application_1” “address” | Main application start address       | CY_BOOT_PRIMARY_1_START   |                                        |
+| "size"                    | Main application size                | CY_BOOT_PRIMARY_1_SIZE    |                                        |
+| “upgrade_address”         | Main application upgrade address     | CY_BOOT_SECONDARY_1_START |                                        |
+| “upgrade_size”            | Main application upgrade size        | CY_BOOT_SECONDARY_1_SIZE  | Must match CY_BOOT_PRIMARY_1_SIZE      |
+|                           |                                      |                           |                                        |
+| “application_2” “address” | Main application start address       | CY_BOOT_PRIMARY_2_START   |                                        |
+| "size"                    | Main application size                | CY_BOOT_PRIMARY_2_SIZE    |                                        |
+| “upgrade_address”         | Main application upgrade address     | CY_BOOT_SECONDARY_2_START |                                        |
+| “upgrade_size”            | Main application upgrade size        | CY_BOOT_SECONDARY_2_SIZE  | Must match CY_BOOT_PRIMARY_2_SIZE      |
 
-To use SWAP, clear this flag  in boot/cypress/MCUBootApp/MCUBootApp.mk:
 
-Line 34:
 
-```
-USE_OVERWRITE ?= 0
-```
-
-#### 14.3.2 Adjust MCUBootApp FLASH locations
-
-Both MCUboot and the application must have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader, see the [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
-
-##### 14.3.2.1 Internal Flash for Secondary Slot
-
-These values are used when the secondary slot is located in the *internal* flash. Because the internal flash is 2 MB, you must have the bootloader and the primary and secondary slots match. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* leave line 33 as:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 0
-   ```
-
-2. Add the following at line 70:
-
-   ```
-   ifeq ($(USE_EXTERNAL_FLASH), 0)
-   MAX_IMG_SECTORS = 1904
-   DEFINES_APP += -DCY_BOOT_IMAGE_1_SIZE=$(CY_BOOT_IMAGE_1_SIZE)
-   endif
-   ```
-
-
-##### 14.3.2.2 External Flash for the Secondary Slot
-
-These values are used when the secondary slot is located in the *external* flash. This allows for a larger primary slot and therefore, a larger application size. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* to change line 33:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 1
-   ```
-
-2. Add the following at line 71:
-
-   ```
-   ifneq ((CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET),)
-   DEFINES_APP += -DCY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET=$(CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET)
-   endif
-   ```
-
-3. Change the MAX_IMG_SECTORS at line 81:
-
-   ```
-   MAX_IMG_SECTORS = 3584
-   ```
-
-
-##### 14.3.3 Change MCUboot to Ignore Primary Slot verify
-
-Notes:
-
-1. The primary slot is where the application is run from.
-
-2. The OTA download stores the new application in the secondary slot.
-
-3. MCUboot verifies the signature in the secondary slot before copying it to the primary slot.
-
-4. Signature verify takes some time. Removing the verify before running from the primary slot allows for a faster boot up of your application. Note that MCUboot checks the signature on the secondary slot before copying the application.
-
-Adjust the signing type for MCUboot because the default has changed from previous versions. If you do not make this change, the OTA will complete the download, reboot, but MCUboot will not find the *magic_number* and fail to copy the secondary slot to the primary slot.
-
-Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h* as follows:
-
-1. comment out line 79:
-
-   ```
-   //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
-   ```
-
-
-
-### 14.4 Configure MCUBootApp v1.7.0-cypress
-
-#### 14.4.1 Decide on COPY vs. SWAP
-
-MCUBoot can support OTA in two ways: by copying the new application over the current application, or by swapping the new application with the current applciation.
-
-##### 14.4.1.1 COPY
-
-MCUBoot copies over the downloaded (new) application in the Secondary slot over the current application in the Primary slot. This is a faster update method, but does not allow for reverting to the previous version if there is a problem.
-
-To use COPY, set this flag in boot/cypress/MCUBootApp/MCUBootApp.mk:
-
-Line 32:
-
-```
-USE_OVERWRITE ?= 1
-```
-
-##### 14.4.1.2 SWAP
-
-MCUBoot swaps the applications in the Primary and Secondary slots. This allows for reverting the change to the previous version (last known good). This operation takes longer than the copy option.
-
-To use SWAP, clear this flag  in boot/cypress/MCUBootApp/MCUBootApp.mk:
-
-Line 32:
-
-```
-USE_OVERWRITE ?= 0
-```
-
-### 14.4.2 Adjust MCUBootApp FLASH locations
-
-Both MCUboot and the application must have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader, see the [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
-
-#### 14.4.2.1 Internal Flash for Secondary Slot
-
-These values are used when the secondary slot is located in the *internal* flash. Because the internal flash is 2 MB, you must have the bootloader and the primary and secondary slots match. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* to change line 31:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 0
-   ```
-
-2. Add the following at line 70:
-
-   ```
-   MAX_IMG_SECTORS = 2000
-   DEFINES_APP += -DCY_BOOT_SCRATCH_SIZE=0x4000
-   DEFINES_APP += -DCY_BOOT_PRIMARY_1_SIZE=0x000EE000
-   DEFINES_APP += -DCY_BOOT_SECONDARY_1_SIZE=0x000EE000
-   ```
-
-3. Place the following before the current line:
-
-   ```
-   DEFINES_APP += -DMCUBOOT_MAX_IMG_SECTORS=$(MAX_IMG_SECTORS)
-   ```
-
-#### 14.4.2.2 External Flash for the Secondary Slot
-
-These values are used when the secondary slot is located in the *external* flash. This allows for a larger primary slot and therefore, a larger application size. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* to change line 31:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 1
-   ```
-
-2. Add the following at line 70:
-
-   ```
-   DEFINES_APP += -DCY_BOOT_SCRATCH_SIZE=0x4000
-   DEFINES_APP += -DCY_BOOT_PRIMARY_1_SIZE=0x001C0000
-   DEFINES_APP += -DCY_BOOT_SECONDARY_1_SIZE=0x001C0000
-   ```
-
-
-#### 14.4.2.3 Change MCUboot to Ignore Primary Slot verify
-
-Notes:
-
-1. The primary slot is where the application is run from.
-
-2. The OTA download stores the new application in the secondary slot.
-
-3. MCUboot verifies the signature in the secondary slot before copying it to the primary slot.
-
-4. Signature verify takes some time. Removing the verify before running from the primary slot allows for a faster boot up of your application. Note that MCUboot checks the signature on the secondary slot before copying the application.
-
-Adjust the signing type for MCUboot because the default has changed from previous versions. If you do not make this change, the OTA will complete the download, reboot, but MCUboot will not find the *magic_number* and fail to copy the secondary slot to the primary slot.
-
-Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h* as follows:
-
-1. On lines 38 and 39, comment out these two lines:
-
-   ```
-   /* Uncomment for ECDSA signatures using curve P-256. */
-   //#define MCUBOOT_SIGN_EC256
-   //#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable
-   ```
-
-2. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h* on line 78:
-
-   ```
-   //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
-   ```
-
-
-
-### 14.5 Configure MCUBootApp 1.6.0-cypress
-
-#### 14.5.1 Adjust MCUBootApp RAM Start in the Linker Script
-
-Change the default RAM location for use with OTA.
-
-Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.ld*.    Change line 66 as follows:
-
-From:
-
-```
-ram               (rwx)   : ORIGIN = 0x08020000, LENGTH = 0x20000
-```
-
-To:
-
-```
-ram               (rwx)   : ORIGIN = 0x08000000, LENGTH = 0x20800
-```
-
-#### 14.5.2 Adjust MCUBootApp Flash Locations
-
-Both MCUboot and the application must have the exact same understanding of the memory layout. Otherwise, the bootloader may consider an authentic image as invalid. To learn more about the bootloader, see the [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation.
-
-##### 14.5.2.1 Internal Flash for the Secondary Slot
-
-These values are used when the secondary slot is located in the *internal* flash. Because the internal flash is 2 MB, you need to ensure that the bootloader and the primary and secondary slots match. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* at line 31:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 0
-   ```
-
-2. Replace line 55 with the following:
-
-   ```
-   DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=2000
-   ```
-
-3. Add the following at line 56:
-
-   ```
-   DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x0EE000
-   DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x0EE000
-   ```
-
-##### 14.5.2.2 External Flash for the Secondary Slot
-
-These values are used when the secondary slot is located in the *external* flash. This allows for a larger primary slot and therefore, a larger application size. The primary and secondary slots are always the same size.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/MCUBootApp.mk* at line 31:
-
-   ```
-   USE_EXTERNAL_FLASH ?= 1
-   ```
-
-2. Replace line 55 with the following:
-
-   ```
-   DEFINES_APP +=-DMCUBOOT_MAX_IMG_SECTORS=3584
-   ```
-
-3. Add the following at line 56:
-
-   ```
-   DEFINES_APP +=-DCY_BOOT_PRIMARY_1_SIZE=0x01c0000
-   DEFINES_APP +=-DCY_BOOT_SECONDARY_1_SIZE=0x01c0000
-   ```
-
-##### 14.5.2.3 Change MCUboot to Ignore Primary Slot Verify
-
-Notes:
-
-1. The primary slot is where the application is run from.
-
-2. The OTA download stores the new application in the secondary slot.
-
-3. MCUboot verifies the signature in the secondary slot before copying it to the primary slot.
-
-4. Signature verify takes some time. Removing the verify before running from the primary slot allows for a faster boot up of your application. Note that MCUboot checks the signature on the secondary slot before copying the application.
-
-Adjust signing type for MCUboot as the default has changed from previous versions. The side effect of not doing this change is that the OTA will complete the download, reboot, and MCUboot will not find the magic_number and fail to copy the secondary slot to the primary slot.
-
-1. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h*. On lines 38 and 39, comment out these two lines:
-
-   ```
-   /* Uncomment for ECDSA signatures using curve P-256. */
-   //#define MCUBOOT_SIGN_EC256
-   //#define NUM_ECC_BYTES (256 / 8) 	// P-256 curve size in bytes, rnok: to make compilable
-   ```
-
-2. Edit *mcuboot/boot/cypress/MCUBootApp/config/mcuboot_config/mcuboot_config.h*. Add the following on line 78:
-
-   ```
-   //#define MCUBOOT_VALIDATE_PRIMARY_SLOT
-   ```
-
-### 14.6 Building MCUBootApp
-
-1. Ensure that the toolchain path is set for the compiler. Verify that the path is correct for your installed version of ModusToolbox.
-
-   - Check the path for ModusToolbox v2.1.x:
-
-     ```
-     export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.1/gcc-7.2.1
-     ```
-
-   - Check the path for ModusToolbox v2.2.x:
-     ```
-     export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.2/gcc
-     ```
-
-   - Check the path for ModusToolbox v2.3.x:
-
-     ```
-     export TOOLCHAIN_PATH=<path>/ModusToolbox/tools_2.3/gcc
-     ```
-
-2. Build the MCUBoot application for internal or external FLASH usage:
-
-   - External FLASH build
-
-     ```
-     cd mcuboot/boot/cypress
-     make app APP_NAME=MCUBootApp PLATFORM=PSOC_062_2M MCUBOOT_IMAGE_NUMBER=1 USE_EXTERNAL_FLASH=1 IMAGE_1_SLOT_SIZE=0x001C0000 CY_BOOT_EXTERNAL_FLASH_SECONDARY_1_OFFSET=0x00024400
-     ```
-
-   - Internal FLASH build
-
-     ```
-     cd mcuboot/boot/cypress
-     $ make app APP_NAME=MCUBootApp PLATFORM=PSOC_062_2M BUILDCFG=Debug MCUBOOT_IMAGE_NUMBER=1 CY_BOOT_IMAGE_1_SIZE=0x000EE000 USE_EXTERNAL_FLASH=0
-     ```
-
-3. Use Cypress Programmer to program MCUboot. Ensure that you close Cypress Programmer before trying to program the application using ModusToolbox or from the CLI. The MCUboot application *.elf* file is *mcuboot/boot/cypress/MCUBootApp/out/PSOC_062_2M/Release/MCUBootApp.elf*.
-
-### 14.7 Program MCUBootApp
+### 14.3 Program MCUBootApp
 
 1. Connect the board to your PC using the provided USB cable through the USB connector.
 2. Program the board using the instructions in your Customer Example Application notes.
@@ -986,49 +870,137 @@ Copy *libs/anycloud-ota/configs/cy_ota_config.h* to your application's top-level
 
    ```
    cp libs/anycloud-ota/configs/cy_ota_config.h <application dir>
+   cp libs/anycloud-ota/configs/mbedtls_user_config.h <application dir>
    ```
 
-Consult the README.md file for configuration of the example application and other information.
+### 16.1 Defines Used With The anycloud-ota Library
 
-The Makefile uses this compile variable to determine which flash to use:
+There are many defines for various functionality in the anycloud-ota library that are documented in the configuration file, libs/anycloud-ota/configs/cy_ota_config.h.
 
-`OTA_USE_EXTERNAL_FLASH=1`
+Typically, these are defines are included in the Makefile of the application as:
 
-The default for the build is to use the external flash. The build system will use the values described above for the slot sizes automatically.
+```
+DEFINES+=<define_name>[=<define_value>]
+```
 
-To use the internal flash only, set the Makefile variable to zero:
+You must also consult the README.md file for the example application.
 
-`OTA_USE_EXTERNAL_FLASH=0`
+#### 16.1.1 Platform Specific Defines
 
-### 16.1 Flash Partitioning
+##### PSoC™ 6 MCU Target Internal Flash Sizes
 
-OTA provides a way to update the system software. The OTA mechanism stores the new software to a "staging" area called the "secondary slot".  MCUboot will do the actual update from the secondary slot to the primary slot on the next reboot of the device. For the OTA software and MCUboot to have the same information on where the two slots are in flash, you need to tell MCUboot where the slots are located.
+| Target                     | Internal Flash Size | Define        | Notes                                                        |
+| -------------------------- | ------------------- | ------------- | ------------------------------------------------------------ |
+| CY8CPROTO-062-4343W        | 2M bytes            | PSOC_062_2M   | Used in anycloud-ota library file flash_qspi.c for pin definition |
+| CY8CKIT-062S2-43012        | 2M bytes            | PSOC_062_2M   | Used in anycloud-ota library file flash_qspi.c for pin definition |
+| CY8CKIT-064B0S2-4343W      | 2M bytes            | PSOC_062_2M   | Used in anycloud-ota library file flash_qspi.c for pin definition |
+| CY8CEVAL-062S2-LAI-4373M2  | 2M bytes            | PSOC_062_2M   | Used in anycloud-ota library file flash_qspi.c for pin definition |
+| CY8CEVAL-062S2-MUR-43439M2 | 2M bytes            | PSOC_062_2M   | Used in anycloud-ota library file flash_qspi.c for pin definition |
+| CY8CPROTO-062S3-4343W      | 512K bytes          | PSOC_062_512K | Used in anycloud-ota library file flash_qspi.c for pin definition |
 
-The secondary slot can be placed on either internal or external flash.
+#### 16.1.2 Flash Related Code Defines
 
-Internal flash:
+| Define                     | Value | Notes                                    |
+| -------------------------- | ----- | ---------------------------------------- |
+| CY_BOOT_USE_EXTERNAL_FLASH | 1     | Used in  aws-iot-device-sdk-port library |
 
-For internal flash we use an offset from the starting address of the internal flash 0x10000000.
 
-- Primary Slot (Slot 0):     start: 0x00018000, size: 0xEE000
 
-- Secondary Slot (Slot 1): start: 0x0010E000, size: 0xEE000
+#### 16.1.3 Flash Layout Defines
 
-External flash:
+| Define                    | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| CY_BOOT_PRIMARY_1_START   | Start of Application offset in internal flash.<br />(MCUBootApp uses 0x00000000 -0x00017FFF )<br />Referred to in MCUBoot JSON file as "application_1" "address". |
+| CY_BOOT_PRIMARY_1_SIZE    | Size of Application + Radio Firmware + MCUBootApp header and trailer<br />Referred to in MCUBoot JSON file as "application_1" "size". |
+| CY_BOOT_SECONDARY_1_START | Offset of Download area for Application in external flash<br />Referred to in MCUBoot JSON file as "application_1" "upgrade_address". |
+| CY_BOOT_SECONDARY_1_SIZE  | Size of Application + Radio Firmware + MCUBootApp header and trailer<br />Referred to in MCUBoot JSON file as "application_1" "upgrade_size".<br />Must be the same as CY_BOOT_PRIMARY_1_SIZE |
+| CY_BOOT_SCRATCH_START     | This is not used by anycloud-ota, must be set aside for MCUBootApp SWAP operation.<br />Not used for MCUBootApp OVERWRITE operation. |
+| CY_BOOT_SCRATCH_SIZE      | This is not used by anycloud-ota, must be set aside for MCUBootApp SWAP operation.<br />Not used for MCUBootApp OVERWRITE operation. |
+| CY_BOOT_STATUS_START      | This is not used by anycloud-ota, must be set aside for MCUBootApp SWAP operation.<br />Not used for MCUBootApp OVERWRITE operation. |
+| CY_BOOT_STATUS_SIZE       | This is not used by anycloud-ota, must be set aside for MCUBootApp SWAP operation.<br />Not used for MCUBootApp OVERWRITE operation. |
+|                           |                                                              |
 
-For external flash the secondary slot is an offset from the starting address of the external flash 0x18000000.
+##### 16.1.3.1 CY8CPROTO-062-4343W Using External Flash
 
-- For MCUBoot v1.7.2
+| Define                    | Value      | Notes                                       |
+| ------------------------- | ---------- | ------------------------------------------- |
+| CY_BOOT_PRIMARY_1_START   | 0x00018000 | Offset from internal flash base             |
+| CY_BOOT_PRIMARY_1_SIZE    | 0x001C0000 |                                             |
+| CY_BOOT_SECONDARY_1_START | 0x00000200 | Offset from external flash base             |
+| CY_BOOT_SECONDARY_1_SIZE  | 0x001C0000 | Must be same size as CY_BOOT_PRIMARY_1_SIZE |
+| CY_BOOT_SCRATCH_START     | 0x00440000 | Offset from external flash base             |
+| CY_BOOT_SCRATCH_SIZE      | 0x00080000 |                                             |
+| CY_BOOT_STATUS_START      | 0x00070200 | Offset from internal flash base             |
+| CY_BOOT_STATUS_SIZE       | 0x00006C00 |                                             |
 
-  Primary Slot (Slot 0):      start: 0x00018000, size: 0x01c0000  [internal flash offset]
+##### 16.1.3.2 CY8CPROTO-062-4343W Using Internal Flash
 
-  Secondary Slot (Slot 1): start: 0x00024400, size: 0x01c0000  [external flash offset]
+| Define                    | Value      | Notes                                       |
+| ------------------------- | ---------- | ------------------------------------------- |
+| CY_BOOT_PRIMARY_1_START   | 0x00018000 | Offset from internal flash base             |
+| CY_BOOT_PRIMARY_1_SIZE    | 0x000EE000 |                                             |
+| CY_BOOT_SECONDARY_1_START | 0x00106000 | Offset from internal flash base             |
+| CY_BOOT_SECONDARY_1_SIZE  | 0x000EE000 | Must be same size as CY_BOOT_PRIMARY_1_SIZE |
+| CY_BOOT_SCRATCH_START     | 0x001f7c00 | Offset from external flash base             |
+| CY_BOOT_SCRATCH_SIZE      | 0x00001000 |                                             |
+| CY_BOOT_STATUS_START      | 0x001f4000 | Offset from internal flash base             |
+| CY_BOOT_STATUS_SIZE       | 0x00003C00 |                                             |
 
-- For MCUBoot v1.7.0
+##### 16.1.3.3 CY8CPROTO-062S3-4343W Using Internal Flash
 
-  Primary Slot (Slot 0):      start: 0x00018000, size: 0x01c0000  [internal flash offset]
+This is a 512k part, uses external flash for upgrade and scratch area.
 
-  Secondary Slot (Slot 1): start: 0x00000000, size: 0x01c0000  [external flash offset]
+| Define                    | Value      | Notes                                       |
+| ------------------------- | ---------- | ------------------------------------------- |
+| CY_BOOT_PRIMARY_1_START   | 0x00018000 | Offset from internal flash base             |
+| CY_BOOT_PRIMARY_1_SIZE    | 0x00058200 |                                             |
+| CY_BOOT_SECONDARY_1_START | 0x00028000 | Offset from external flash base             |
+| CY_BOOT_SECONDARY_1_SIZE  | 0x00058200 | Must be same size as CY_BOOT_PRIMARY_1_SIZE |
+| CY_BOOT_SCRATCH_START     | 0x00440000 | Offset from external flash base             |
+| CY_BOOT_SCRATCH_SIZE      | 0x00080000 |                                             |
+| CY_BOOT_STATUS_START      | 0x00070200 | Offset from internal flash base             |
+| CY_BOOT_STATUS_SIZE       | 0x00003C00 |                                             |
+
+##### 16.1.3.4 CYW920829M2EVB-01 Using External Flash
+
+This platform only has external flash.
+
+| Define                    | Value      | Notes                                       |
+| ------------------------- | ---------- | ------------------------------------------- |
+| CY_BOOT_PRIMARY_1_START   | 0x00020000 | Offset from external flash base             |
+| CY_BOOT_PRIMARY_1_SIZE    | 0x00060000 |                                             |
+| CY_BOOT_SECONDARY_1_START | 0x00080000 | Offset from external flash base             |
+| CY_BOOT_SECONDARY_1_SIZE  | 0x00060000 | Must be same size as CY_BOOT_PRIMARY_1_SIZE |
+| CY_BOOT_SCRATCH_START     | 0x000EC000 | Offset from external flash base             |
+| CY_BOOT_SCRATCH_SIZE      | 0x00002000 |                                             |
+| CY_BOOT_STATUS_START      | 0x000E0000 | Offset from external flash base             |
+| CY_BOOT_STATUS_SIZE       | 0x0000C000 |                                             |
+
+#### 16.1.4 HTTP and MQTT Related Defines
+
+| Define                                            | Notes                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------ |
+| There are numerous HTTP and MQTT related defines. | Please use cy_ota_config.h in your project to adjust these defines. |
+
+
+
+#### 16.1.5 BlueTooth® Related Defines
+
+| Define                    | Notes                                                        |
+| ------------------------- | ------------------------------------------------------------ |
+| CY_OTA_BLE_SECURE_SUPPORT | Setting CY_OTA_BLE_SECURE_SUPPORT=1 enables a secure BlueTooth® connection. You must also adjust the BlueTooth® configuration for your application using bt-configurator.exe. |
+
+#### 16.1.7 Other Defines
+
+| Define                                | Platform              | Value | Notes                                                        |
+| ------------------------------------- | --------------------- | ----- | ------------------------------------------------------------ |
+| CYBSP_WIFI_CAPABLE                    | All PSoC™ 6 MCUs      | 1     | Used in TARGET_XXX libraries                                 |
+| CY_SD_HOST_CLK_RAMP_UP_TIME_MS_WAKEUP | All PSoC™ 6 MCUs      | 0     | Used in mtb-hal-cat1 library                                 |
+| CY_WIFI_HOST_WAKE_SW_FORCE            | CY8CPROTO-062-4343W   | 0     | Used inwhd-bsp-integration                                   |
+| CYHAL_DISABLE_WEAK_FUNC_IMPL          | CY8CPROTO-062S3-4343W | 1     | Used in mtb-hal-cat1 library when executing code in place from external flash (XIP - eXecute In Place) |
+| OTA_SUPPORT                           | All                   | 1     | Used in recipe-make-cat1a, needed for defining Python usage for POST build processing |
+
+
 
 
 ## 17. Limitations
@@ -1037,7 +1009,7 @@ For external flash the secondary slot is an offset from the starting address of 
 
   As the workaround, use a Job document, which has information about where the OTA update image is located.
 
-2. Internal and external flash is supported. You can use the internal flash can only with platforms that have 2M of internal flash. The size of the application is greatly limited if using internal flash only.
+2. Internal and external flash is supported. You can use the internal flash only in certain combinations with platforms that have 2M of internal flash. The size of the application is greatly limited if using internal flash only.
 
 3. Ensure that you have a reliable network connection before starting an OTA update. If your network connection is poor, OTA update may fail due to lost packets or a lost connection.
 
@@ -1050,18 +1022,20 @@ For external flash the secondary slot is an offset from the starting address of 
 - Cypress ModusToolbox OTA Examples
   - [Cypress OTA MQTT Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-mqtt )
   - [Cypress OTA HTTP Example](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ota-http )
-  - [Cypress OTA Bluetooth Example ](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ble-battery-server)
+  - [Cypress OTA Bluetooth® Example ](https://github.com/cypresssemiconductorco/mtb-example-anycloud-ble-battery-server)
 - [ModusToolbox Software Environment, Quick Start Guide, Documentation, and Videos](https://www.cypress.com/products/modustoolbox-software-environment)
 -  [MCUboot](https://github.com/JuulLabs-OSS/mcuboot/blob/cypress/docs/design.md) documentation
 
-Cypress also provides a wealth of data at www.cypress.com to help you select the right device, and quickly and effectively integrate it into your design.
+Infineon also provides a wealth of data at www.infineon.com to help you select the right device, and quickly and effectively integrate it into your design.
 
-For PSoC™ 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Cypress community.
+For PSoC™ 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https://community.cypress.com/docs/DOC-14644) in the Infineon community.
 
 ## 19. Document History
 
 | Document Version | Description of Change                                      |
 | ---------------- | ---------------------------------------------------------- |
+| 1.4.5            | Update Migration guide for OTA v4.x to 5.x                 |
+| 1.4.4            | Update for OTA v5.0.0 and CyBootloader v1.8.1              |
 | 1.4.3            | Update publisher.py and subscriber.py documentation        |
 | 1.4.2            | Update Copyright info                                      |
 | 1.4.1            | Updated for OTA v4.0.0 BLE support and CyBootloader v1.7.2 |
@@ -1074,7 +1048,7 @@ For PSoC™ 6 MCU devices, see [How to Design with PSoC 6 MCU - KBA223067](https
 
 ------
 
-© 2021, Cypress Semiconductor Corporation (an Infineon company) or an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
+© 2022, Cypress Semiconductor Corporation (an Infineon company) or an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 This software, associated documentation and materials ("Software") is owned by Cypress Semiconductor Corporation or one of its affiliates ("Cypress") and is protected by and subject to worldwide patent protection (United States and foreign), United States copyright laws and international treaty provisions. Therefore, you may use this Software only as provided in the license agreement accompanying the software package from which you obtained this Software ("EULA"). If no EULA applies, then any reproduction, modification, translation, compilation, or representation of this Software is prohibited without the express written permission of Cypress.
 Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Cypress reserves the right to make changes to the Software without notice. Cypress does not assume any liability arising out of the application or use of the Software or any product or circuit described in the Software. Cypress does not authorize its products for use in any products where a malfunction or failure of the Cypress product may reasonably be expected to result in significant property damage, injury or death ("High Risk Product"). By including Cypress's product in a High Risk Product, the manufacturer of such system or application assumes all risk of such use and in doing so agrees to indemnify Cypress against all liability.
 

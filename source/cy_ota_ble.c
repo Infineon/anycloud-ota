@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -385,6 +385,7 @@ cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_ev
     wiced_bt_gatt_write_req_t       *p_write_req;
     cy_ota_storage_write_info_t     chunk_info;
     cy_rslt_t                       result;
+    uint32_t                        full_write_size;
     cy_ota_context_t *ota_ctx = (cy_ota_context_t *)ota_ptr;
 
     CY_OTA_CONTEXT_ASSERT(ota_ctx);
@@ -398,6 +399,7 @@ cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_ev
     chunk_info.buffer = p_write_req->p_val;
     chunk_info.offset = p_write_req->offset;
     chunk_info.size   = p_write_req->val_len;
+    full_write_size   = chunk_info.size;
 
     /* Don't require App to keep track of offset into the Slot
      * We also handle the offset handed in, in case we are pointing into a buffer
@@ -408,6 +410,16 @@ cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_ev
 
     cy_ota_set_state(ota_ctx, CY_OTA_STATE_STORAGE_WRITE);
 
+#ifdef CY_OTA_BLE_SECURE_SUPPORT
+    /*
+     * Make sure we don't try and write the trailing signature.
+     */
+    if (chunk_info.offset + chunk_info.size > ota_ctx->total_image_size - SIGNATURE_LEN)
+    {
+        chunk_info.size -= (chunk_info.offset + chunk_info.size) - (ota_ctx->total_image_size - SIGNATURE_LEN);
+    }
+#endif
+
     result = cy_ota_write_incoming_data_block(ota_ptr, &chunk_info);
     if (result != CY_RSLT_SUCCESS)
     {
@@ -416,6 +428,12 @@ cy_rslt_t cy_ota_ble_download_write(cy_ota_context_ptr ota_ptr, wiced_bt_gatt_ev
         cy_log_msg(CYLF_OTA, CY_LOG_ERR, "     cy_ota_write_incoming_data_block() FAILED : 0x%lx \n", result);
         return CY_RSLT_OTA_ERROR_BLE_GATT;
     }
+
+    /* Make sure the chunk info size is correct in case we needed to strip
+     * out the trailing signature for secure BLE.
+     */
+
+    chunk_info.size = full_write_size;
 
     /* update the stats */
     ota_ctx->total_bytes_written   += chunk_info.size;      /* Total bytes written to flash         */

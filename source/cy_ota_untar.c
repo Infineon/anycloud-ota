@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +42,7 @@
 #include "untar.h"
 #include "sysflash.h"
 #include "flash_map_backend.h"
-#include "bootutil.h"
+#include "ota_serial_flash.h"
 
 /* define CY_TEST_APP_VERSION_IN_TAR to test the application version in the
  * TAR archive at start of OTA image download.
@@ -72,6 +72,10 @@
  */
 #define CY_FILE_TYPE_SPE        "SPE"       /**< Secure Programming Environment (TFM) code type               */
 #define CY_FILE_TYPE_NSPE       "NSPE"      /**< Non-Secure Programming Environment (application) code type   */
+
+#ifdef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
+#define CY_FILE_TYPE_FWDB       "FWDB"      /**< Firmware Data Block (FWDB) type                              */
+#endif
 
 /***********************************************************************
  *
@@ -139,6 +143,8 @@ static cy_untar_result_t write_data_to_flash( const struct flash_area *fap,
     curr_offset = offset;
     curr_src = source;
 
+    cy_log_msg(CYLF_OTA, CY_LOG_INFO, "%s() write_data_to_flash() fap_off:0x%08x   off: 0x%08x  curr_off: 0x%08x\n", __func__, fap->fa_off, offset, curr_offset);
+
     while (bytes_to_write > 0)
     {
         uint32_t chunk_size = bytes_to_write;
@@ -147,28 +153,37 @@ static cy_untar_result_t write_data_to_flash( const struct flash_area *fap,
             chunk_size = CY_FLASH_SIZEOF_ROW;
         }
 
-        /* this should only happen on last part of last 4k chunk */
+        /* Is the chunk_size smaller than a flash row? */
         if ( (chunk_size % CY_FLASH_SIZEOF_ROW) != 0)
         {
-            /* we will read a 512 byte block, write out data into the block, then write the whole block */
-            if (flash_area_read(fap, curr_offset, block_buffer, sizeof(block_buffer)) != 0)
+            uint32_t row_offset;
+            uint32_t row_base;
+
+            row_base   = (curr_offset / CY_FLASH_SIZEOF_ROW) * CY_FLASH_SIZEOF_ROW;
+            row_offset = curr_offset - row_base;
+
+            /* we will read a CY_FLASH_SIZEOF_ROW byte block, write the new data into the block, then write the whole block */
+            if (flash_area_read(fap, row_base, block_buffer, sizeof(block_buffer)) != 0)
             {
                 cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() flash_area_read() failed\n", __func__);
                 return CY_UNTAR_ERROR;
             }
-            memcpy (block_buffer, curr_src, chunk_size);
+            memcpy (&block_buffer[row_offset], curr_src, chunk_size);
 
-            if (flash_area_write(fap, curr_offset, block_buffer, sizeof(block_buffer)) != 0)
+            if (flash_area_write(fap, row_base, block_buffer, sizeof(block_buffer)) != 0)
             {
-                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s() flash_area_write() failed\n", __LINE__, __func__);
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s() v() failed\n", __LINE__, __func__);
                 return CY_UNTAR_ERROR;
             }
         }
         else
         {
-            if (flash_area_write(fap, curr_offset, curr_src, chunk_size) != 0)
+            int rc;
+
+            rc = flash_area_write(fap, curr_offset, curr_src, chunk_size);
+            if (rc != 0)
             {
-                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s() flash_area_write() failed\n", __LINE__, __func__);
+                cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%d:%s() flash_area_write() failed rc:%d\n", __LINE__, __func__, rc);
                 return CY_UNTAR_ERROR;
             }
         }
@@ -217,6 +232,12 @@ static cy_untar_result_t ota_untar_write_callback(cy_untar_context_ptr ctxt,
     {
         image = 0;  /* The application code, cm4 */
     }
+#ifdef FW_DATBLOCK_SEPARATE_FROM_APPLICATION
+    else if ( strncmp(ctxt->files[file_index].type, CY_FILE_TYPE_FWDB, strlen(CY_FILE_TYPE_FWDB)) == 0)
+    {
+        image = 1;  /* The Firmware Data Block */
+    }
+#endif
     else
     {
         /* unknown file type */
@@ -325,7 +346,7 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
          */
         if (cy_is_tar_header( chunk_info->buffer, chunk_info->size) == CY_UNTAR_SUCCESS)
         {
-            cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() TAR ARCHIVE\n", __func__);
+            cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%d:%s() TAR ARCHIVE\n", __LINE__, __func__);
             if (cy_ota_untar_init_context(ctx_ptr, &ota_untar_context) != CY_RSLT_SUCCESS)
             {
                 cy_log_msg(CYLF_OTA, CY_LOG_ERR, "%s() cy_ota_untar_init_context() FAILED! \n", __func__);
@@ -338,7 +359,7 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
     if (ctx->ota_is_tar_archive != 0)
     {
         uint32_t consumed = 0;
-        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%s() TAR ARCHIVE\n", __func__);
+        cy_log_msg(CYLF_OTA, CY_LOG_NOTICE, "%d:%s() TAR ARCHIVE\n", __LINE__, __func__);
 
         while( consumed < chunk_info->size )
         {
@@ -397,6 +418,7 @@ cy_rslt_t cy_ota_write_incoming_data_block(cy_ota_context_ptr ctx_ptr, cy_ota_st
     {
         /* non-tarball OTA here, always image 0x00 */
         const struct flash_area *fap;
+
         cy_log_msg(CYLF_OTA, CY_LOG_DEBUG, "%s() NON-TAR \n", __func__);
         if (flash_area_open(FLASH_AREA_IMAGE_SECONDARY(0), &fap) != 0)
         {

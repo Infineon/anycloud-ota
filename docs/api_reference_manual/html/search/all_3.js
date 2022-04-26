@@ -186,6 +186,7 @@ var searchData=
   ['cy_5frslt_5fota_5ferror_5fredirect',['CY_RSLT_OTA_ERROR_REDIRECT',['../group__group__ota__macros.html#gaa8eec83bf1a9f12fbf3d0695fd927ecc',1,'cy_ota_api.h']]],
   ['cy_5frslt_5fota_5ferror_5fsending_5fresult',['CY_RSLT_OTA_ERROR_SENDING_RESULT',['../group__group__ota__macros.html#ga0d9847708d8f998130ce2062ff4ee32f',1,'cy_ota_api.h']]],
   ['cy_5frslt_5fota_5ferror_5fserver_5fdropped',['CY_RSLT_OTA_ERROR_SERVER_DROPPED',['../group__group__ota__macros.html#ga1c25e49e9d4924010fa246372c35ecaf',1,'cy_ota_api.h']]],
+  ['cy_5frslt_5fota_5ferror_5fsmif_5ftimeout',['CY_RSLT_OTA_ERROR_SMIF_TIMEOUT',['../group__group__ota__macros.html#gac9f0157c245803a2cc7fa006b5d8cbdf',1,'cy_ota_api.h']]],
   ['cy_5frslt_5fota_5ferror_5ftransport_5funsupported',['CY_RSLT_OTA_ERROR_TRANSPORT_UNSUPPORTED',['../group__group__ota__macros.html#gaaeddb7ad91ae3202b50a8adcf4d2ff02',1,'cy_ota_api.h']]],
   ['cy_5frslt_5fota_5ferror_5funsupported',['CY_RSLT_OTA_ERROR_UNSUPPORTED',['../group__group__ota__macros.html#gaef318c4aef208a23957acdf5fa4263d7',1,'cy_ota_api.h']]],
   ['cy_5frslt_5fota_5ferror_5fverify',['CY_RSLT_OTA_ERROR_VERIFY',['../group__group__ota__macros.html#ga05a242705c79d0c758365caea4d5af97',1,'cy_ota_api.h']]],

@@ -6,6 +6,16 @@ See the [README.md](./README.md) for a complete description of the OTA library.
 
 ## Changelog
 
+### v5.0.0
+
+ - Add support for CYW920829M2EVB-01 with GCC compiler, BT Only.
+ - Add support for CY8CPROTO-062S3-4343W, BT Only, internal flash.
+ - Updated library use to MCUBoot v1.8.1-cypress
+   - Legacy PSoC6 OTA targets
+   - CY8CPROTO-062S3-4343W
+   - CYW920829M2EVB-01
+
+
 ### v4.2.0
 
  - Add support for CY8CEVAL-062S2-MUR-43439M2

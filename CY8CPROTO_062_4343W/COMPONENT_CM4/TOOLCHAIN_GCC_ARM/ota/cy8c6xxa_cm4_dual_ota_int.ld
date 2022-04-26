@@ -44,7 +44,7 @@ ENTRY(Reset_Handler)
 STACK_SIZE = 0x1000;
 
 /* Size of the Cortex-M0+ application image at the start of FLASH - passed in as argument to ld.exe*/
-/* MCUBOOT_BOOTLOADER_SIZE  = 0x12000; */
+/* CY_BOOT_PRIMARY_1_START  = 0x18000; */
 
 /* MCUBoot Header Size passed in as argument to ld.exe */
 /* MCUBOOT_HEADER_SIZE = 0x1000; */
@@ -74,7 +74,7 @@ MEMORY
      * where 'xx' is the device group; for example, 'cy8c6xx7_cm0plus.ld'.
      */
     ram               (rwx)   : ORIGIN = 0x08020800, LENGTH = 0xDF000
-    flash             (rx)    : ORIGIN = 0x10000000 + MCUBOOT_BOOTLOADER_SIZE, LENGTH = CY_BOOT_PRIMARY_1_SIZE
+    flash             (rx)    : ORIGIN = 0x10000000 + CY_BOOT_PRIMARY_1_START, LENGTH = CY_BOOT_PRIMARY_1_SIZE
 
     /* This is a 32K flash region used for EEPROM emulation. This region can also be used as the general purpose flash.
      * You can assign sections to this memory region for only one of the cores.

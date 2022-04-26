@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,9 +36,12 @@
 #include "cy_utils.h"
 #include "cy_result.h"
 #include "cy_json_parser.h"
+#include "cy_log.h"
 
 #include "FreeRTOS.h"
 #include "FreeRTOSConfig.h"
+
+#include "ota_serial_flash.h"
 
 /*************************************************************
  * Defines and enums
@@ -162,7 +165,7 @@ static cy_untar_result_t cy_parse_component_json_data(cy_untar_context_t *ctxt, 
 
     if (size < ctxt->files[0].size )
     {
-        configPRINTF( ("%s() Not enough data for components.json parse need: %ld\n", __func__, ctxt->files[0].size) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() Not enough data for components.json parse need: %ld\n", __func__, ctxt->files[0].size);
         /* still waiting for all of the json, still good */
         return CY_UNTAR_NOT_ENOUGH_DATA;
     }
@@ -205,13 +208,13 @@ static cy_untar_result_t cy_untar_parse_process_header(cy_untar_context_t *ctxt,
 
         if (cy_untar_block_of_zeros(buffer, size) == 0)
         {
-            configPRINTF( ("%s() is_tar_header() ZEROs\n" , __func__) );
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "%s() is_tar_header() ZEROs, ignore\n" , __func__);
             /* full TAR_BLOCK_SIZE of 0x00 - ignore */
             return CY_UNTAR_SUCCESS;
         }
 
         /* expected a header but NOT A HEADER. */
-        configPRINTF( ("%s() is_tar_header() failed\n" , __func__) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() is_tar_header() failed\n" , __func__);
         return CY_UNTAR_ERROR;
     }
 
@@ -221,7 +224,7 @@ static cy_untar_result_t cy_untar_parse_process_header(cy_untar_context_t *ctxt,
         if (ctxt->num_files > 0 )
         {
             /* error - components.json must be first! */
-            configPRINTF( ("%s() missing components.json!\n" , __func__) );
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() missing components.json!\n" , __func__);
             return CY_UNTAR_ERROR;
         }
         ctxt->current_file = CY_UNTAR_COMPONENTS_JSON_INDEX;
@@ -239,7 +242,7 @@ static cy_untar_result_t cy_untar_parse_process_header(cy_untar_context_t *ctxt,
                 if (component_size != ctxt->files[i].size)
                 {
                     /* data in tar and components.json do not match */
-                    configPRINTF( ("%s() components.json faulty file size %ld != %ld %s!\n" , __func__, component_size, ctxt->files[i].size) );
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() components.json faulty file size %ld != %ld %s!\n" , __func__, component_size, ctxt->files[i].size);
                     return CY_UNTAR_ERROR;
                 }
                 /* we found a file */
@@ -250,7 +253,7 @@ static cy_untar_result_t cy_untar_parse_process_header(cy_untar_context_t *ctxt,
         if (i >= ctxt->num_files_in_json)
         {
             /* File not found in components.json - data in tar and components.json do not match */
-            configPRINTF( ("%s() components.json faulty could not find %s!\n" , __func__, (char*)hdr->name) );
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() components.json faulty could not find %s!\n" , __func__, (char*)hdr->name);
             return CY_UNTAR_ERROR;
         }
     }
@@ -296,17 +299,17 @@ static cy_untar_result_t cy_untar_parse_process_data(cy_untar_context_t *ctxt, u
             *consumed = ctxt->files[CY_UNTAR_COMPONENTS_JSON_INDEX].size;
             ctxt->already_parsed_components_json = 1;
             ctxt->state = CY_TAR_PARSE_FIND_HEADER;
-#if 0  //DEBUG
+#if DEBUG
             {
-                configPRINTF( ("%d:%s() parsed components.json done \n", __LINE__, __func__) );
-                configPRINTF( ("       version : %s\n", ctxt->version) );
-                configPRINTF( ("     num files : %d\n", ctxt->num_files_in_json) );
+                cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s() parsed components.json done \n", __LINE__, __func__);
+                cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "       version : %s\n", ctxt->version);
+                cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "     num files : %d\n", ctxt->num_files_in_json);
                 int i;
                 for (i = 0; i < ctxt->num_files_in_json; i++)
                 {
-                    configPRINTF( ("      file  %d : %s\n", i, ctxt->files[i].name) );
-                    configPRINTF( ("               : %s\n", ctxt->files[i].type) );
-                    configPRINTF( ("               : %ld\n", ctxt->files[i].size) );
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "      file  %d : %s\n", i, ctxt->files[i].name);
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "               : %s\n", ctxt->files[i].type);
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "               : %ld\n", ctxt->files[i].size);
                 }
             }
 #endif
@@ -321,14 +324,14 @@ static cy_untar_result_t cy_untar_parse_process_data(cy_untar_context_t *ctxt, u
             CY_ASSERT(ctxt->coalesce_needs < sizeof(ctxt->coalesce_buffer));
             if (ctxt->coalesce_needs > sizeof(ctxt->coalesce_buffer))
             {
-                configPRINTF( ("%s() Buffer needs > coalesce buffer. Reduce size of components.json or increase buffer size.\n",__func__) );
+                cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%s() Buffer needs > coalesce buffer. Reduce size of components.json or increase buffer size.\n",__func__);
                 return CY_UNTAR_ERROR;
             }
             /* this is normal when coalescing data */
             return CY_UNTAR_NOT_ENOUGH_DATA;
         }
         /* components.json parse failure */
-        configPRINTF( ("%d:%s PARSE FAILURE\n", __LINE__, __func__) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s PARSE FAILURE\n", __LINE__, __func__);
         return CY_UNTAR_COMPONENTS_JSON_PARSE_FAIL;
     }
     else
@@ -353,14 +356,14 @@ static cy_untar_result_t cy_untar_parse_process_data(cy_untar_context_t *ctxt, u
                 result = ctxt->cb_func(ctxt, ctxt->current_file, buffer, file_offset, data_for_file, ctxt->cb_arg);
                 if (result != CY_UNTAR_SUCCESS)
                 {
-                    configPRINTF( ("%d:%s    CALBACK returned FAILURE\n", __LINE__, __func__, result) );
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s    CALBACK returned FAILURE\n", __LINE__, __func__, result);
                     return result;
                 }
             }
             ctxt->files[ctxt->current_file].processed += data_for_file;
             *consumed = data_for_file;
-//            configPRINTF( ("      file  %d : %s\n", ctxt->current_file, ctxt->files[ctxt->current_file].name) );
-//            configPRINTF( ("               : %ld of %ld\n", ctxt->files[ctxt->current_file].processed, ctxt->files[ctxt->current_file].size) );
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "      file  %d : %s\n", ctxt->current_file, ctxt->files[ctxt->current_file].name);
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "               : %ld of %ld\n", ctxt->files[ctxt->current_file].processed, ctxt->files[ctxt->current_file].size);
         }
 
         if (ctxt->files[ctxt->current_file].processed >= ctxt->files[ctxt->current_file].size)
@@ -394,10 +397,10 @@ cy_untar_result_t cy_is_tar_header( uint8_t *buffer, uint32_t size )
     }
     if (strncmp((char*)hdr->magic, TMAGIC, TMAGLEN) != 0)
     {
-//        configPRINTF( ("is_tar_header() invalid ustar magic:%s\n", hdr->magic) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "is_tar_header() invalid ustar magic:%s\n", hdr->magic);
         return CY_UNTAR_INVALID;
     }
-    configPRINTF( ("is_tar_header(), hdr->magic: %s, TMAGIC: %s, TMAGLEN: %d\n", hdr->magic, TMAGIC, TMAGLEN) );
+    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "is_tar_header(), hdr->magic: %s, TMAGIC: %s, TMAGLEN: %d\n", hdr->magic, TMAGIC, TMAGLEN);
     return CY_UNTAR_SUCCESS;
 }
 
@@ -437,7 +440,7 @@ cy_untar_result_t cy_untar_deinit( cy_untar_context_t *ctxt )
 {
     if (ctxt == NULL)
     {
-        configPRINTF( ("%d:%s BAD ARGS\n", __LINE__, __func__) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s BAD ARGS\n", __LINE__, __func__);
         return CY_UNTAR_ERROR;
     }
     memset (ctxt, 0x00, sizeof(cy_untar_context_t));
@@ -469,7 +472,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
 
     if ( (ctxt == NULL) || (in_buffer == NULL) || (in_size == 0) || (consumed == NULL))
     {
-        configPRINTF( ("%d:%s BAD ARGUMENTS\n", __LINE__, __func__) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s BAD ARGUMENTS\n", __LINE__, __func__);
         return CY_UNTAR_ERROR;
     }
 
@@ -478,7 +481,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
     if (ctxt->magic != CY_UNTAR_CONTEXT_MAGIC)
     {
         /* our untar context not initialized! */
-        configPRINTF( ("%d:%s BAD UNTAR context MAGIC\n", __LINE__, __func__) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s BAD UNTAR context MAGIC\n", __LINE__, __func__);
         return CY_UNTAR_ERROR;
     }
 
@@ -541,7 +544,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
         size_to_use = curr_size;
         stream_offset_to_use = curr_stream_offset;
 
-//        configPRINTF( ("%d:%s() ctxt->state: %d  consumed: %ld\n", __LINE__, __func__, ctxt->state, *consumed) );
+        cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "%d:%s() ctxt->state: %d  consumed: %ld\n", __LINE__, __func__, ctxt->state, *consumed);
         if (ctxt->state == CY_TAR_PARSE_FIND_HEADER)
         {
             /*
@@ -588,7 +591,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
                 result = cy_untar_parse_process_header(ctxt, stream_offset_to_use, buff_to_use, size_to_use);
                 if (result != CY_UNTAR_SUCCESS)
                 {
-                    configPRINTF( ("%d:%s() cy_untar_parse_process_header() fail  return %d\n", __LINE__, __func__, result) );
+                    cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s() cy_untar_parse_process_header() fail  return %d\n", __LINE__, __func__, result);
                     return result;
                 }
                 bytes_consumed = TAR_BLOCK_SIZE;    /* always 1 TAR_BLOCK_SIZE for ustar header */
@@ -615,7 +618,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
                 used_coalesce = 1;
             }
 
-//            configPRINTF( ("%d:%s() offset: %ld sz: %ld\n", __LINE__, __func__, stream_offset_to_use, size_to_use) );
+            cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_DEBUG, "%d:%s() offset: %ld sz: %ld\n", __LINE__, __func__, stream_offset_to_use, size_to_use);
             result = cy_untar_parse_process_data(ctxt, stream_offset_to_use, buff_to_use, size_to_use, &bytes_consumed);
             if (result == CY_UNTAR_NOT_ENOUGH_DATA)
             {
@@ -626,7 +629,7 @@ cy_untar_result_t cy_untar_parse( cy_untar_context_t *ctxt, uint32_t in_stream_o
             if (result != CY_UNTAR_SUCCESS)
             {
                 /* data parse fail */
-                configPRINTF( ("%d:%s() cy_untar_parse_process_data() fail  return %d\n", __LINE__, __func__, result) );
+                cy_log_msg(CYLF_MIDDLEWARE, CY_LOG_ERR, "%d:%s() cy_untar_parse_process_data() fail  return %d\n", __LINE__, __func__, result);
                 return result;
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021, Cypress Semiconductor Corporation (an Infineon company)
+ * Copyright 2022, Cypress Semiconductor Corporation (an Infineon company)
  * SPDX-License-Identifier: Apache-2.0
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1085,7 +1085,7 @@ static cy_rslt_t cy_ota_parse_job_info(cy_ota_context_t *ctx, const char *buffer
     ctx->parsed_job.broker_server.host_name = ctx->parsed_job.new_host_name;
 
     /* validate version is higher than current application */
-    if ( (APP_VERSION_MAJOR > ctx->parsed_job.ver_major) ||
+    if ( ((uint16_t)APP_VERSION_MAJOR > ctx->parsed_job.ver_major) ||   /* fix Coverity 446703 unsigned compare  */
          ( (APP_VERSION_MAJOR == ctx->parsed_job.ver_major) &&
            ( ( ( (uint32_t)(APP_VERSION_MINOR + 1) ) >    /* fix Coverity 238370 when APP_VERSION_MINOR == 0 */
                ( (uint32_t)(ctx->parsed_job.ver_minor + 1) ) ) ) ) ||
@@ -2087,7 +2087,7 @@ _exit_ota_agent:
     cy_rtos_exit_thread();
 
 }
-#endif  /* CY_OTA_BLE_ONLY */
+#endif  /* defined(COMPONENT_OTA_HTTP) || defined(COMPONENT_OTA_MQTT) */
 
 /******************************************************************************
  *

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Over The Air (OTA) Update Library: Over The Air v4.2.0 Overview</title>
+<title>Over The Air (OTA) Update Library: Over The Air v5.0.0 Overview</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -96,11 +96,14 @@ $(document).ready(function(){initNavTree('index.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Over The Air v4.2.0 Overview </div>  </div>
+<div class="title">Over The Air v5.0.0 Overview </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This library provides support for OTA updating of the application code running on a PSoC™ 6 Connectivity Device, using Wi-Fi or Bluetooth®. For simplification, this document will refer to an MQTT Broker or an HTTP Server as "server".</p>
-<p>The library provides a number of combinations on how to get the OTA image:<br />
+<div class="textblock"><p>This library provides support for OTA updating of the application code running on a PSoC™ 6 Connectivity Device or CYW920829M2EVB-01 Device, using Wi-Fi or Bluetooth®.<br />
+<br />
+ For simplification, this document will refer to an MQTT Broker or an HTTP Server as "server".<br />
+<br />
+ The library provides a number of combinations on how to get the OTA image:<br />
 <br />
 <b>Bluetooth®</b></p><ul>
 <li>We use a Push model with Bluetooth®. A Peer application running on a laptop or phone will connect and push an update to the Device.</li>
@@ -113,12 +116,11 @@ $(document).ready(function(){initNavTree('index.html','');});
 </p><ul>
 <li>The OTA Agent downloads a JSON "Job" document (default name "ota_update.json").<br />
 </li>
-<li>The Job document has information about an update that is available, including its location.</li>
-</ul>
-<p>Step 2: - Get Data:<br />
-</p><ul>
-<li>The OTA Agent will download the OTA image to the secondary slot (Slot 1).<br />
- On the next reboot, MCUboot will copy the new version of the application from the secondary slot (Slot 1) to the Primary slot (Slot 0) and run the application.</li>
+<li>The Job document has information about an update that is available, including its location. Step 2: - Get Data:<br />
+</li>
+<li>The OTA Agent will download the OTA image to the upgrade (secondary) slot.<br />
+<br />
+ On the next reboot, MCUboot will copy the new version of the application from the upgrade (secondary) slot to the boot (primary) slot and run the application.</li>
 </ul>
 <p>You can skip Step 1 by setting the use_get_job_flow field in <a class="el" href="structcy__ota__network__params__t.html" title="OTA Connection parameters structure. ">cy_ota_network_params_t</a> to CY_OTA_DIRECT_FLOW when calling <a class="el" href="group__group__ota__functions.html#ga84d744546862b858ddc65334be5b63c3" title="Start the OTA Background Agent. ">cy_ota_agent_start()</a>.</p>
 <p>The ModusToolbox OTA code examples import this OTA library automatically.</p>
@@ -133,6 +135,11 @@ Features and Functionality</h1>
 <li>Provides a callback mechanism to report stages of connect, download percentage, and errors.</li>
 <li>Once the application starts the OTA Agent, the OTA Agent will contact the server at the defined intervals to see if there is an update available.</li>
 </ul>
+<p>Bluetooth®</p><ul>
+<li>Runs in a separate thread with callbacks to the users application to handle the connection messages and download data.</li>
+<li>When Bluetooth® is enabled in the compile flags, the Bluetooth® server will start automatically. <br />
+ </li>
+</ul>
 <h1><a class="anchor" id="section_notes"></a>
 Integration Notes</h1>
 <p>A pre-defined configuration file has been bundled with this library.<br />
@@ -142,48 +149,55 @@ Integration Notes</h1>
  directory to the top-level code example directory.<br />
 <br />
 </li>
+<li>For PSoC™ 6 device builds, add the following to COMPONENTS in the code example project's Makefile<br />
+<ul>
+<li>PSOC6HAL For example, if CY8CPROTO-062-4343W is being used, the Makefile entry would be:<br />
+<div class="fragment"><div class="line">COMPONENTS+=PSOC6HAL</div>
+</div><!-- fragment --> <br />
+</li>
+</ul>
+</li>
 <li>For Bluetooth® builds, add the following to COMPONENTS in the code example project's Makefile<br />
 <ul>
-<li>FREERTOS, PSOC6HAL, LWIP, WICED_BLE, OTA_BLUETOOTH Then add the Radio component, based on the platform.<br />
+<li>FREERTOS, LWIP, WICED_BLE, OTA_BLUETOOTH Then add the Radio component, based on the platform.<br />
  For example, if CY8CPROTO-062-4343W is being used, the Makefile entry would be:<br />
-<div class="fragment"><div class="line">COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS SECURE_SOCKETS 4343W</div>
+<div class="fragment"><div class="line">COMPONENTS+=FREERTOS PSOC6HAL WICED_BLE OTA_BLUETOOTH</div>
 </div><!-- fragment --> <br />
 </li>
 </ul>
 </li>
 <li>For MQTT and HTTP builds, add the following to COMPONENTS in the code example project's Makefile<br />
 <ul>
-<li>FREERTOS, PSOC6HAL, LWIP, MBEDTLS, SECURE_SOCKETS, OTA_MQTT (or OTA_HTTP) Then add the Radio component, based on the platform.<br />
+<li>FREERTOS, LWIP, MBEDTLS, SECURE_SOCKETS, OTA_MQTT (or OTA_HTTP) Then add the Radio component, based on the platform.<br />
  For example, if CY8CKIT-062S2-43012 is being used, the Makefile entry would be:<br />
-<div class="fragment"><div class="line">COMPONENTS=FREERTOS PSOC6HAL LWIP MBEDTLS SECURE_SOCKETS 43012</div>
+<div class="fragment"><div class="line">COMPONENTS+=FREERTOS PSOC6HAL LWIP MBEDTLS SECURE_SOCKETS</div>
 </div><!-- fragment --> <br />
  Note that COMPONENTS OTA_BLUETOOTH, OTA_MQTT and OTA_HTTP can be used simultaneously, but will possibly be too large to fit in the FLASH slot available.<br />
-<br />
- </li>
+</li>
 </ul>
 </li>
 </ul>
 <h1><a class="anchor" id="section_concept"></a>
 General Concept</h1>
-<p>The OTA Agent stores the update to the secondary slot and uses MCUboot to validate and copy the update from the secondary slot to the primary slot.<br />
+<p>The OTA Agent stores the update to the upgrade (secondary) slot and uses MCUboot to validate and copy the update from the upgrade (secondary) slot to the boot (primary) slot.<br />
 </p><ul>
-<li>MCUboot runs the current application in the primary slot.<br />
+<li>MCUboot runs the current application in the boot (primary) slot.<br />
 </li>
-<li>The OTA Agent downloads the update and stores it in the secondary slot.<br />
+<li>The OTA Agent downloads the update and stores it in the upgrade (secondary) slot.<br />
 </li>
-<li>The secondary slot is marked so that MCUboot will copy it over to the primary slot.<br />
+<li>The upgrade (secondary) slot is marked so that MCUboot will copy it over to the boot (primary) slot.<br />
 </li>
-<li>If validate_after_reboot == 0, the secondary slot will be tagged as "perm"<br />
+<li>If validate_after_reboot == 0, the upgrade (secondary) slot will be tagged as "perm"<br />
 </li>
-<li>If validate_after_reboot == 1, the secondary slot will be tagged as "test"<br />
+<li>If validate_after_reboot == 1, the upgrade (secondary) slot will be tagged as "test"<br />
 </li>
 <li>If reboot_upon_completion == 1, the system will reboot automatically.<br />
 </li>
-<li>On the next system reboot, MCUboot sees that there is an update in the secondary slot and copies the update to the primary slot.<br />
+<li>On the next system reboot, MCUboot sees that there is an update in the upgrade (secondary) slot and copies the update to the boot (primary) slot.<br />
 </li>
-<li>MCUboot runs the current application (now the update) in the primary slot.<br />
+<li>MCUboot runs the current application (now the update) in the boot (primary) slot.<br />
 </li>
-<li>If validate_after_reboot == 1, the updated application must validate itself and call cy_ota_validated() to inform MCUboot that it is now "perm" to complete the process. If not marked as "perm", o n the next reboot, MCUBoot will REVERT to the original application.</li>
+<li>If validate_after_reboot == 1, the updated application must validate itself and call cy_ota_validated() to inform MCUboot that it is now "perm" to complete the process. If not marked as "perm", on the next reboot, MCUBoot will REVERT to the original application.</li>
 </ul>
 <h1><a class="anchor" id="section_api_overview"></a>
 API Overview</h1>
